@@ -1,0 +1,48 @@
+import { createRouter, createWebHistory, type NavigationGuardNext, type RouteLocationNormalized } from 'vue-router'
+import { useUserStore } from '@/stores/user';
+import { emitter } from '@/utils';
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: () => import('@/views/HomeView.vue'),
+      redirect: { name: 'homespace'},
+      children: [
+        {
+          path: '/about',
+          name: 'about',
+          component: () => import('@/views/AboutView.vue'),
+        },
+        {
+          path: '/homespace',
+          name: 'homespace',
+          component: () => import('@/views/HomeSpace.vue'),
+        },
+      ]
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+    },
+  ],
+})
+router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
+  const userStore = useUserStore();
+  if (to.path !== '/login' && !userStore.isAuthenticated) {
+    next('/login');
+  } else if (userStore.isAuthenticated && to.path === '/login') {
+    next('/')
+  } else {
+    next();
+  }
+});
+export default router
+emitter.on('UPDATE_INFO', () => {
+  if (router.currentRoute.value.path === '/login') {
+    router.push('/');
+  }
+})

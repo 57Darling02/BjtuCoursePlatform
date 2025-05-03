@@ -1,0 +1,12 @@
+.postcss-test {
+  height: 30px;
+  background: blueviolet;
+  user-select: none;
+}
+
+:root {
+  --el-fill-color-blank: transparent;
+  .el-collapse-item__header {
+    height: fit-content;
+  }
+}
