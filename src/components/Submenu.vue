@@ -22,28 +22,36 @@
                     {{ userStore.userinfo.major || '未分配' }}
                 </el-descriptions-item>
                 <el-descriptions-item label="身份" :span="2">
-                    <el-tag type="success" v-for="i in userStore.userinfo.role" style="margin-right: 5px;"
+                    <el-tag round type="success" v-for="i in userStore.userinfo.role" style="margin-right: 5px;"
                         effect="plain">
                         {{ i }}
                     </el-tag>
                 </el-descriptions-item>
                 <el-descriptions-item label="状态" :span="2">
-                    <el-tag :type="userStore.status_ve ? 'success' : 'danger'" style="margin-right: 5px;"
+                    <el-tag round :type="userStore.status_ve ? 'success' : 'danger'" style="margin-right: 5px;"
                         :effect="userStore.status_ve ? 'light' : 'dark'">
                         {{ userStore.status_ve ? '✅' : '🚫' }}ve服务器
                     </el-tag>
-                    <el-tag :type="userStore.status_app ? 'success' : 'danger'"
-                        :effect="userStore.status_app ? 'light' : 'dark'"
-                        @click="handleSyncPassword">
+                    <el-tag round :type="userStore.status_app ? 'success' : 'danger'"
+                        :effect="userStore.status_app ? 'light' : 'dark'" @click="handleSyncPassword">
                         {{ userStore.status_app ? '✅' : '🚫' }}app服务器
                     </el-tag>
                 </el-descriptions-item>
 
             </el-descriptions>
             <!-- Action Buttons -->
-            <template v-for="i in actionButtons">
+            <el-space wrap>
+                <el-button v-for="i in actionButtons" :type="i.type" style="" @click="i.function" round>{{ i.text
+                    }}</el-button>
+            </el-space>
+            <el-row class="action-buttons">
+                <el-col :span="12">
+
+                </el-col>
+            </el-row>
+            <template>
                 <el-divider />
-                <el-button :type="i.type" style="width: 100%;" @click="i.function" round>{{ i.text }}</el-button>
+
             </template>
         </div>
 
@@ -82,12 +90,11 @@ const handleSyncPassword = () => {
         })
 }
 
-const actionButtons = computed(() => [
+const actionButtons = [
+    { text: '同步密码以连接app服务器', type: 'primary', function: handleSyncPassword },
     { text: '进入课程平台', type: 'success', function: userStore.go_kcpt },
-    { text: '同步密码以连接app服务器', type: 'primary', function: handleSyncPassword},
     { text: '退出登录', type: 'danger', function: userStore.handlelogout },
-
-])
+]
 
 
 onMounted(async () => {

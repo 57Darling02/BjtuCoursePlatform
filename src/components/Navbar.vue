@@ -13,7 +13,7 @@
             </el-col>
         </el-row>
     </div>
-    <el-drawer v-model="visible" :size="300" :append-to-body="true" :destroy-on-close="true"
+    <el-drawer v-model="visible" :size="300" :append-to-body="true" :destroy-on-close="true" style="border-top-left-radius: 12px;border-bottom-left-radius: 12px;"
         :before-close="handleBeforeClose">
         <Submenu v-if="visible"/>
     </el-drawer>

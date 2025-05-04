@@ -9,28 +9,28 @@
     <template v-else>
         <div class="a-card-static">
             <el-space wrap :size="5">
-                <el-tag type="warning" v-if="countWaitMakeup(userStore.homeworkList)">{{
+                <el-tag type="warning" v-if="countWaitMakeup(userStore.homeworkList)" round>{{
                     countWaitMakeup(userStore.homeworkList) }}项待补交</el-tag>
-                <el-tag type="warning">{{ countUncompleted(userStore.homeworkList) }}项待完成</el-tag>
-                <el-tag type="danger" v-if="countExpired(userStore.homeworkList)">{{
+                <el-tag type="warning" round>{{ countUncompleted(userStore.homeworkList) }}项待完成</el-tag>
+                <el-tag type="danger" v-if="countExpired(userStore.homeworkList)" round>{{
                     countExpired(userStore.homeworkList) }}项过期</el-tag>
-                <el-tag type="info">共{{ userStore.homeworkList.length }}项</el-tag>
+                <el-tag type="info" round>共{{ userStore.homeworkList.length }}项</el-tag>
             </el-space>
             <el-collapse v-model="active_colomn" accordion>
                 <el-collapse-item v-for="(group, courseId) in groupedByCourse" :key="courseId" :name="courseId"
-                    class="a-card">
+                    class="a-card" >
                     <template #title>
                         <el-space wrap>
                             <el-text>{{ group.courseName }}</el-text>
                             <el-space :size="2">
-                                <el-tag type="warning" v-if="countWaitMakeup(group.items)">{{
+                                <el-tag type="warning" round v-if="countWaitMakeup(group.items)">{{
                                     countWaitMakeup(group.items) }}项待补交</el-tag>
-                                <el-tag type="warning" v-if="countUncompleted(group.items)">{{
+                                <el-tag type="warning" round v-if="countUncompleted(group.items)">{{
                                     countUncompleted(group.items)
                                 }}项待完成</el-tag>
-                                <el-tag type="danger" v-if="countExpired(group.items)">{{
+                                <el-tag type="danger" round v-if="countExpired(group.items)">{{
                                     countExpired(group.items) }}项过期</el-tag>
-                                <el-tag type="info">共{{ group.items.length }}项</el-tag>
+                                <el-tag type="info" round>共{{ group.items.length }}项</el-tag>
                             </el-space>
                         </el-space>
                     </template>
@@ -45,8 +45,8 @@
             </el-collapse>
         </div>
     </template>
-    <el-dialog v-if="activeHomework" v-model="HomeworkDialogVisible" :title="activeHomework.course_name"
-        style="flex-direction: column;display: flex;" fullscreen destroy-on-close body-class="full-dialog-body" header-class="full-dialog-header">
+    <el-dialog v-if="activeHomework" v-model="HomeworkDialogVisible" :title="activeHomework.title"
+        style="flex-direction: column;display: flex;overflow: hidden;" fullscreen destroy-on-close body-class="full-dialog-body" header-class="full-dialog-header">
         <HwDialog :activehomework="activeHomework"  />
     </el-dialog>
 </template>
@@ -56,8 +56,9 @@ import { useUserStore } from '@/stores/user'
 import type { HomeworkItem } from '@/api';
 import PublicHwPanel from '@/components/PublicHwPanel.vue';
 import HwDialog from '@/components/HwDialog.vue';
-import { el_alert } from '@/utils';
+import { el_alert, emitter } from '@/utils';
 import { getAllHomeworkItem, getAllStudentSubmissions } from '@/api/api_ve';
+import { emit } from 'process';
 const userStore = useUserStore();
 
 
@@ -237,14 +238,24 @@ const update_homeworkdetail_Task = async () => {
             message: `${error}`,
             type: 'error',
             showClose: true,
-            duration: 0
+            duration: 800
         });
     } finally {
         // isLoading.value = false;
     }
 }
 const active_colomn = ref('0')
-
+emitter.on('UPDATE_HOMEWORKS',() => {
+    try {
+        isLoading.value = true;
+        userStore.homeworkList = [];
+        HomeworkDialogVisible.value = false;
+        userStore.addTaskToQueue(UPDATE_HOMEWORKSTask);
+        userStore.addTaskToQueue(update_homeworkdetail_Task);
+    } catch (error) {
+        console.error('获取作业列表失败:', error)
+    }
+})
 
 onMounted(() => {
     try {
@@ -259,6 +270,7 @@ onMounted(() => {
 .hwitem {
     background-color: rgba(224, 219, 219, 0.425);
     width: 95%;
+    padding-left: 23px;
 }
 
 </style>
