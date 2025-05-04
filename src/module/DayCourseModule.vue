@@ -56,9 +56,9 @@ onMounted(async () => {
             userStore.Cache['DayCourse_time'] = JSON.stringify(new Date());
             data.value = freshData;
             el_alert({
-                title: '课程表更新',
+                title:'今日课表',
                 message: `${new Date().toLocaleString()},今日共${freshData.length}节`,
-                type: 'sccess',
+                type: 'success',
             })
         } else {
             data.value = JSON.parse(userStore.Cache['DayCourse']) || [];

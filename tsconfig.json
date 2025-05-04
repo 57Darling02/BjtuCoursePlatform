@@ -1,11 +1,16 @@
 {
   "files": [],
+  "compilerOptions": {
+    "types": [
+      "element-plus/global"  // 添加 Element Plus 全局类型
+    ]
+  },
   "references": [
     {
       "path": "./tsconfig.node.json"
     },
     {
       "path": "./tsconfig.app.json"
-    }
+    },
   ]
 }

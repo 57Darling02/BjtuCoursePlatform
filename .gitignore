@@ -31,5 +31,4 @@ coverage
 
 /rc
 # 忽略规则
-/src/api/api_ve/login.ts
-
+src/api/

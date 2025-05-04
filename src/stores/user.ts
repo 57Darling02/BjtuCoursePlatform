@@ -93,6 +93,8 @@ export const useUserStore = defineStore('user', () => {
             courseList.value = []
             homeworkList.value = []
             Cache.value = {}
+            saveCache.flush()
+            saveState.flush()
             router.push('/login')
 
         } catch (error) {

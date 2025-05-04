@@ -1,5 +1,5 @@
-import { type NotificationOptions } from 'element-plus';
-export const el_alert = (data: {title?: string, message?: string, type?: string, showClose?: boolean, customClass?: string, dangerouslyUseHTMLString?: boolean, duration?: number, offset?: number, position?: string}) => {
+import { type NotificationParams  } from 'element-plus';
+export const el_alert = (data: NotificationParams ) => {
   ElNotification(data);
 };
 export const extractAlertMessage = (html: string): string | null => {
