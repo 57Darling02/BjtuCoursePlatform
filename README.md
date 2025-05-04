@@ -3,6 +3,7 @@
 [![Vue3](https://img.shields.io/badge/Vue3-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 > 基于官方接口重构的现代化课程平台 二次开发 性能与体验全面升级 支持多端适配 功能聚合 
+
 **点击访问:** [课程平台魔改版 (57d02.cn)](http://hw.57d02.cn:8080/)
 注：部署在BJTU主校区10.60网段内，需要10.61网段ip才能够访问
 （人话：请连接连接 phone.wlan.bjtu）
