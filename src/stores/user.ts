@@ -184,16 +184,9 @@ export const useUserStore = defineStore('user', () => {
     emitter.on('UPDATE_INFO', async () => {
         const UPDATE_INFOTask = async () => {
             if (userinfo.value == null) isLoading.value = true;
-            
             if (!await checkAuth()) return;
             try {
-                await el_alert({
-                    title: '信息更新中...',
-                    message: `${new Date().toLocaleString()}`,
-                    type: 'info',
-                    showClose: true,
-                    duration: 1000
-                });
+                
                 const semesterRes = await getAllTerm();
                 activeSemester.value = semesterRes[0];
                 const xqCode = activeSemester.value?.xqCode;
@@ -209,6 +202,13 @@ export const useUserStore = defineStore('user', () => {
                     useCache('avatar', '')
                     throw ('头像获取失败')
                 }
+                await el_alert({
+                    title: '用户数据',
+                    message: `${new Date().toLocaleString()}更新成功`,
+                    type: 'success',
+                    showClose: true,
+                    duration: 1000
+                });
             } catch (error) {
                 el_alert({
                     title: '信息更新失败',

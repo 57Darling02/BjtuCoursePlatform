@@ -20,9 +20,14 @@
 </template>
 <script lang='ts' setup>
 import { computed, onMounted, ref } from 'vue';
+import { useUserStore } from '@/stores/user';
 import type { CourseScheduleItem } from '@/api';
 import CourseScheduleItemPanel from '@/components/CourseScheduleItemPanel.vue';
 import { getDayCourse } from '@/api/api_app';
+import { el_alert } from '@/utils';
+
+const userStore = useUserStore();
+
 const isLoading = ref(true);
 const data = ref<CourseScheduleItem[]>()
 const formatDate = (date: Date) => {
@@ -40,7 +45,24 @@ const remainCourse = computed(() => {
 })
 onMounted(async () => {
     try {
-        data.value = await getDayCourse(formatDate(new Date()));
+        const cacheTime = userStore.Cache['DayCourse_time']
+            ? new Date(JSON.parse(userStore.Cache['DayCourse_time']))
+            : null;
+        const isSameDay = cacheTime && formatDate(cacheTime) === formatDate(new Date());
+        if (!userStore.Cache['DayCourse'] || !cacheTime || !isSameDay) {
+            
+            const freshData = await getDayCourse(formatDate(new Date()));
+            userStore.Cache['DayCourse'] = JSON.stringify(freshData);
+            userStore.Cache['DayCourse_time'] = JSON.stringify(new Date());
+            data.value = freshData;
+            el_alert({
+                title: '课程表更新',
+                message: `${new Date().toLocaleString()},今日共${freshData.length}节`,
+                type: 'sccess',
+            })
+        } else {
+            data.value = JSON.parse(userStore.Cache['DayCourse']) || [];
+        }
         if (data.value) {
             data.value = data.value.reduce((acc: CourseScheduleItem[], curr) => {
                 const existing = acc.find(item =>
