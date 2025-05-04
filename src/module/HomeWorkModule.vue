@@ -20,19 +20,19 @@
                 <el-collapse-item v-for="(group, courseId) in groupedByCourse" :key="courseId" :name="courseId"
                     class="a-card">
                     <template #title>
-                            <el-space wrap>
-                                <el-text>{{ group.courseName }}</el-text>
-                                <el-space :size="2">
-                                    <el-tag type="warning" v-if="countWaitMakeup(group.items)">{{
-                                        countWaitMakeup(group.items) }}项待补交</el-tag>
-                                    <el-tag type="warning" v-if="countUncompleted(group.items)">{{
-                                        countUncompleted(group.items)
-                                        }}项待完成</el-tag>
-                                    <el-tag type="danger" v-if="countExpired(group.items)">{{
-                                        countExpired(group.items) }}项过期</el-tag>
-                                    <el-tag type="info">共{{ group.items.length }}项</el-tag>
-                                </el-space>
+                        <el-space wrap>
+                            <el-text>{{ group.courseName }}</el-text>
+                            <el-space :size="2">
+                                <el-tag type="warning" v-if="countWaitMakeup(group.items)">{{
+                                    countWaitMakeup(group.items) }}项待补交</el-tag>
+                                <el-tag type="warning" v-if="countUncompleted(group.items)">{{
+                                    countUncompleted(group.items)
+                                }}项待完成</el-tag>
+                                <el-tag type="danger" v-if="countExpired(group.items)">{{
+                                    countExpired(group.items) }}项过期</el-tag>
+                                <el-tag type="info">共{{ group.items.length }}项</el-tag>
                             </el-space>
+                        </el-space>
                     </template>
                     <el-row v-for="hw in group.items" :key="hw.id" class="a-card hwitem" :gutter="12"
                         @click="handleClick(hw)" v-if="active_colomn == courseId">
@@ -45,9 +45,9 @@
             </el-collapse>
         </div>
     </template>
-    <el-dialog v-if="activeHomework" v-model="HomeworkDialogVisible" :title="activeHomework.course_name" width="90%"
-        min-width="300px" style="display: flex;flex-direction: column;" top="8vh" destroy-on-close>
-        <HwDialog :activehomework="activeHomework" style="flex: 1;" />
+    <el-dialog v-if="activeHomework" v-model="HomeworkDialogVisible" :title="activeHomework.course_name"
+        style="flex-direction: column;display: flex;" fullscreen destroy-on-close body-class="full-dialog-body" header-class="full-dialog-header">
+        <HwDialog :activehomework="activeHomework"  />
     </el-dialog>
 </template>
 <script lang='ts' setup>
@@ -63,7 +63,9 @@ const userStore = useUserStore();
 
 const activeHomework = ref<HomeworkItem | null>(null)
 const HomeworkDialogVisible = ref(false);
-const isLoading = ref(true);
+const isLoading = ref(false);
+if (!userStore?.homeworkList || userStore.homeworkList?.length == 0) isLoading.value = true;
+
 
 const countUncompleted = (list: HomeworkItem[]) =>
     list.filter(hw => hw.status === 0 && hw.subStatus === 0).length;
@@ -161,8 +163,11 @@ const UPDATE_HOMEWORKSTask = async () => {
     if (!await userStore.checkAuth_ve()) return;
     try {
         if (userStore.courseList.length === 0) return;
-        isLoading.value = true;
-        userStore.homeworkList = await getAllHomeworkItem(userStore.courseList.map(course => course.id));
+        if (!userStore?.homeworkList || userStore.homeworkList?.length == 0) {
+            isLoading.value = true;
+        }
+        const homeworkList = await getAllHomeworkItem(userStore.courseList.map(course => course.id));
+        userStore.homeworkList = homeworkList
         el_alert({
             title: '作业信息更新',
             message: `${new Date().toLocaleString()}`,
@@ -255,4 +260,5 @@ onMounted(() => {
     background-color: rgba(224, 219, 219, 0.425);
     width: 95%;
 }
+
 </style>

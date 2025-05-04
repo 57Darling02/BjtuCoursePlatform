@@ -9,7 +9,9 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AddHwPanel: typeof import('./src/components/AddHwPanel.vue')['default']
+    Bg_Normal: typeof import('./src/components/Bg_Normal.vue')['default']
     Bg_StarrySky: typeof import('./src/components/Bg_StarrySky.vue')['default']
+    'Bg_StarrySky copy 2': typeof import('./src/components/Bg_StarrySky copy 2.vue')['default']
     CourseScheduleItemPanel: typeof import('./src/components/CourseScheduleItemPanel.vue')['default']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElButton: typeof import('element-plus/es')['ElButton']

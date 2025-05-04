@@ -13,29 +13,32 @@ import { getUserInfo as getUserInfo_app } from '@/api/api_app';
 import router from '@/router';
 import { throttle } from 'lodash-es';
 const USER_STORAGE_KEY = 'user_store'
+const CACHE_STORAGE_KEY = 'user_cache'
 
 export const useUserStore = defineStore('user', () => {
     // 从 localStorage 恢复状态，如果没有则使用默认值
     const storedState = localStorage.getItem(USER_STORAGE_KEY);
-    const initialState: any = storedState
-        ? decryptData<typeof initialState>(storedState) ?? {
-            isAuthenticated: false,
-            username: '',
-            password: '',
-            userinfo: null,
-            activeSemester: null,
-            courseList: [],
-            homeworkList: [],
-        }
+    const cachedState = localStorage.getItem(CACHE_STORAGE_KEY);
+    const storedAuthData = storedState
+        ? decryptData<{ isAuthenticated: boolean; username: string; password: string }>(storedState)
+        : null;
+    const cachedData = cachedState
+        ? JSON.parse(cachedState)
         : {
-            isAuthenticated: false,
-            username: '',
-            password: '',
             userinfo: null,
             activeSemester: null,
             courseList: [],
             homeworkList: [],
-        }
+            Cache: {},
+        };
+
+    // 合并认证数据和缓存数据到初始状态
+    const initialState = {
+        isAuthenticated: storedAuthData?.isAuthenticated ?? false,
+        username: storedAuthData?.username ?? '',
+        password: storedAuthData?.password ?? '',
+        ...cachedData,
+    };
 
     const isAuthenticated = ref<boolean>(initialState.isAuthenticated);
     const username = ref<string>(initialState.username);
@@ -48,16 +51,14 @@ export const useUserStore = defineStore('user', () => {
     const retryConnect = ref<number>(0)
 
     // 缓存部分数据
-    const Cache = ref<Record<string, any>>({});
+    const Cache = ref<Record<string, any>>(initialState.Cache || {});
     const useCache = (name: string, something: any) => {
         Cache.value[name] = something;
     };
-
     const userinfo = ref<UserInfo>(initialState.userinfo)
     const activeSemester = ref<TermInfo | null>(initialState.activeSemester)
     const courseList = ref<CourseInfo[]>(initialState.courseList)
     const homeworkList = ref<HomeworkItem[]>(initialState.homeworkList)
-
 
     const addTaskToQueue = (task: () => Promise<void>) => {
         taskQueue.value.push(task);
@@ -86,8 +87,14 @@ export const useUserStore = defineStore('user', () => {
         try {
             await logout()
             isAuthenticated.value = false
+            username.value = ''
+            password.value = ''
+            activeSemester.value = null
+            courseList.value = []
+            homeworkList.value = []
+            Cache.value = {}
             router.push('/login')
-            
+
         } catch (error) {
             console.error('Logout failed:', error)
         }
@@ -159,7 +166,7 @@ export const useUserStore = defineStore('user', () => {
             return lastCheckResult.value;
         }
         const result = await checkAuth_force();
-        
+
         // 更新缓存时间和结果
         lastCheckTime.value = now;
         lastCheckResult.value = result;
@@ -169,14 +176,15 @@ export const useUserStore = defineStore('user', () => {
     const checkAuth_force = async () => {
         const a = await checkAuth_ve()
         const b = await checkAuth_app()
-        
+
         if (a || b) return true;
         return false
     }
 
     emitter.on('UPDATE_INFO', async () => {
         const UPDATE_INFOTask = async () => {
-            isLoading.value = true;
+            if (userinfo.value == null) isLoading.value = true;
+            
             if (!await checkAuth()) return;
             try {
                 await el_alert({
@@ -217,20 +225,32 @@ export const useUserStore = defineStore('user', () => {
     });
 
     const saveState = throttle(() => {
-        localStorage.setItem(USER_STORAGE_KEY, encryptData({
-            isAuthenticated: isAuthenticated.value,
-            username: username.value,
-            password: password.value,
-            userinfo: userinfo.value,
-            activeSemester: activeSemester.value,
-            courseList: courseList.value,
-            homeworkList: homeworkList.value
-        }))
-    }, 500)
+        localStorage.setItem(
+            USER_STORAGE_KEY,
+            encryptData({
+                isAuthenticated: isAuthenticated.value,
+                username: username.value,
+                password: password.value,
+            })
+        );
+    }, 500);
+
+    const saveCache = throttle(() => {
+        localStorage.setItem(
+            CACHE_STORAGE_KEY,
+            JSON.stringify({
+                userinfo: userinfo.value,
+                activeSemester: activeSemester.value,
+                courseList: courseList.value,
+                homeworkList: homeworkList.value,
+                Cache: Cache.value,
+            })
+        );
+    }, 1000);
 
     // 监听状态变化并持久化
-    watch([isAuthenticated, username, password], saveState)
-    watch([userinfo, activeSemester, courseList, homeworkList], saveState, { deep: true })
+    watch([isAuthenticated, username, password], saveState);
+    watch([userinfo, activeSemester, courseList, homeworkList, Cache], saveCache, { deep: true });
 
     return {
         isAuthenticated,

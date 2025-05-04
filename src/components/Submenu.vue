@@ -43,7 +43,7 @@
             <!-- Action Buttons -->
             <template v-for="i in actionButtons">
                 <el-divider />
-                <el-button :type="i.type" style="width: 100%;" @click="i.function">{{ i.text }}</el-button>
+                <el-button :type="i.type" style="width: 100%;" @click="i.function" round>{{ i.text }}</el-button>
             </template>
         </div>
 

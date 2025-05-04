@@ -1,142 +1,132 @@
-<!-- 星空背景 -->
 <template>
-    <div id="bg">
-        <div class="body" id="bodyId">
-            <div class="stars" ref="starsRef">
-                <div class="star" v-for="(item, index) in starsCount" :key="index"></div>
-            </div>
-        </div>
-    </div>
+  <div class="cosmic-space">
+    <!-- 自动生成星空层 -->
+    <div v-for="layer in layers" :key="layer" :class="`stars-layer-${layer}`"></div>
+    
+    <!-- 流星 -->
+    <div v-for="n in 3" :key="'meteor'+n" class="shooting-star"></div>
+  </div>
 </template>
+
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
-let starsRef = ref(null);
-const starsCount = 800; //星星数量
-const distance = 900; //间距
-onMounted(() => {
-    let starNodes = Array.from(starsRef.value.children);
-    starNodes.forEach((item) => {
-        let speed = 0.2 + Math.random() * 1;
-        let thisDistance = distance + Math.random() * 300;
-        item.style.transformOrigin = `0 0 ${thisDistance}px`;
-        item.style.transform = `
-          translate3d(0,0,-${thisDistance}px)
-          rotateY(${Math.random() * 360}deg)
-          rotateX(${Math.random() * -50}deg)
-          scale(${speed},${speed})`;
-    });
-});
-
-// -------流星脚本开始-------
-const createMeteor = () => {
-    let meteor = document.createElement("div");
-    meteor.classList.add("meteor");
-    meteor.style.position = "absolute";
-    meteor.style.height = "2px";
-    meteor.style.background = "linear-gradient(to right, #00ffff, rgba(0, 0, 0, 0))"; // 改为青色渐变
-    meteor.style.width = Math.random() * 10 + 100 + "px";
-    meteor.style.right = Math.random() * window.innerWidth + "px";
-    meteor.style.top = Math.random() * (window.innerHeight / 3) + "px";
-    document.getElementById("bodyId").prepend(meteor);
-
-    // 获取流星的初始位置
-    const meteorRect = meteor.getBoundingClientRect();
-    // 计算滑动距离
-    const distance = window.innerHeight / 2 - meteorRect.top + Math.random() * 50;
-    // 设置动画持续时间，根据距离和随机速度计算
-    const duration = (distance / (160 + Math.random() * 50)) * 1000; // 调整速度倍数
-    // 创建动画，斜着向下滑动
-    meteor.style.animation = `myMeteor ${duration}ms linear forwards`;
-    // 修改 myMeteor 动画
-    const myMeteor = `@keyframes myMeteor {
-      0% {
-        transform: translate(0, 0) rotate(-30deg); // 初始位置
-      }
-      90%{
-        opacity: .8;
-      }
-      100% {
-        opacity: 0;
-        transform: translate(-${distance}px, ${distance}px) rotate(-30deg); // 终点位置
-      }
-    }`;
-
-    // 将 CSS 代码添加到 style 标签中
-    const style = document.createElement("style");
-    style.innerHTML = myMeteor;
-    document.head.appendChild(style);
-
-    // 移除流星
-    setTimeout(() => {
-        meteor.remove();
-    }, duration);
-};
-
-const createMeteorInterval = setInterval(() => {
-    createMeteor();
-}, 5000 + Math.random() * 2000);
-// -------流星脚本结束-------
-
-// 在组件销毁时清除定时器
-onBeforeUnmount(() => {
-    clearInterval(createMeteorInterval);
-});
+// 通过计算属性生成层级数量
+const layers = Array.from({length: 5}, (_, i) => i + 1)
 </script>
-<style scoped>
-#bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+
+<style lang="scss" scoped>
+// 配置参数
+$stars-count: 300; // 每层星星数量
+$layers-count: 5; // 星空层数
+$base-duration: 50s; // 基础动画时长
+$color-palette: (
+  primary: #00ffff,
+  secondary: #a0d8ef,
+  accent: #7fffd4
+);
+
+// 生成单颗星星的混合宏（修复随机数生成）
+@mixin star-particle($size) {
+  width: $size;
+  height: $size;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 
+    (random(2000) - 1000) + px 
+    (random(2000) - 1000) + px 
+    lighten(map-get($color-palette, primary), random(20));
 }
 
-.body {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    background: radial-gradient(200% 100% at bottom center,
-            #0a1a2f,
-            #3a1d6e,
-            #2196f3);
-    background: radial-gradient(200% 105% at top center,
-            #0a1a2f 10%,       /* 深科技蓝 */
-            #3a1d6e 40%,       /* 蓝紫色 */
-            #2196f3 65%,       /* 亮科技蓝 */
-            #00bcd4);          /* 青色 */
-    background-attachment: fixed;
-    overflow: hidden;
+@keyframes star-move {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-@keyframes rotate {
-    0% {
-        transform: perspective(400px) rotateZ(20deg) rotateX(-40deg) rotateY(0);
+.cosmic-space {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(
+    ellipse at bottom,
+    adjust-color(map-get($color-palette, primary), $lightness: -30%),
+    darken(map-get($color-palette, primary), 40%)
+  );
+  overflow: hidden;
+  perspective: 1000px;
+
+  // 修复循环判断语法和透明度计算
+  @for $i from 1 through $layers-count {
+    .stars-layer-#{$i} {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      animation: star-move ($base-duration + $i * 10s) linear infinite;
+      transform-style: preserve-3d;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        @include star-particle(random(3) + px);
+        filter: blur(random(2) + px);
+        $spread: 500 + $i * 200;
+        transform: translate3d(
+          random($spread) - $spread/2 + px,
+          random($spread) - $spread/2 + px,
+          random(2000) - 1000 + px
+        );
+
+        // 修复透明度计算（移除负号）
+        @if $i % 2 == 0 {
+          box-shadow: adjust-color(
+            map-get($color-palette, secondary),
+            $alpha: random(50)/-100 // 修正为合法数值
+          );
+        } @else {
+          box-shadow: adjust-color(
+            map-get($color-palette, primary),
+            $alpha: random(30)/-100
+          );
+        }
+      }
+    }
+  }
+
+  .shooting-star {
+    @for $i from 1 through 3 {
+      &:nth-child(#{$i}) {
+        $delay: random(20) + 5s;
+        animation: meteor $delay linear infinite;
+        animation-delay: $delay;
+      }
     }
 
-    100% {
-        transform: perspective(400px) rotateZ(20deg) rotateX(-40deg) rotateY(-360deg);
-    }
-}
-
-.stars {
-    transform: perspective(500px);
-    transform-style: preserve-3d;
     position: absolute;
-    perspective-origin: 50% 100%;
-    left: 45%;
-    animation: rotate 90s infinite linear;
-    bottom: 0;
-}
-
-.star {
-    width: 2px;
+    width: 100px;
     height: 2px;
-    background: #00ffff;      /* 改为青色 */
-    position: absolute;
-    left: 0;
-    top: 0;
-    backface-visibility: hidden;
+    background: linear-gradient(
+      to right,
+      transparentize(map-get($color-palette, accent), 0.8),
+      transparent
+    );
+    transform: rotate(-30deg);
+    filter: drop-shadow(0 0 5px map-get($color-palette, accent));
+  }
+}
+
+@keyframes meteor {
+  0% {
+    opacity: 0;
+    transform: translateX(-100vw) rotate(-30deg);
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100vw) rotate(-30deg);
+  }
 }
 </style>

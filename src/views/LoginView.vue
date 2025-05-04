@@ -1,8 +1,8 @@
 <template>
   <el-skeleton :rows="9" animated v-if="is_loading" class="a-card" style="width: 80%; max-width: 420px;">
   </el-skeleton>
-  <el-form ref="loginFormRef" class="login-form" :model="loginForm" :rules="loginRules" label-width="auto" style="width: 80%; max-width: 420px;" v-else
-    label-position="right">
+  <el-form ref="loginFormRef" class="a-card" :model="loginForm" :rules="loginRules" label-width="auto"
+    style="width: 80%; max-width: 420px;" v-else label-position="right">
     <div style="display: flex; justify-content: center; width: 100%;">
       <h1>课程平台青春版</h1>
     </div>
@@ -47,12 +47,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
-import { login,getCaptcha, type loginParams } from '@/api'
+import { login, getCaptcha, type loginParams } from '@/api'
 import { el_alert } from '@/utils'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
+import { logout } from '@/api/api_ve'
 const userStore = useUserStore();
 
 // 表单实例
@@ -75,6 +76,7 @@ const captchaUrl = ref('')
 // 获取验证码
 const refreshCaptcha = async () => {
   try {
+    await logout()
     if (captchaUrl.value) URL.revokeObjectURL(captchaUrl.value)
     const res = await getCaptcha(loginForm.loginType)
     captchaUrl.value = res.captchaUrl
@@ -151,7 +153,8 @@ const handleLogin = async () => {
             message: '欢迎回来！',
             type: 'success',
           })
-          router.push('/')
+          await router.push('/')
+          await nextTick()
         } catch (error) {
           el_alert({
             title: '登录失败',
@@ -159,9 +162,6 @@ const handleLogin = async () => {
             type: 'error',
           })
           await refreshCaptcha()
-        } finally {
-          is_loading.value = false
-          router.push('/')
         }
       }
     })

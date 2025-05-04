@@ -6,7 +6,18 @@
 
 :root {
   --el-fill-color-blank: transparent;
+
   .el-collapse-item__header {
     height: fit-content;
+  }
+
+  .full-dialog-body {
+    top: 50px;
+    height: calc(100% - 25px);
+    display: flex;
+  }
+  .full-dialog-header {
+    height: 15px;
+    display: flex;
   }
 }

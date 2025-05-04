@@ -5,7 +5,7 @@
             <el-descriptions direction="vertical" :column="2" size="default">
                 <el-descriptions-item label="" align="center" :rowspan="2">
                     <el-avatar :size="70" fit="cover" loading="lazy"
-                        :src="'api/download.shtml?p=photo&f=' + userStore.userinfo.avatarPath1" />
+                        :src="'api/download.shtml?p=photo&f=' + userStore.userinfo.avatarPath" />
                 </el-descriptions-item>
 
                 <!-- 基础信息 -->
