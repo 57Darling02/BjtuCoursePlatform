@@ -1,7 +1,0 @@
-export * from './captcha'
-export * from './logout'
-export * from './login'
-export * from './userinfo'
-export * from './terminfo'
-export * from './Course'
-export * from './homework'
