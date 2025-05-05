@@ -5,12 +5,17 @@
 
 一个基于官方接口重构的课程平台，提供自动登录、成绩排名、优秀作业参考、移动端适配等额外功能。增强作业查看、文件预览、文件提交、课表查询等常用功能的体验。ui和性能体验升级。
 
-**点击访问:** [课程平台魔改版 (57d02.cn)](http://hw.57d02.cn:8080/)
 
-> 注：部署在BJTU主校区10.60网段内，需要非10.61网段ip才能够访问
-> （人话：无线请连接连接 phone.wlan.bjtu或eduroam）
+**强烈推荐校园网访问:**
+[校园网入口](http://hw.57d02.cn:8080/)
 
-公网：cloudflareTunnel代理[课程平台魔改版 (57d02.cn)](https://bjtucourse.57d02.cn/homespace) 
+> 注：需连接(phone.wlan.bjtu或eduroam),速度快体验好。部署在BJTU主校区10.60网段内，需要非10.60网段ip才能够访问。
+
+**国内访问:**[国内入口](https://course.57d02.cn/)
+>frp穿透流量,虽然only10G，但也是用上了高贵的https
+
+
+**国外访问:**[cloudflareTunnel入口](https://bjtucourse.57d02.cn/homespace) 
 
 > 很卡，毕竟绕路国外。不建议使用
 
