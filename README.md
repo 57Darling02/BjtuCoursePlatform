@@ -46,9 +46,7 @@
 
 
 
-![6c31105c24b49d8fd73a0b5da6cebcc](https://resource-un4.pages.dev/article/62d936b0157004db42fd4d0ffbb58ef.png)
-
-![778110fe88c4ebc54e7f0444156cf1e](https://resource-un4.pages.dev/article/778110fe88c4ebc54e7f0444156cf1e.png)
+![img](https://resource-un4.pages.dev/article/1746447823180.webp)
 
 ## 🚄 性能优化
 因为推荐高频率打开网站看看，而且移动端设备普遍性能偏低，因此网站做了许多性能优化工作。
