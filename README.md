@@ -9,7 +9,9 @@
 
 > 注：部署在BJTU主校区10.60网段内，需要非10.61网段ip才能够访问
 > （人话：无线请连接连接 phone.wlan.bjtu或eduroam）
+
 公网：cloudflareTunnel代理[课程平台魔改版 (57d02.cn)](https://bjtucourse.57d02.cn/homespace) 
+
 > 很卡，毕竟绕路国外。不建议使用
 ## 🌟核心功能
 
@@ -40,6 +42,13 @@
      - 支持PC/平板/手机移动设备（普通设备比例应该没问题）
      -  autoprefixer补全各内核浏览器的CSS前缀
    - **界面美化**：使用统一圆角，不失优雅。
+
+
+
+![6c31105c24b49d8fd73a0b5da6cebcc](https://resource-un4.pages.dev/article/62d936b0157004db42fd4d0ffbb58ef.png)
+
+![778110fe88c4ebc54e7f0444156cf1e](https://resource-un4.pages.dev/article/778110fe88c4ebc54e7f0444156cf1e.png)
+
 ## 🚄 性能优化
 因为推荐高频率打开网站看看，而且移动端设备普遍性能偏低，因此网站做了许多性能优化工作。
 - ⚡ **网络请求优化**：并发请求池（限制3并发请求，太高并发别把学校服务器搞炸了😐）
