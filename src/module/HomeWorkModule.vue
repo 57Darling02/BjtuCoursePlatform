@@ -18,7 +18,7 @@
             </el-space>
             <el-collapse v-model="active_colomn" accordion>
                 <el-collapse-item v-for="(group, courseId) in groupedByCourse" :key="courseId" :name="courseId"
-                    class="a-card" >
+                    class="a-card">
                     <template #title>
                         <el-space wrap>
                             <el-text>{{ group.courseName }}</el-text>
@@ -27,7 +27,7 @@
                                     countWaitMakeup(group.items) }}项待补交</el-tag>
                                 <el-tag type="warning" round v-if="countUncompleted(group.items)">{{
                                     countUncompleted(group.items)
-                                }}项待完成</el-tag>
+                                    }}项待完成</el-tag>
                                 <el-tag type="danger" round v-if="countExpired(group.items)">{{
                                     countExpired(group.items) }}项过期</el-tag>
                                 <el-tag type="info" round>共{{ group.items.length }}项</el-tag>
@@ -38,16 +38,20 @@
                         @click="handleClick(hw)" v-if="active_colomn == courseId">
                         <PublicHwPanel :activehomework="hw" />
                     </el-row>
-                    <el-skeleton :rows="group.items.length * 3" v-else-if="group.items.length > 0" animated
-                        class="skeleton-header" />
-                    <el-skeleton :rows="1" animated class="skeleton-header" v-else />
+                    <div class="a-card hwitem" v-else>
+                        <el-skeleton :rows="group.items.length * 3" v-if="group.items.length > 0" animated
+                            class="skeleton-header" />
+                        <el-skeleton :rows="1" animated class="skeleton-header" v-else />
+                    </div>
+
                 </el-collapse-item>
             </el-collapse>
         </div>
     </template>
     <el-dialog v-if="activeHomework" v-model="HomeworkDialogVisible" :title="activeHomework.title"
-        style="flex-direction: column;display: flex;overflow: hidden;" fullscreen destroy-on-close body-class="full-dialog-body" header-class="full-dialog-header">
-        <HwDialog :activehomework="activeHomework"  />
+        style="flex-direction: column;display: flex;overflow: hidden;" fullscreen destroy-on-close
+        body-class="full-dialog-body" header-class="full-dialog-header">
+        <HwDialog :activehomework="activeHomework" />
     </el-dialog>
 </template>
 <script lang='ts' setup>
@@ -245,7 +249,7 @@ const update_homeworkdetail_Task = async () => {
     }
 }
 const active_colomn = ref('0')
-emitter.on('UPDATE_HOMEWORKS',() => {
+emitter.on('UPDATE_HOMEWORKS', () => {
     try {
         isLoading.value = true;
         userStore.homeworkList = [];
@@ -272,5 +276,4 @@ onMounted(() => {
     width: 95%;
     padding-left: 23px;
 }
-
 </style>
