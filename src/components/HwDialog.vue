@@ -2,7 +2,7 @@
     <el-tabs type="card" :lazy="true" v-model="active_tab"
         style="width: 100%;height: 100%;display: 100%; border-radius: 12px;">
         <el-tab-pane label="相关信息" name="相关信息" style="display: flex;height: 100%;">
-            <el-scrollbar height="100%">
+            <el-scrollbar height="100%"  style="width: 100%;">
                 <PublicHwPanel :activehomework="ActiveHomework" />
                 <el-divider />
                 <Hwcontent :id="ActiveHomework.id" />

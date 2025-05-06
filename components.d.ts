@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    2: typeof import('./src/components/Bg_StarrySky copy 2.vue')['default']
     AddHwPanel: typeof import('./src/components/AddHwPanel.vue')['default']
     Bg_Normal: typeof import('./src/components/Bg_Normal.vue')['default']
     Bg_StarrySky: typeof import('./src/components/Bg_StarrySky.vue')['default']
