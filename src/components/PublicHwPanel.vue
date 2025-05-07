@@ -7,11 +7,11 @@
                 <el-tag type="info">📅{{ hw.create_date.split(' ')[0] }}</el-tag>
                 <el-tag type="info">🚫{{ hw.end_time.split(' ')[0] }}</el-tag>
                 <el-tag>👥已完成:{{ hw.submitCount }}/{{ hw.allCount }}</el-tag>
-                <el-tag type="danger" v-if="hw.status == 0 && hw.subStatus != 2">⏳<el-countdown
+                <el-tag type="danger" v-if="hw.status == 0 && hw.subStatus != 2"><el-countdown
                         :style="{ display: 'inline-block', verticalAlign: 'middle', marginLeft: '4px' }"
                         value-style="color: #666; font-size: 14px; font-weight: 700; height:100%; display:flex "
-                        format="DD[天] HH:mm:ss"
-                        :value="new Date(hw.makeup_time ? hw.makeup_time : hw.end_time).getTime()" /></el-tag>
+                        format="⏳DD[天] HH:mm:ss"
+                        :value="countdownTarget" /></el-tag>
                 <el-tag type="success" v-if="hw.detail && hw.detail.score">
                     ✍️分数:{{ hw.detail.score }}/{{ hw.full_score }}</el-tag>
                 <el-tag type="info" v-if="hw.detail && hw.detail.rank">
@@ -62,7 +62,12 @@ const props = defineProps({
 })
 const hw = computed(() => props.activehomework)
 const addhwdialog = ref(false)
-
+const countdownTarget = computed(() => {
+    const now = Date.now();
+    const endTime = new Date(hw.value.end_time).getTime();
+    const makeupTime = hw.value.makeup_time ? new Date(hw.value.makeup_time).getTime() : endTime;
+    return now < endTime ? endTime : makeupTime;
+});
 
 const showaddhw = ref(hw.value.status === 0 && hw.value.subStatus === 0)
 const button_status = computed(() => {

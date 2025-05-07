@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import Bg_Normal from '@/components/Bg_Normal.vue'
-// import Bg_StarrySky from './components/Bg_StarrySky.vue';
+import Bg_StarrySky from './components/Bg_StarrySkySass.vue';
 </script>
 
 <template>
   <div id="mainview">
     <RouterView/>
   </div>
-  <Bg_Normal style="z-index: -1;"/>
-  <!-- <Bg_StarrySky style="z-index: -1;"/> -->
+  <!-- <Bg_Normal style="z-index: -1;"/> -->
+  <Bg_StarrySky/>
 </template>
 
 <style lang="scss">
