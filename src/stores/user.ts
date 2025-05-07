@@ -70,6 +70,10 @@ export const useUserStore = defineStore('user', () => {
     const processTaskQueue = async () => {
         isProcessingQueue.value = true;
         while (taskQueue.value.length > 0) {
+            if (!isAuthenticated.value) {
+                taskQueue.value=[]
+                break
+            }
             const currentTask = taskQueue.value.shift();
             if (currentTask) {
                 try {
@@ -110,6 +114,7 @@ export const useUserStore = defineStore('user', () => {
     }
 
     const checkAuth_ve = async () => {
+        if (!isAuthenticated.value) return
         while (retryConnect.value < 3) {
             try {
                 const veUserInfo = await getUserInfo_ve()
@@ -148,6 +153,7 @@ export const useUserStore = defineStore('user', () => {
         return false
     }
     const checkAuth_app = async () => {
+        if (!isAuthenticated.value) return
         try {
             const appUserInfo = await getUserInfo_app(username.value, password.value);
             userinfo.value = { ...userinfo.value, ...appUserInfo };

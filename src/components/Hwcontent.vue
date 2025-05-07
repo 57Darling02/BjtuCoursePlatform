@@ -36,13 +36,11 @@
 </template>
 
 <script lang="ts" setup>
-import { defineProps, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { getHomeworkDetail } from '@/api/api_ve';
 import { type HomeWorkDetail, type HomeworkFile } from '@/api';
 import { useUserStore } from '@/stores/user'
 import { el_alert } from '@/utils';
-// import pdf from 'vue-pdf'
-// import PdfViewer from '@/components/PdfPreview.vue'
 const userStore = useUserStore()
 const props = defineProps({
     id: {
