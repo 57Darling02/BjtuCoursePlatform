@@ -11,8 +11,12 @@
 [校园网http入口](http://hw.57d02.cn:8080)
 > 注：需连接(phone.wlan.bjtu或eduroam),速度快体验好。部署在BJTU主校区10.60网段内，需要非10.60网段ip才能够访问。
 
-**国内访问:**[国内入口](https://course.57d02.cn/)
->frp穿透流量,虽然only10G
+**国内访问:**
+[course.bjtu.top](https://course.bjtu.top/)
+>感谢好朋友 上条当咩 贡献的子域名和服务器
+
+[frp穿透入口](https://course.57d02.cn/)
+>有点卡，还不稳定
 
 
 **国外访问:**[cloudflareTunnel入口](https://bjtucourse.57d02.cn/homespace) 
