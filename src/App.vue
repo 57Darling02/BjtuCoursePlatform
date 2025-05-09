@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import Bg_Normal from '@/components/Bg_Normal.vue'
-import Bg_StarrySky from './components/Bg_StarrySkySass.vue';
+// import Bg_Normal from '@/components/Bg_Normal.vue'
+import Bg_StarrySky from '@/components/Bg_StarrySkySass.vue';
 </script>
 
 <template>
+
   <div id="mainview">
-    <RouterView/>
+    <RouterView />
   </div>
   <!-- <Bg_Normal style="z-index: -1;"/> -->
-  <Bg_StarrySky/>
+  <Bg_StarrySky />
 </template>
 
 <style lang="scss">
@@ -24,6 +25,7 @@ $white_bg: rgba(255, 255, 255, 0.888);
   justify-content: center;
   align-items: center;
 }
+
 %card-base {
   background: $white_bg;
   border-radius: 12px;
@@ -34,12 +36,15 @@ $white_bg: rgba(255, 255, 255, 0.888);
   position: relative;
   z-index: 2;
 }
+
 .a-card {
   @extend %card-base;
+
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
   }
+
   padding: 1.5;
 }
 

@@ -12,7 +12,8 @@
             class="scroll-tab-pane">
             <el-scrollbar height="100%" style="width: 100%;">
                 <h3 v-if="ActiveHomework.status == 2">✒️分数:{{ ActiveHomework.detail?.score }}</h3>
-                <Hwcontent :id="ActiveHomework.detail?.my_homework" v-if="active_tab == '我的作业'" />
+                <HwStucontent :id="ActiveHomework.detail?.my_homework" :ipId="ActiveHomework.id" v-if="active_tab == '我的作业'" />
+                
                 <h3 v-if="ActiveHomework.detail?.comment">🧑‍🏫老师评价:{{ ActiveHomework.detail?.is_excellent == 1 ? '🤩' :
                     '' }}</h3>
                 <div v-html="ActiveHomework.detail?.comment" />
@@ -36,7 +37,8 @@
                     <el-scrollbar height="100%" style="width: 100%;">
                         <h3>✒️分数:{{ ActiveHomework.detail.courseNoteList[index].score }}
                             🪜排名:{{ index + 1 }}/{{ ActiveHomework.submitCount }}<br /></h3>
-                        <Hwcontent :id="i" v-if="active_tab == '优秀作业' && active_tab3 == index" />
+                        <!-- <Hwcontent :id="i" v-if="active_tab == '优秀作业' && active_tab3 == index" /> -->
+                        待我找到入口
                         <h3>🧑‍🏫老师评价:{{ ActiveHomework.detail.courseNoteList[index].is_excellent == '1' ? '🤩' : ''
                             }}</h3>
                         <div v-html="ActiveHomework.detail.courseNoteList[index].content" />
@@ -54,7 +56,7 @@
                         <h3 v-if="ActiveHomework.detail.courseNoteList[index].score">✒️分数:{{
                             ActiveHomework.detail.courseNoteList[index].score }};
                             {{ index + 1 }}/{{ ActiveHomework.submitCount }}<br /></h3>
-                        <Hwcontent :id="i.id" v-if="active_tab2 == index" />
+                        <a :href="`api/back/coursePlatform/homeWork.shtml?method=batchDownloadWorks&id=${ ActiveHomework.id }`">下载所有人作业</a>
                         <h3>🧑‍🏫老师评价:{{ i.is_excellent == '1' ? '🤩' : '' }}</h3>
                         <div v-html="i.content" />
                     </el-scrollbar>
@@ -68,7 +70,9 @@ import { markRaw, ref, type PropType } from 'vue'
 import { type HomeworkItem } from '@/api';
 import PublicHwPanel from './PublicHwPanel.vue';
 import Hwcontent from '@/components/Hwcontent.vue'
-import { deleteHomework } from '@/api/api_ve';
+import HwStucontent from '@/components/HwStucontent.vue'
+
+import { deleteHomework, getHomeworkDetail_pg } from '@/api/api_ve';
 import { emitter } from '@/utils';
 import { Delete } from '@element-plus/icons-vue'
 const props = defineProps({
@@ -81,6 +85,11 @@ const ActiveHomework = props.activehomework
 const active_tab = ref('相关信息')
 const active_tab2 = ref(0)
 const active_tab3 = ref(0)
+
+if (ActiveHomework.detail?.my_homework) {
+    getHomeworkDetail_pg(ActiveHomework.detail?.my_homework,ActiveHomework.id,1)
+}
+
 
 const handleDelHw = () => {
     if (ActiveHomework.status == 2) {

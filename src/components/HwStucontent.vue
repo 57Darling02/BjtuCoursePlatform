@@ -21,8 +21,8 @@
         <div class="file" v-for="(i, index) in homeworkdetail.FileList" :key="index">
             <h3>附件{{ index + 1 }}:{{ i.file_name }}
                 <el-button type="info" @click="prewiewVisible = true; prewiewfile = i;"
-                    v-if="i.convert_url?.endsWith('docx') || i.convert_url?.endsWith('pdf')" round>预览</el-button>
-                <el-button type="primary" @click="" round><a :href="`/api/pdf/${i.convert_url}`" :download="i.file_name"
+                    v-if="i.convert_url" round>预览</el-button>
+                <el-button type="primary" @click="" round><a :href="i.url" :download="i.file_name"
                         style="color: inherit; text-decoration: none">
                         下载
                     </a></el-button>
@@ -37,7 +37,7 @@
 
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue';
-import { getHomeworkDetail, getHomeworkDetail_pg } from '@/api/api_ve';
+import { getHomeworkDetail_pg } from '@/api/api_ve';
 import { type HomeWorkDetail, type HomeworkFile } from '@/api';
 import { useUserStore } from '@/stores/user'
 import { el_alert } from '@/utils';
@@ -47,15 +47,19 @@ const props = defineProps({
         type: Number,
         required: true,
     },
+    ipId:{
+        type:Number,
+        required:true 
+    }
 });
 const homeworkdetail = ref<HomeWorkDetail>({} as HomeWorkDetail)
 const prewiewVisible = ref(false)
 const prewiewfile = ref({} as HomeworkFile)
 const isLoading = ref(true)
-
+const uLevel = userStore.userinfo.roleCode.includes('xs') ? 1 : 2
 onMounted(async () => {
     try {
-        homeworkdetail.value = await getHomeworkDetail(props.id)
+        homeworkdetail.value = await getHomeworkDetail_pg(props.id,props.ipId,uLevel)
         
     } catch (error) {
         await userStore.checkAuth_ve()

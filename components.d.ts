@@ -42,6 +42,7 @@ declare module 'vue' {
     ElUpload: typeof import('element-plus/es')['ElUpload']
     Hwcontent: typeof import('./src/components/Hwcontent.vue')['default']
     HwDialog: typeof import('./src/components/HwDialog.vue')['default']
+    HwStucontent: typeof import('./src/components/HwStucontent.vue')['default']
     Navbar: typeof import('./src/components/Navbar.vue')['default']
     PdfPreview: typeof import('./src/components/PdfPreview.vue')['default']
     PublicHwPanel: typeof import('./src/components/PublicHwPanel.vue')['default']
