@@ -38,7 +38,8 @@
                         <h3>✒️分数:{{ ActiveHomework.detail.courseNoteList[index].score }}
                             🪜排名:{{ index + 1 }}/{{ ActiveHomework.submitCount }}<br /></h3>
                         <!-- <Hwcontent :id="i" v-if="active_tab == '优秀作业' && active_tab3 == index" /> -->
-                        待我找到入口
+                        请前往其他人作业处下载全部人作业查看
+                        如果找到新接口会更新的（我一定会回来的）
                         <h3>🧑‍🏫老师评价:{{ ActiveHomework.detail.courseNoteList[index].is_excellent == '1' ? '🤩' : ''
                             }}</h3>
                         <div v-html="ActiveHomework.detail.courseNoteList[index].content" />
@@ -46,10 +47,10 @@
                 </el-tab-pane>
             </el-tabs>
         </el-tab-pane>
-        <el-tab-pane label="关羽赏花" name="关羽赏花" style="height: 100%;"
+        <el-tab-pane label="其他人" name="其他人" style="height: 100%;"
             v-if="ActiveHomework?.detail?.courseNoteList?.length && ActiveHomework?.detail?.courseNoteList?.length > 0">
             <el-tabs tab-position="right" style="height: 100%;"
-                v-if="ActiveHomework.detail.courseNoteList && active_tab == '关羽赏花'" v-model="active_tab2">
+                v-if="ActiveHomework.detail.courseNoteList && active_tab == '其他人'" v-model="active_tab2">
                 <el-tab-pane v-for="(i, index) in ActiveHomework.detail.courseNoteList" :label="`${i.stu_name}`"
                     style="height: 100%;" :name="index">
                     <el-scrollbar height="100%" style="width: 100%;">
