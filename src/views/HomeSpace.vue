@@ -1,9 +1,12 @@
 <template>
    <div style="display: flex; flex-direction: column; gap: 6px; flex: 1; max-width: 985px;width: 100%;">
-      <div>
-         <DayCourseModule v-if="userStore.status_app"/>
-      </div>
-         
+      <transition name="el-fade-in">
+         <div>
+            <DayCourseModule v-if="userStore.status_app" />
+         </div>
+      </transition>
+
+
       <div>
          <HomeWorkModule />
       </div>

@@ -19,7 +19,7 @@ const scroll = throttle(({ scrollTop }: { scrollTop: number }) => {
   last_scrollY.value = normalizedScrollTop
 }, 200, { trailing: true })
 
-const footer_content = ['Powered by Real_ZyJiang © 2025']
+const footer_content = ['Powered by 57Darling02 © 2025']
 emitter.emit('UPDATE_INFO')
 onMounted(() => {
   scrollbarRef.value?.update()

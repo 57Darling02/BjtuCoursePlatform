@@ -184,7 +184,15 @@ export const useUserStore = defineStore('user', () => {
     const checkAuth_force = async () => {
         const a = await checkAuth_ve()
         const b = await checkAuth_app()
-
+        if (a && !b){
+            el_alert({
+                title: '警告',
+                message:'ve服务器连接成功，但app服务器连接失败,请尝试同步密码以完成下次自动登入',
+                type: 'warning',
+                showClose: true,
+                duration: 3000
+            });
+        }
         if (a || b) return true;
         return false
     }

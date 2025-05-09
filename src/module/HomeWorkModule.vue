@@ -62,7 +62,6 @@ import PublicHwPanel from '@/components/PublicHwPanel.vue';
 import HwDialog from '@/components/HwDialog.vue';
 import { el_alert, emitter } from '@/utils';
 import { getAllHomeworkItem, getAllStudentSubmissions } from '@/api/api_ve';
-import { emit } from 'process';
 const userStore = useUserStore();
 
 

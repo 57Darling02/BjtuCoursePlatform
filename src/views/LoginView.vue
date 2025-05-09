@@ -153,7 +153,7 @@ const handleLogin = async () => {
             message: '欢迎回来！',
             type: 'success',
           })
-          await router.push('/')
+          await router.push('/homespace')
           await nextTick()
         } catch (error) {
           el_alert({
