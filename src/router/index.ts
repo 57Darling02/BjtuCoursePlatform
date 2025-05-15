@@ -21,6 +21,11 @@ const router = createRouter({
           name: 'homespace',
           component: () => import('@/views/HomeSpace.vue'),
         },
+        {
+          path: '/learnspace',
+          name: 'learnspace',
+          component: () => import('@/views/LearnSpace.vue'),
+        },
       ]
     },
     {

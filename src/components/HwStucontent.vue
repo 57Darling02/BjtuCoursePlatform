@@ -22,7 +22,7 @@
             <h3>附件{{ index + 1 }}:{{ i.file_name }}
                 <el-button type="info" @click="prewiewVisible = true; prewiewfile = i;"
                     v-if="i.convert_url" round>预览</el-button>
-                <el-button type="primary" @click="" round><a :href="i.url" :download="i.file_name"
+                <el-button type="primary" @click="()=>{console.log(i.url)}" round><a :href="i.url" :download="i.file_name"
                         style="color: inherit; text-decoration: none">
                         下载
                     </a></el-button>

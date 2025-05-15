@@ -42,7 +42,7 @@
             <!-- Action Buttons -->
             <el-space wrap>
                 <el-button v-for="i in actionButtons" :type="i.type" style="" @click="i.function" round>{{ i.text
-                    }}</el-button>
+                }}</el-button>
             </el-space>
             <el-row class="action-buttons">
                 <el-col :span="12">
@@ -62,9 +62,10 @@
 <script lang='ts' setup>
 
 import { useUserStore } from '@/stores/user'
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { modifyPassword } from '@/api/api_ve';
 import { el_alert } from '@/utils';
+import router from '@/router';
 const userStore = useUserStore()
 const loading = ref(true)
 const avatarSrc = ref<string>("")
@@ -91,9 +92,14 @@ const handleSyncPassword = () => {
 }
 
 const actionButtons = [
+    { text: '主页', type: 'info', function: () => { router.push({ name: 'homespace' });nextTick() } },
+    { text: '课程学习', type: 'info', function: () => { router.push({ name: 'learnspace' });nextTick() } },
+    { text: '关于', type: 'info', function: () => { router.push({ name: 'about' });nextTick() } },
     { text: '同步密码以连接app服务器', type: 'primary', function: handleSyncPassword },
     { text: '进入课程平台', type: 'success', function: userStore.go_kcpt },
     { text: '退出登录', type: 'danger', function: userStore.handlelogout },
+
+
 ]
 
 
