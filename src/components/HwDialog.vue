@@ -2,7 +2,7 @@
     <el-tabs type="card" :lazy="true" v-model="active_tab"
         style="width: 100%;height: 100%;display: 100%; border-radius: 12px;">
         <el-tab-pane label="相关信息" name="相关信息" style="display: flex;height: 100%;">
-            <el-scrollbar height="100%"  style="width: 100%;">
+            <el-scrollbar height="100%" style="width: 100%;">
                 <PublicHwPanel :activehomework="ActiveHomework" />
                 <el-divider />
                 <Hwcontent :id="ActiveHomework.id" />
@@ -12,8 +12,9 @@
             class="scroll-tab-pane">
             <el-scrollbar height="100%" style="width: 100%;">
                 <h3 v-if="ActiveHomework.status == 2">✒️分数:{{ ActiveHomework.detail?.score }}</h3>
-                <HwStucontent :id="ActiveHomework.detail?.my_homework" :ipId="ActiveHomework.id" v-if="active_tab == '我的作业'" />
-                
+                <HwStucontent :id="ActiveHomework.detail?.my_homework" :ipId="ActiveHomework.id"
+                    v-if="active_tab == '我的作业'" />
+
                 <h3 v-if="ActiveHomework.detail?.comment">🧑‍🏫老师评价:{{ ActiveHomework.detail?.is_excellent == 1 ? '🤩' :
                     '' }}</h3>
                 <div v-html="ActiveHomework.detail?.comment" />
@@ -38,8 +39,12 @@
                         <h3>✒️分数:{{ ActiveHomework.detail.courseNoteList[index].score }}
                             🪜排名:{{ index + 1 }}/{{ ActiveHomework.submitCount }}<br /></h3>
                         <!-- <Hwcontent :id="i" v-if="active_tab == '优秀作业' && active_tab3 == index" /> -->
-                        请前往其他人作业处下载全部人作业查看
-                        如果找到新接口会更新的（我一定会回来的）
+                        <a :href="`api/downloadZyFj.shtml?path=&filename=${ActiveHomework.detail.courseNoteList[index].stu_name}&id=${ActiveHomework.detail.courseNoteList[index].id}`"
+                            :download="ActiveHomework.detail.courseNoteList[index].stu_id"
+                            style="color: inherit; text-decoration: none">
+                            下载(不知道会下到谁的作业)
+                        </a>
+                        
                         <h3>🧑‍🏫老师评价:{{ ActiveHomework.detail.courseNoteList[index].is_excellent == '1' ? '🤩' : ''
                             }}</h3>
                         <div v-html="ActiveHomework.detail.courseNoteList[index].content" />
@@ -57,7 +62,14 @@
                         <h3 v-if="ActiveHomework.detail.courseNoteList[index].score">✒️分数:{{
                             ActiveHomework.detail.courseNoteList[index].score }};
                             {{ index + 1 }}/{{ ActiveHomework.submitCount }}<br /></h3>
-                        <a :href="`api/back/coursePlatform/homeWork.shtml?method=batchDownloadWorks&id=${ ActiveHomework.id }`">下载所有人作业</a>
+                        <a
+                            :href="`api/back/coursePlatform/homeWork.shtml?method=batchDownloadWorks&id=${ActiveHomework.id}`">下载所有人作业</a>
+                        <!-- <a :href="`api/downloadZyFj.shtml?filename=${ActiveHomework.detail.courseNoteList[index].stu_name}&id=${ActiveHomework.detail.courseNoteList[index].id}`"
+                            :download="ActiveHomework.detail.courseNoteList[index].stu_id"
+                            style="color: inherit; text-decoration: none">
+                            下载
+                        </a> -->
+                        <!-- <button @click="console.log(`api/downloadZyFj.shtml?filename=${ActiveHomework.detail.courseNoteList[index].stu_name}&id=${ActiveHomework.detail.courseNoteList[index].id}`,ActiveHomework.detail.courseNoteList[index])">aaa</button> -->
                         <h3>🧑‍🏫老师评价:{{ i.is_excellent == '1' ? '🤩' : '' }}</h3>
                         <div v-html="i.content" />
                     </el-scrollbar>
@@ -88,7 +100,7 @@ const active_tab2 = ref(0)
 const active_tab3 = ref(0)
 
 if (ActiveHomework.detail?.my_homework) {
-    getHomeworkDetail_pg(ActiveHomework.detail?.my_homework,ActiveHomework.id,1)
+    getHomeworkDetail_pg(ActiveHomework.detail?.my_homework, ActiveHomework.id, 1)
 }
 
 
