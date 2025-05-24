@@ -148,13 +148,17 @@ const handleLogin = async () => {
           userStore.isAuthenticated = true
           userStore.username = loginForm.username
           userStore.password = loginForm.password
+          await router.push('/homespace')
+          await nextTick()
           el_alert({
             title: '登录成功',
             message: '欢迎回来！',
             type: 'success',
           })
-          await router.push('/homespace')
-          await nextTick()
+          if(loginForm.loginType === '2') {
+            userStore.handleSyncPassword()
+          }
+          
         } catch (error) {
           el_alert({
             title: '登录失败',

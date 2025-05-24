@@ -1,5 +1,4 @@
 <template>
-
     <template v-if="isLoading">
         <div class="a-card-static" style="flex: 1;">
             <el-skeleton :rows="1" animated class="skeleton-header" />
@@ -7,7 +6,9 @@
         </div>
     </template>
     <template v-else>
-
+        <div class="a-card-static">
+            <NavMoudule/>
+        </div>
         <div class="a-card-static">
             <el-space wrap :size="5">
                 <el-tag type="warning" round>共{{ userStore.courseList.length }} 门</el-tag>
@@ -19,10 +20,10 @@
                             <el-text>{{ item.name }}</el-text>
                         </el-space>
                     </template>
-                    <el-row v-for="i in functionList" class="a-card hwitem" :gutter="12"
-                        v-if="active_colomn == item.name" @click="i.function(item)">
+                    <el-row v-for="i in functionList" class="a-card hwitem" :gutter="12" @click="i.function(item)">
                         {{ i.text }}
                     </el-row>
+
                 </el-collapse-item>
 
             </el-collapse>
@@ -31,25 +32,42 @@
     <el-dialog v-if="activeCourseInfo" v-model="DialogVisible" :title="activeCourseInfo.name"
         style="flex-direction: column;display: flex;overflow: hidden;" fullscreen destroy-on-close
         body-class="full-dialog-body" header-class="full-dialog-header">
-        <CoursewarePanel :course_num="activeCourseInfo.course_num" :fz_id="activeCourseInfo.fz_id" :xq_code="activeCourseInfo.xq_code"/>
+        <CoursewarePanel :course_num="activeCourseInfo.course_num" :fz_id="activeCourseInfo.fz_id"
+            :xq_code="activeCourseInfo.xq_code" />
+        
     </el-dialog>
 </template>
 <script lang='ts' setup>
-import {  ref } from 'vue';
+import { ref } from 'vue';
 import { useUserStore } from '@/stores/user'
 import type { CourseInfo } from '@/api';
 import CoursewarePanel from '@/views/CoursewarePanel.vue';
 const active_colomn = ref('0')
 const userStore = useUserStore();
-
+import NavMoudule from '@/module/NavModule.vue'
+import router from '@/router';
 
 const activeCourseInfo = ref<CourseInfo | null>(null)
 const DialogVisible = ref(false);
 const isLoading = ref(false);
 
 const functionList = [
-    { text: '查看课件', type: 'info', function: (courseInfo: CourseInfo) => { activeCourseInfo.value = courseInfo; DialogVisible.value = true } },
-    { text: '查看课程回放', type: 'info', function: (courseInfo: CourseInfo) => { activeCourseInfo.value = courseInfo; DialogVisible.value = true } },
+    { 
+        text: '查看课件', 
+        type: 'info', 
+        function: (courseInfo: CourseInfo) => {
+            const route = router.resolve({
+                name: 'courseware',
+                query: {
+                    course_num: courseInfo.course_num,
+                    fz_id: courseInfo.fz_id,
+                    xq_code: courseInfo.xq_code
+                }
+            });
+            window.open(route.href, '_blank');
+        } 
+    },
+    { text: '查看课程回放', type: 'info', function: (courseInfo: CourseInfo) => {  } },
 ]
 
 

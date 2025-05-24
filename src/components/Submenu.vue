@@ -33,26 +33,13 @@
                         {{ userStore.status_ve ? '✅' : '🚫' }}ve服务器
                     </el-tag>
                     <el-tag round :type="userStore.status_app ? 'success' : 'danger'"
-                        :effect="userStore.status_app ? 'light' : 'dark'" @click="handleSyncPassword">
+                        :effect="userStore.status_app ? 'light' : 'dark'">
                         {{ userStore.status_app ? '✅' : '🚫' }}app服务器
                     </el-tag>
                 </el-descriptions-item>
-
+                
             </el-descriptions>
-            <!-- Action Buttons -->
-            <el-space wrap>
-                <el-button v-for="i in actionButtons" :type="i.type" style="" @click="i.function" round>{{ i.text
-                }}</el-button>
-            </el-space>
-            <el-row class="action-buttons">
-                <el-col :span="12">
-
-                </el-col>
-            </el-row>
-            <template>
-                <el-divider />
-
-            </template>
+            <NavMoudule/>
         </div>
 
 
@@ -60,47 +47,13 @@
     </el-card>
 </template>
 <script lang='ts' setup>
-
+import NavMoudule from '@/module/NavModule.vue'
 import { useUserStore } from '@/stores/user'
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
-import { modifyPassword } from '@/api/api_ve';
-import { el_alert } from '@/utils';
-import router from '@/router';
+import { onMounted, onUnmounted, ref } from 'vue';
 const userStore = useUserStore()
 const loading = ref(true)
 const avatarSrc = ref<string>("")
-// Action Buttons
-const handleSyncPassword = () => {
-    ElMessageBox.confirm(
-        '使用统一认证登入时，如果课程平台密码与认证密码不相同, 将无法提供由轻新课堂APP服务器接口提供的当日课程等功能。您可以选择同步认证密码和课程平台的密码?',
-        '同步密码',
-        {
-            confirmButtonText: '同步',
-            cancelButtonText: '蒜鸟',
-            type: 'info',
-        }
-    )
-        .then(() => {
-            modifyPassword(userStore.password)
-        })
-        .catch(() => {
-            el_alert({
-                type: 'info',
-                message: '同步了也没啥影响，建议同步',
-            })
-        })
-}
 
-const actionButtons = [
-    { text: '主页', type: 'info', function: () => { router.push({ name: 'homespace' });nextTick() } },
-    { text: '课程学习', type: 'info', function: () => { router.push({ name: 'learnspace' });nextTick() } },
-    { text: '关于', type: 'info', function: () => { router.push({ name: 'about' });nextTick() } },
-    { text: '同步密码以连接app服务器', type: 'primary', function: handleSyncPassword },
-    { text: '进入课程平台', type: 'success', function: userStore.go_kcpt },
-    { text: '退出登录', type: 'danger', function: userStore.handlelogout },
-
-
-]
 
 
 onMounted(async () => {
