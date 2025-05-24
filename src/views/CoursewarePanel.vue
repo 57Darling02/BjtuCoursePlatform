@@ -12,7 +12,8 @@
                     </el-icon>
                     <template #title>控制菜单</template>
                 </el-menu-item>
-                <el-menu-item index="2">
+                <el-menu-item @click="isCollapse = false" index="2">
+                    
                     <el-icon>
                         <Files />
                     </el-icon>
@@ -25,7 +26,6 @@
                                     <el-row>
                                         <el-text truncated>{{ item.label }}</el-text>
                                     </el-row>
-
                                 </el-tooltip>
 
                             </template>
@@ -95,8 +95,9 @@
                     </template>
                 </el-menu-item>
             </el-menu>
-            <iframe style="flex: 1;transition-delay: 2s;" v-if="!isLoading && coursewareList[active_value].play_url"
-                :src="`/api/pdf/${coursewareList[active_value].play_url}`" frameborder="0" v-show="isShow"></iframe>
+            
+            <iframe style="flex: 1;width: 100px;" v-if="!isLoading && coursewareList[active_value].play_url"
+                :src="`/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api/pdf/${coursewareList[active_value].play_url}`" frameborder="0"  v-show="isShow"></iframe>
             <div style="flex: 1;display: flex;flex-direction: row;justify-content: center;align-items: center;" v-else>
                 <div class="a-card"
                     style="display: flex;flex-direction: column;justify-content: center;align-items: center;"
@@ -108,7 +109,6 @@
                     </el-text>
                 </div>
             </div>
-
         </div>
     </div>
 
