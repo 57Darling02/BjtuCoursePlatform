@@ -1,3 +1,5 @@
+const version = '1.0.0'; 
+
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 import { emitter, el_alert, decryptData, encryptData } from '@/utils';
@@ -8,7 +10,7 @@ import {
     type UserInfo,
 } from '@/api';
 
-import { login_ve, logout, getUserInfo as getUserInfo_ve, getAllTerm, getAllCourses } from '@/api/api_ve';
+import { login_ve, logout, getUserInfo as getUserInfo_ve, getAllTerm, getAllCourses, modifyPassword } from '@/api/api_ve';
 import { getUserInfo as getUserInfo_app } from '@/api/api_app';
 import router from '@/router';
 import { throttle } from 'lodash-es';
@@ -71,7 +73,7 @@ export const useUserStore = defineStore('user', () => {
         isProcessingQueue.value = true;
         while (taskQueue.value.length > 0) {
             if (!isAuthenticated.value) {
-                taskQueue.value=[]
+                taskQueue.value = []
                 break
             }
             const currentTask = taskQueue.value.shift();
@@ -104,6 +106,27 @@ export const useUserStore = defineStore('user', () => {
         } catch (error) {
             console.error('Logout failed:', error)
         }
+    }
+
+    const handleSyncPassword = () => {
+        ElMessageBox.confirm(
+            '是否需要将课程平台和轻新课堂APP的密码同步设置为统一认证的密码？强烈建议同步。(如果不同步，则下次访问时将无法自动登入，同时也无法使用轻新课堂APP相关的功能。)',
+            '同步密码',
+            {
+                confirmButtonText: '同步',
+                cancelButtonText: '蒜鸟',
+                type: 'info',
+            }
+        )
+            .then(() => {
+                modifyPassword(password.value)
+            })
+            .catch(() => {
+                ElNotification({
+                    type: 'info',
+                    message: '同步了也没啥影响，建议同步',
+                })
+            })
     }
 
     const go_kcpt = async () => {
@@ -184,10 +207,10 @@ export const useUserStore = defineStore('user', () => {
     const checkAuth_force = async () => {
         const a = await checkAuth_ve()
         const b = await checkAuth_app()
-        if (a && !b){
+        if (a && !b) {
             el_alert({
                 title: '警告',
-                message:'ve服务器连接成功，但app服务器连接失败,请尝试同步密码以完成下次自动登入',
+                message: 've服务器连接成功，但app服务器连接失败,请尝试同步密码以完成下次自动登入',
                 type: 'warning',
                 showClose: true,
                 duration: 3000
@@ -202,7 +225,7 @@ export const useUserStore = defineStore('user', () => {
             if (userinfo.value == null) isLoading.value = true;
             if (!await checkAuth()) return;
             try {
-                
+
                 const semesterRes = await getAllTerm();
                 activeSemester.value = semesterRes[0];
                 const xqCode = activeSemester.value?.xqCode;
@@ -260,6 +283,7 @@ export const useUserStore = defineStore('user', () => {
                 courseList: courseList.value,
                 homeworkList: homeworkList.value,
                 Cache: Cache.value,
+                version: version, // 版本号
             })
         );
     }, 1000);
@@ -279,6 +303,7 @@ export const useUserStore = defineStore('user', () => {
         homeworkList,
         handlelogout,
         go_kcpt,
+        handleSyncPassword,
         checkAuth_ve,
         status_ve,
         checkAuth_app,

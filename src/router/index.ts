@@ -9,7 +9,7 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: () => import('@/views/HomeView.vue'),
-      redirect: { name: 'homespace'},
+      redirect: { name: 'homespace' },
       children: [
         {
           path: '/about',
@@ -26,12 +26,23 @@ const router = createRouter({
           name: 'learnspace',
           component: () => import('@/views/LearnSpace.vue'),
         },
+
       ]
     },
     {
       path: '/login',
       name: 'login',
       component: () => import('@/views/LoginView.vue'),
+    },
+    {
+      path: '/courseware',
+      name: 'courseware',
+      component: () => import('@/views/CoursewarePanel.vue'),
+      props: route => ({
+        course_num: route.query.course_num,
+        fz_id: route.query.fz_id,
+        xq_code: route.query.xq_code
+      })
     },
   ],
 })
