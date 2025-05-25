@@ -3,27 +3,28 @@
 [![Vue3](https://img.shields.io/badge/Vue3-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-一个基于官方接口重构的课程平台，提供自动登录、成绩排名、优秀作业参考、移动端适配等额外功能。增强作业查看、文件预览、文件提交、课表查询等常用功能的体验。ui和性能体验升级。
+一个基于官方接口重构的课程平台，适配移动设备和提供更符合学生需求的功能放置。
+功能概览：
+自动登录、课件下载、课件快速预览、成绩排名、优秀作业参考、增强作业查看、作业文件预览、文件提交、课表查询等常用功能的体验。
 
 **国内访问:**（建议ipv6访问）
 [course.bjtu.top](https://course.bjtu.top/)
 
->感谢好朋友 上条当咩 贡献的子域名和服务器。
+>感谢好朋友 上条当咩 提供的子域名和服务器。
 
 **校园网访问:**（如果你使用校园无线网，建议使用这个）
 [校园网http入口](http://hw.57d02.cn:8080)
 
-> 注：需连接(phone.wlan.bjtu或eduroam),速度快体验好。部署在BJTU主校区10.60网段内，需要非10.60网段ip才能够访问。
+> 注：需连接校园网(phone.wlan.bjtu或eduroam),速度快体验好。
 
 [frp穿透入口](https://course.57d02.cn/)
-
 >有点卡，还不稳定
 
-**国外访问:**[cloudflareTunnel入口](https://bjtucourse.57d02.cn/homespace) 
+**国外访问:**[cloudflareTunnel入口](https://bjtucourse.57d02.cn/) 
 
 > 很卡，毕竟绕路国外。不建议使用
 
-## 🌟核心功能
+## 🌟核心功能介绍
 
 - **自动登入**：(我真的不想输密码)
   - AES-256-CBC加密存储用户凭证
