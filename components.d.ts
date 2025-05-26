@@ -47,6 +47,7 @@ declare module 'vue' {
     Hwcontent: typeof import('./src/components/Hwcontent.vue')['default']
     HwDialog: typeof import('./src/components/HwDialog.vue')['default']
     HwStucontent: typeof import('./src/components/HwStucontent.vue')['default']
+    Loading: typeof import('./src/components/Loading.vue')['default']
     Navbar: typeof import('./src/components/Navbar.vue')['default']
     PdfPreview: typeof import('./src/components/PdfPreview.vue')['default']
     PublicHwPanel: typeof import('./src/components/PublicHwPanel.vue')['default']
@@ -54,8 +55,5 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     Submenu: typeof import('./src/components/Submenu.vue')['default']
     TheWelcome: typeof import('./src/components/TheWelcome.vue')['default']
-  }
-  export interface ComponentCustomProperties {
-    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

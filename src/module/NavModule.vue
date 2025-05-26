@@ -1,32 +1,40 @@
 <template>
-    <!-- Action Buttons -->
+    <el-row>
+        <el-text class="custom-style"
+            style="font-size: 14px; font-weight: bold; color: var(--el-text-color-primary); margin-bottom: 10px;">
+            传送门
+        </el-text>
+    </el-row>
     <el-space wrap>
-        <el-button v-for="i in actionButtons" :type="i.type" style="" @click="i.function" round>{{ i.text
-        }}</el-button>
+        <el-button v-for="btn in actionButtons" :key="btn.routeName" :type="btn.type" style="" @click="btn.jump" round>
+            {{ btn.text }}
+        </el-button>
     </el-space>
 </template>
 
 <script lang="ts" setup>
 import router from '@/router';
-import { nextTick } from 'vue';
-import { useUserStore } from '@/stores/user';
-const userStore = useUserStore()
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';  // 新增：获取当前路由
 
-const actionButtons = [
-    { text: '主页/作业', type: 'info', function: () => { router.push({ name: 'homespace' });nextTick() } },
-    { text: '课程学习', type: 'info', function: () => { router.push({ name: 'learnspace' });nextTick() } },
-    { text: '同步密码', type: 'primary', function: userStore.handleSyncPassword },
-    { text: '进入课程平台', type: 'success', function: userStore.go_kcpt },
-    { text: '退出登录', type: 'danger', function: userStore.handlelogout },
-]
+// 1. 定义按钮配置（核心配置，后续新增按钮只需修改此处）
+const buttonConfigs = [
+    { text: '主页/作业', routeName: 'homespace' },
+    { text: '课程学习', routeName: 'learnspace' },
+];
 
+// 2. 获取响应式路由对象
+const route = useRoute();
+
+// 3. 动态计算按钮属性（关键逻辑）
+const actionButtons = computed(() =>
+    buttonConfigs.map(btn => ({
+        ...btn,
+        type: route.name === btn.routeName || route.matched.some(r => r.name === btn.routeName) ? 'success' : 'info',  // 路由匹配逻辑
+        jump: () => {
+            router.push({ name: btn.routeName });  // 跳转函数
+        }
+    }))
+);
 
 </script>
-
-<style scoped>
-.custom-style .el-segmented {
-    --el-segmented-item-selected-color: var(--el-text-color-primary);
-    --el-segmented-item-selected-bg-color: #ffd100;
-    --el-border-radius-base: 16px;
-}
-</style>

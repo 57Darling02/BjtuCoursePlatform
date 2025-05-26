@@ -8,7 +8,8 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build"
+    "type-check": "vue-tsc --build",
+    "build:static_style-css": "sass src/assets/static_style.scss:public/static_style.css --no-source-map"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",

@@ -1,15 +1,21 @@
 <script setup lang="ts">
-// import Bg_Normal from '@/components/Bg_Normal.vue'
-import Bg_StarrySky from '@/components/Bg_StarrySkySass.vue';
+import Loading from './components/Loading.vue';
+import { ref, onMounted } from 'vue';
+import { useUserStore } from '@/stores/user';
+const userStore = useUserStore();
+userStore.isLoading = true;
+onMounted(() => {
+    setTimeout(() => {
+        userStore.isLoading = false;
+    }, 500);
+})
 </script>
 
 <template>
-
+  <Loading v-if="userStore.isLoading" />
   <div id="mainview">
     <RouterView />
   </div>
-  <!-- <Bg_Normal style="z-index: -1;"/> -->
-  <Bg_StarrySky />
 </template>
 
 <style lang="scss">
