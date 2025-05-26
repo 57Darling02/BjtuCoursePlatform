@@ -7,7 +7,7 @@
                     <el-icon class="arrow-icon" :class="{ 'rotate-180': !isCollapse }">
                         <DArrowRight />
                     </el-icon>
-                    <template #title>控制菜单</template>
+                    <template #title>点击{{isCollapse?'展开':'收起'}}菜单</template>
                 </el-menu-item>
                 <el-menu-item @click="isCollapse = false" index="2">
                     <el-icon><Files /></el-icon>    

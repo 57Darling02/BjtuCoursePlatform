@@ -7,7 +7,7 @@
     </template>
     <template v-else>
         <div class="a-card-static">
-            <NavMoudule/>
+            <NavMoudule />
         </div>
         <div class="a-card-static">
             <el-space wrap :size="5">
@@ -29,32 +29,21 @@
             </el-collapse>
         </div>
     </template>
-    <el-dialog v-if="activeCourseInfo" v-model="DialogVisible" :title="activeCourseInfo.name"
-        style="flex-direction: column;display: flex;overflow: hidden;" fullscreen destroy-on-close
-        body-class="full-dialog-body" header-class="full-dialog-header">
-        <CoursewarePanel :course_num="activeCourseInfo.course_num" :fz_id="activeCourseInfo.fz_id"
-            :xq_code="activeCourseInfo.xq_code" />
-        
-    </el-dialog>
+
 </template>
 <script lang='ts' setup>
 import { ref } from 'vue';
 import { useUserStore } from '@/stores/user'
 import type { CourseInfo } from '@/api';
-import CoursewarePanel from '@/views/CoursewarePanel.vue';
-const active_colomn = ref('0')
 const userStore = useUserStore();
 import NavMoudule from '@/module/NavModule.vue'
 import router from '@/router';
-
-const activeCourseInfo = ref<CourseInfo | null>(null)
-const DialogVisible = ref(false);
 const isLoading = ref(false);
-
+const active_colomn = ref(userStore.courseList.length > 0 ? userStore.courseList[0].name : ''); // 默认展开第一门课程
 const functionList = [
-    { 
-        text: '查看课件', 
-        type: 'info', 
+    {
+        text: '查看课件',
+        type: 'info',
         function: (courseInfo: CourseInfo) => {
             const route = router.resolve({
                 name: 'courseware',
@@ -65,9 +54,16 @@ const functionList = [
                 }
             });
             window.open(route.href, '_blank');
-        } 
+        }
     },
-    { text: '查看课程回放', type: 'info', function: (courseInfo: CourseInfo) => {  } },
+    {
+        text: '查看课程回放', type: 'info', function: (courseInfo: CourseInfo) => {
+            ElMessage.error({
+                message: "没座！",
+                duration: 500
+            })
+        }
+    },
 ]
 
 
