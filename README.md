@@ -24,6 +24,10 @@
 
 > 很卡，毕竟绕路国外。不建议使用
 
+## 起源
+
+[BJTU课程平台SE起源 | 57Darling02's Blog](https://57darling02.github.io/posts/瞎捣鼓/BJTU课程平台起源SE.html)
+
 ## 🌟核心功能介绍
 
 - **自动登入**：(我真的不想输密码)
