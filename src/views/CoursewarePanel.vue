@@ -1,9 +1,6 @@
 <template>
     <div class="CoursewarePanel">
-        <div v-if="isLoading" v-loading="isLoading" element-loading-text="Loading..." :element-loading-spinner="svg"
-            element-loading-svg-view-box="-10, -10, 50, 50" element-loading-background="rgba(122, 122, 122, 0.8)"
-            style="flex:1;">
-        </div>
+        <Loading v-if="isLoading && !userStore.isLoading" />
         <div style="flex: 1; display: flex;" v-else-if="coursewareList.length > 0">
             <el-menu default-active="2" class="el-menu-vertical-demo" :collapse="isCollapse">
                 <el-menu-item @click="toggleCollapse" index="2">
@@ -13,10 +10,7 @@
                     <template #title>控制菜单</template>
                 </el-menu-item>
                 <el-menu-item @click="isCollapse = false" index="2">
-                    
-                    <el-icon>
-                        <Files />
-                    </el-icon>
+                    <el-icon><Files /></el-icon>    
                     <span>
                         <el-select-v2 v-model="active_value" :options="options" placeholder="Please select" filterable
                             style="width: 100%" :loading="isLoading">
@@ -27,7 +21,6 @@
                                         <el-text truncated>{{ item.label }}</el-text>
                                     </el-row>
                                 </el-tooltip>
-
                             </template>
                         </el-select-v2>
                     </span>
@@ -57,6 +50,15 @@
                     <span>
                         资源大小:
                         {{ coursewareList[active_value].rpSize }}MB
+                    </span>
+                </el-menu-item>
+                <el-menu-item index="2">
+                    <el-icon>
+                        <FolderOpened />
+                    </el-icon>
+                    <span>
+                        资源类型:
+                        {{ coursewareList[active_value].extName }}
                     </span>
                 </el-menu-item>
                 <el-menu-item index="2">
@@ -95,9 +97,13 @@
                     </template>
                 </el-menu-item>
             </el-menu>
-            
-            <iframe style="flex: 1;width: 100px;" v-if="!isLoading && coursewareList[active_value].play_url"
-                :src="`/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api/pdf/${coursewareList[active_value].play_url}`" frameborder="0"  v-show="isShow"></iframe>
+
+            <iframe style="flex: 1;width: 100px;" v-if="!isLoading && coursewareList[active_value].play_url && (coursewareList[active_value].extName == 'pdf' || coursewareList[active_value].extName == 'docx')"
+                :src="`/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api/pdf/${coursewareList[active_value].play_url}`"
+                frameborder="0" v-show="isShow"></iframe>
+            <iframe style="flex: 1;width: 100px;" v-else-if="coursewareList[active_value].play_url"
+                :src="`/api/pdf/${coursewareList[active_value].play_url}`"
+                frameborder="0" v-show="isShow"></iframe>
             <div style="flex: 1;display: flex;flex-direction: row;justify-content: center;align-items: center;" v-else>
                 <div class="a-card"
                     style="display: flex;flex-direction: column;justify-content: center;align-items: center;"
@@ -115,21 +121,14 @@
 </template>
 <script lang='ts' setup>
 import { Files, FolderOpened, DArrowRight, Download, Timer, Avatar, Document, Unlock, Lock } from '@element-plus/icons-vue'
+import Loading from '@/components/Loading.vue';
 import { onMounted, ref } from 'vue'
 import { type CourseResourceItem } from '@/api';
 import { getCourseResourceList } from '@/api/api_ve';
+import { useUserStore } from '@/stores/user';
+const userStore = useUserStore();
 import router from '@/router';
-const isLoading = ref(true)
-const svg = `
-        <path class="path" d="
-          M 30 15
-          L 28 17
-          M 25.61 25.61
-          A 15 15, 0, 0, 1, 15 30
-          A 15 15, 0, 1, 1, 27.99 7.5
-          L 15 15
-        " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
-      `
+const isLoading = ref(true);
 const isShow = ref(true)
 const active_value = ref()
 const options = ref<{ value: number; label: string }[]>([])
@@ -221,8 +220,8 @@ const downloadFile = () => {
 };
 
 // 初始化时获取数据
-onMounted(() => {
-    fetchCoursewareList()
+onMounted(async() => {
+    await fetchCoursewareList()
 })
 
 </script>
@@ -230,7 +229,6 @@ onMounted(() => {
 .CoursewarePanel {
     width: 100%;
     height: 100%;
-    // background-color: antiquewhite;
     border-color: rgba(234, 228, 228, 0.13);
     backdrop-filter: blur(5px);
     display: flex;

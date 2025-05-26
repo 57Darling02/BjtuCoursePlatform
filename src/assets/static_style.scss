@@ -1,0 +1,202 @@
+@use "sass:math";
+@use "sass:string";
+// 加载动画
+.loading-screen {
+    position: fixed;
+    z-index: 9999;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+$containerSize: 128px;
+$ballSize: 8px;
+$n: 36;
+$pDeg: calc(360deg / $n);
+$time: 2.5s;
+
+.loading {
+    width: $containerSize;
+    height: $containerSize;
+    margin: 50px auto;
+    position: relative;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .dot {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: $ballSize;
+        height: $ballSize;
+        margin-left: -(calc($ballSize / 2));
+        margin-top: -(calc($ballSize / 2));
+        perspective: 70px;
+        transform-style: preserve-3d;
+        transform-origin: center calc($containerSize /2) + calc($ballSize / 2);
+
+        @for $i from 2 through $n {
+            &:nth-child(#{$i}) {
+                transform: rotate($pDeg * ($i - 1));
+                &::before,
+                &::after {
+                    animation-delay: - calc($time / $n) * ($i - 1) * 6;
+                }
+            }
+
+
+        }
+
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        &::before {
+            background-color: #000;
+            top: -100%;
+            animation: rotation-black $time infinite;
+
+            @keyframes rotation-black {
+                0% {
+                    animation-timing-function: ease-in;
+                }
+
+                25% {
+                    transform: translate3d(0, 100%, $ballSize);
+                    animation-timing-function: ease-out;
+                }
+
+                50% {
+                    transform: translate3d(0, 200%, 0);
+                    animation-timing-function: ease-in;
+                }
+
+                75% {
+                    transform: translate3d(0, 100%, -$ballSize);
+                    animation-timing-function: ease-out;
+                }
+            }
+        }
+
+        &::after {
+            background-color: rgb(255, 255, 255, 1);
+            top: 100%;
+            animation: rotation-white $time infinite;
+
+            @keyframes rotation-white {
+                0% {
+                    animation-timing-function: ease-in;
+                }
+
+                25% {
+
+                    transform: translate3d(0, -100%, -$ballSize);
+                    animation-timing-function: ease-out;
+                }
+
+                50% {
+
+                    transform: translate3d(0, -200%, 0);
+                    animation-timing-function: ease-in;
+                }
+
+                75% {
+
+                    transform: translate3d(0, -100%, $ballSize);
+                    animation-timing-function: ease-out;
+                }
+            }
+        }
+    }
+
+}
+
+// 背景动画
+
+@function getShadows($count) {
+    $shadows: '';
+
+    @for $_ from 1 through $count {
+        $shadows: '#{$shadows}#{math.random(100)}vw #{math.random(100)}vh #fff,';
+    }
+
+    @return string.unquote(string.slice($shadows, 1, -2));
+}
+.bg-space {
+    z-index: -1;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(ellipse at center,
+            #0a0a2a 0%,
+            #000033 50%,
+            #000000 100%);
+
+    .layer {
+        @for $i from 1 through 5 {
+            &:nth-child(#{$i}) {
+                $duration: calc(400s / math.pow(2, $i));
+                $count: math.floor(calc(1000 / math.pow(2, $i)));
+                $size: #{$i}px;
+
+                position: fixed;
+                width: $size;
+                height: $size;
+                border-radius: 50%;
+                left: 0;
+                top: 0;
+                background-color: white;
+                box-shadow: getShadows($count);
+                animation: moveUp $duration linear infinite;
+
+                &::after {
+                    content: '';
+                    position: fixed;
+                    left: 0;
+                    top: 100vh;
+                    border-radius: inherit;
+                    width: inherit;
+                    height: inherit;
+                    box-shadow: inherit;
+                }
+            }
+        }
+    }
+
+}
+
+@keyframes moveUp {
+    to {
+        transform: translateY(-100vh);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.3;
+        transform: scale(0.98);
+    }
+
+    100% {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+}

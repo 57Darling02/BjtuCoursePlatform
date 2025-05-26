@@ -37,9 +37,24 @@
                         {{ userStore.status_app ? '✅' : '🚫' }}app服务器
                     </el-tag>
                 </el-descriptions-item>
-                
+
             </el-descriptions>
-            <NavMoudule/>
+
+
+            <NavMoudule />
+            <el-divider />
+            <el-row>
+                <el-text style="font-size: 14px; font-weight: bold; color: var(--el-text-color-primary); margin-bottom: 10px;">
+                    个人中心
+                </el-text>
+            </el-row>
+            <!-- Action Buttons -->
+            <el-space wrap>
+                <el-button v-for="i in actionButtons" :type="i.type" style="" @click="i.function" round>{{ i.text
+                    }}</el-button>
+
+            </el-space>
+
         </div>
 
 
@@ -53,7 +68,11 @@ import { onMounted, onUnmounted, ref } from 'vue';
 const userStore = useUserStore()
 const loading = ref(true)
 const avatarSrc = ref<string>("")
-
+const actionButtons = [
+    { text: '同步密码', type: 'primary', function: userStore.handleSyncPassword },
+    { text: '进入课程平台', type: 'success', function: userStore.go_kcpt },
+    { text: '退出登录', type: 'danger', function: userStore.handlelogout },
+]
 
 
 onMounted(async () => {
