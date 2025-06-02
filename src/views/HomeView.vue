@@ -42,6 +42,10 @@ onUnmounted(() => scroll.cancel())
       <el-tag effect="light" type="success" v-for="i in footer_content" round>
         {{ i }}
       </el-tag>
+      <el-tag effect="light" type="success" round>
+        本站总访问量<span id="vercount_value_site_pv">-</span>次
+      </el-tag>
+      
     </el-space>
   </el-scrollbar>
 </template>

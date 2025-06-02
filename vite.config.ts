@@ -32,7 +32,16 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // 基础代理配置
+      '/api_server1936': {
+        target: 'http://123.121.147.7:1936',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api_server1936/, ''),
+        // 如果需要处理cookie可以添加：
+        cookieDomainRewrite: "localhost",
+        cookiePathRewrite: {
+          '/api_server1936': '/api_server1936'
+        }
+      },
       '/api_app': {
         target: 'http://123.121.147.7:8081',
         changeOrigin: true,
@@ -54,7 +63,7 @@ export default defineConfig({
             res.setHeader('Access-Control-Allow-Credentials', 'true');
           });
         },
-        cookieDomainRewrite:  "localhost",
+        cookieDomainRewrite: "localhost",
         cookiePathRewrite: {
           '^/': '/api_mis/'
         }
@@ -70,7 +79,7 @@ export default defineConfig({
         },
         // 保持cookie设置
         cookieDomainRewrite: "localhost",
-        
+
       },
       '/api': {
         target: 'http://123.121.147.7:88/ve',
