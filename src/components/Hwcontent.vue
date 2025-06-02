@@ -11,9 +11,8 @@
     <template v-else>
         <el-dialog v-model="prewiewVisible" style="display: flex;flex-direction: column;background-color: antiquewhite;" :title="prewiewfile.file_name" fullscreen append-to-body destroy-on-close>
             <div style="width: 100%;height: fit-content;background-color: aliceblue;">
-                <iframe style="width: 100%;height: 85vh;" v-if="prewiewfile.convert_url != null" :src="`/api/pdf/${prewiewfile.convert_url}`"
+                <iframe style="width: 100%;height: 85vh;" v-if="prewiewfile.convert_url != null" :src="`/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api/pdf/${prewiewfile.convert_url}`"
                 frameborder="0"></iframe>
-                <!-- <pdf v-if="prewiewfile.convert_url!= null" :src="`/api/pdf/${prewiewfile.convert_url}`" style="width: 100%;height: 85vh;" /> -->
             </div>
         </el-dialog>
         <div v-html="homeworkdetail.content" />

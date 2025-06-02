@@ -7,10 +7,12 @@
                     <el-icon class="arrow-icon" :class="{ 'rotate-180': !isCollapse }">
                         <DArrowRight />
                     </el-icon>
-                    <template #title>点击{{isCollapse?'展开':'收起'}}菜单</template>
+                    <template #title>点击{{ isCollapse ? '展开' : '收起' }}菜单</template>
                 </el-menu-item>
                 <el-menu-item @click="isCollapse = false" index="2">
-                    <el-icon><Files /></el-icon>    
+                    <el-icon>
+                        <Files />
+                    </el-icon>
                     <span>
                         <el-select-v2 v-model="active_value" :options="options" placeholder="Please select" filterable
                             style="width: 100%" :loading="isLoading">
@@ -84,6 +86,7 @@
                     </el-icon>
                     <span>
                         上传时间:{{ coursewareList[active_value].inputTime }}
+                        <!-- {{ coursewareList[active_value].res_url }} -->
                     </span>
                 </el-menu-item>
 
@@ -98,12 +101,8 @@
                 </el-menu-item>
             </el-menu>
 
-            <iframe style="flex: 1;width: 100px;" v-if="!isLoading && coursewareList[active_value].play_url && (coursewareList[active_value].extName == 'pdf' || coursewareList[active_value].extName == 'docx')"
-                :src="`/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api/pdf/${coursewareList[active_value].play_url}`"
-                frameborder="0" v-show="isShow"></iframe>
-            <iframe style="flex: 1;width: 100px;" v-else-if="coursewareList[active_value].play_url"
-                :src="`/api/pdf/${coursewareList[active_value].play_url}`"
-                frameborder="0" v-show="isShow"></iframe>
+            <iframe style="flex: 1;width: 100px;" v-if="!isLoading && pdfUrl" :src="pdfUrl" frameborder="0"
+                v-show="isShow" />
             <div style="flex: 1;display: flex;flex-direction: row;justify-content: center;align-items: center;" v-else>
                 <div class="a-card"
                     style="display: flex;flex-direction: column;justify-content: center;align-items: center;"
@@ -122,7 +121,7 @@
 <script lang='ts' setup>
 import { Files, FolderOpened, DArrowRight, Download, Timer, Avatar, Document, Unlock, Lock } from '@element-plus/icons-vue'
 import Loading from '@/components/Loading.vue';
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { type CourseResourceItem } from '@/api';
 import { getCourseResourceList } from '@/api/api_ve';
 import { useUserStore } from '@/stores/user';
@@ -192,6 +191,82 @@ const fetchCoursewareList = async () => {
     }
 }
 
+const getFilePlayUrl = async (resId: string) => {
+    try {
+        // Make HTTP GET request to the endpoint
+        const response = await fetch(`/api/back/coursePlatform/dataSynAction.shtml?method=getFilePlayUrl&id=${resId}&type=2`);
+
+        // Validate response status
+        if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        // Parse and return JSON response
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching file play URL:', error);
+        throw error; // Re-throw to allow caller to handle the error
+    }
+};
+
+const pdfUrl = ref('')
+
+// 监听课件变化
+watch(active_value, async (newVal) => {
+    const currentItem = coursewareList.value[newVal]
+    if (currentItem.play_url && (currentItem.extName.endsWith('pdf') || currentItem.extName == 'docx')) {
+        pdfUrl.value = `/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api/pdf/${currentItem.play_url}`
+    } else if (currentItem?.play_url?.endsWith('pdf') && currentItem.extName != 'pdf') {
+        try {
+            isLoading.value = true
+            const result = await getFilePlayUrl(currentItem.resId.toString())
+            pdfUrl.value = result.url.replace('http://123.121.147.7:1936', '/api_server1936')
+            const response = await fetch(pdfUrl.value);
+            if (!response.ok) {
+                throw new Error(`请求失败，状态码: ${response.status}`);
+            }
+            const htmlContent = await response.text();
+            // 使用 DOMParser 解析 HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            // 查找所有 type="text/javascript" 的 script 标签
+            const scripts = Array.from(doc.querySelectorAll('script[type="text/javascript"]'));
+            let scriptContent = '';
+            for (const script of scripts) {
+                if (script.textContent && script.textContent.includes('var url =')) {
+                    scriptContent = script.textContent;
+                    break;
+                }
+            }
+
+            if (scriptContent) {
+                // 使用正则表达式提取 url 的值
+                const urlMatch = scriptContent.match(/var url = ['"]([^'"]+)['"]/);
+                if (urlMatch && urlMatch[1]) {
+                    const extractedUrl = urlMatch[1];
+
+                    const match = extractedUrl.match(/kk\/(.*)$/);
+                    if (match && match[1]) {
+                        const targetPath = match[0];
+                        pdfUrl.value = "/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api_server1936/" + targetPath;
+                    } else {
+                        console.log('未匹配到 kk/ 后面的内容');
+                        pdfUrl.value = '';
+                    }
+                    // console.log('提取的 PDF URLaa:',pdfUrl.value);
+                }
+            }
+
+        } catch (error) {
+            ElMessage.error('获取PDF地址失败')
+        } finally {
+            isLoading.value = false
+        }
+    } else {
+        pdfUrl.value = ''
+    }
+}, { immediate: true })
+
 const downloadFile = () => {
     const item = coursewareList.value[active_value.value];
     const encodedName = encodeURIComponent(item.rpName);
@@ -220,7 +295,7 @@ const downloadFile = () => {
 };
 
 // 初始化时获取数据
-onMounted(async() => {
+onMounted(async () => {
     await fetchCoursewareList()
 })
 

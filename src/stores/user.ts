@@ -210,7 +210,7 @@ export const useUserStore = defineStore('user', () => {
         if (a && !b) {
             el_alert({
                 title: '警告',
-                message: 've服务器连接成功，但app服务器连接失败,请尝试同步密码以完成下次自动登入',
+                message: '网页端服务器连接成功，但轻新课堂服务器连接失败,已挂起轻新课堂相关功能',
                 type: 'warning',
                 showClose: true,
                 duration: 3000
