@@ -17,12 +17,6 @@
 
 > 注：需连接校园网(phone.wlan.bjtu或eduroam),速度快体验好。
 
-[frp穿透入口](https://course.57d02.cn/)
->有点卡，还不稳定
-
-**国外访问:**[cloudflareTunnel入口](https://bjtucourse.57d02.cn/) 
-
-> 很卡，毕竟绕路国外。不建议使用
 
 ## 起源
 
