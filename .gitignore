@@ -6,7 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+dist
 node_modules
 .DS_Store
 
@@ -31,4 +31,4 @@ coverage
 
 /rc
 # 忽略规则
-src/api/
+
