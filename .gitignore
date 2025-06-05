@@ -9,7 +9,7 @@ lerna-debug.log*
 dist
 node_modules
 .DS_Store
-
+dist
 dist-ssr
 coverage
 *.local
@@ -28,7 +28,7 @@ coverage
 *.sw?
 
 *.tsbuildinfo
-
+.vscode
 /rc
 # 忽略规则
 
