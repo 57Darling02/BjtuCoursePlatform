@@ -2,23 +2,23 @@
   "rewrites": [
     {
       "source": "/api_server1936/(.*)",
-      "destination": "/api/proxy"
+      "destination": "/public/proxy"
     },
     {
       "source": "/api_app/(.*)",
-      "destination": "/api/proxy"
+      "destination": "/public/proxy"
     },
     {
       "source": "/api_mis/(.*)",
-      "destination": "/api/proxy"
+      "destination": "/public/proxy"
     },
     {
       "source": "/api_cas/(.*)",
-      "destination": "/api/proxy"
+      "destination": "/public/proxy"
     },
     {
       "source": "/api/(.*)",
-      "destination": "/api/proxy"
+      "destination": "/public/proxy"
     }
   ]
 }
