@@ -1,0 +1,24 @@
+{
+  "rewrites": [
+    {
+      "source": "/api_server1936/(.*)",
+      "destination": "/api/proxy"
+    },
+    {
+      "source": "/api_app/(.*)",
+      "destination": "/api/proxy"
+    },
+    {
+      "source": "/api_mis/(.*)",
+      "destination": "/api/proxy"
+    },
+    {
+      "source": "/api_cas/(.*)",
+      "destination": "/api/proxy"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/proxy"
+    }
+  ]
+}
