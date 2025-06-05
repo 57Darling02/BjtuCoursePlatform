@@ -1,10 +1,10 @@
-// proxy.js
-const { createProxyMiddleware } = require('http-proxy-middleware');
+// api/proxy.js
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
-module.exports = (req, res) => {
+export default (req, res) => {
   let target = '';
   const headers = {};
-  
+
   // 根据请求路径设置不同的代理规则
   if (req.url.startsWith('/api_server1936')) {
     target = 'http://123.121.147.7:1936';
@@ -26,7 +26,7 @@ module.exports = (req, res) => {
   }
 
   // 创建代理中间件
-  createProxyMiddleware({
+  return createProxyMiddleware({
     target,
     changeOrigin: true,
     secure: false,
@@ -42,7 +42,7 @@ module.exports = (req, res) => {
       '*': ''  // 清除域名限制
     },
     onProxyRes: (proxyRes) => {
-      // 处理CAS和MIS的特殊跨域头
+      // 处理跨域响应头
       const origin = req.headers.origin || '*';
       proxyRes.headers['access-control-allow-origin'] = origin;
       proxyRes.headers['access-control-allow-credentials'] = 'true';
