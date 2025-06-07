@@ -7,8 +7,8 @@
         </div>
     </template>
     <template v-else>
-        
-        
+
+
         <div class="a-card-static">
             <el-space wrap :size="5">
                 <el-tag type="warning" v-if="countWaitMakeup(userStore.homeworkList)" round>{{
@@ -19,34 +19,37 @@
                 <el-tag type="info" round>共{{ userStore.homeworkList.length }}项</el-tag>
             </el-space>
             <el-collapse v-model="active_colomn" accordion>
-                <el-collapse-item v-for="(group, courseId) in groupedByCourse" :key="courseId" :name="courseId"
-                    class="a-card">
-                    <template #title>
-                        <el-space wrap>
-                            <el-text>{{ group.courseName }}</el-text>
-                            <el-space :size="2">
-                                <el-tag type="warning" round v-if="countWaitMakeup(group.items)">{{
-                                    countWaitMakeup(group.items) }}项待补交</el-tag>
-                                <el-tag type="warning" round v-if="countUncompleted(group.items)">{{
-                                    countUncompleted(group.items)
-                                    }}项待完成</el-tag>
-                                <el-tag type="danger" round v-if="countExpired(group.items)">{{
-                                    countExpired(group.items) }}项过期</el-tag>
-                                <el-tag type="info" round>共{{ group.items.length }}项</el-tag>
+                <div class="fade-item">
+                    <el-collapse-item v-for="(group, courseId, index) in groupedByCourse" :key="courseId" :name="courseId" 
+                        class="a-card fade-item" :style="{ '--delay': (0.2 + index * 0.05) + 's' }">
+                        <template #title>
+                            <el-space wrap>
+                                <el-text>{{ group.courseName }}</el-text>
+                                <el-space :size="2">
+                                    <el-tag type="warning" round v-if="countWaitMakeup(group.items)">{{
+                                        countWaitMakeup(group.items) }}项待补交</el-tag>
+                                    <el-tag type="warning" round v-if="countUncompleted(group.items)">{{
+                                        countUncompleted(group.items)
+                                        }}项待完成</el-tag>
+                                    <el-tag type="danger" round v-if="countExpired(group.items)">{{
+                                        countExpired(group.items) }}项过期</el-tag>
+                                    <el-tag type="info" round>共{{ group.items.length }}项</el-tag>
+                                </el-space>
                             </el-space>
-                        </el-space>
-                    </template>
-                    <el-row v-for="hw in group.items" :key="hw.id" class="a-card hwitem" :gutter="12"
-                        @click="handleClick(hw)" v-if="active_colomn == courseId">
-                        <PublicHwPanel :activehomework="hw" />
-                    </el-row>
-                    <div class="a-card hwitem" v-else>
-                        <el-skeleton :rows="group.items.length * 3" v-if="group.items.length > 0" animated
-                            class="skeleton-header" />
-                        <el-skeleton :rows="1" animated class="skeleton-header" v-else />
-                    </div>
+                        </template>
+                        <el-row v-for="hw in group.items" :key="hw.id" class="a-card hwitem" :gutter="12"
+                            @click="handleClick(hw)" v-if="active_colomn == courseId">
+                            <PublicHwPanel :activehomework="hw" />
+                        </el-row>
+                        <div class="a-card hwitem" v-else>
+                            <el-skeleton :rows="group.items.length * 3" v-if="group.items.length > 0" animated
+                                class="skeleton-header" />
+                            <el-skeleton :rows="1" animated class="skeleton-header" v-else />
+                        </div>
 
-                </el-collapse-item>
+                    </el-collapse-item>
+                </div>
+
             </el-collapse>
         </div>
     </template>

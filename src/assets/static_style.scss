@@ -146,11 +146,11 @@ $time: 2.5s;
             #000000 100%);
 
     .layer {
-        @for $i from 1 through 5 {
+        @for $i from 3 through 5 {
             &:nth-child(#{$i}) {
                 $duration: calc(400s / math.pow(2, $i));
                 $count: math.floor(calc(1000 / math.pow(2, $i)));
-                $size: #{$i}px;
+                $size: #{$i*1.5}px;
 
                 position: fixed;
                 width: $size;

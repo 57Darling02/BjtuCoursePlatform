@@ -14,17 +14,20 @@
                 <el-tag type="warning" round>共{{ userStore.courseList.length }} 门</el-tag>
             </el-space>
             <el-collapse v-model="active_colomn" accordion>
-                <el-collapse-item v-for="item in userStore.courseList" :key="item.id" :name="item.name" class="a-card">
-                    <template #title>
-                        <el-space wrap>
-                            <el-text>{{ item.name }}</el-text>
-                        </el-space>
-                    </template>
-                    <el-row v-for="i in functionList" class="a-card hwitem" :gutter="12" @click="i.function(item)">
-                        {{ i.text }}
-                    </el-row>
+                <div class="fade-item" v-for="(item, index) in userStore.courseList" :style="{ '--delay': (0.2 + index * 0.05) + 's' }">
+                    <el-collapse-item :key="item.id" :name="item.name" class="a-card">
+                        <template #title>
+                            <el-space wrap>
+                                <el-text>{{ item.name }}</el-text>
+                            </el-space>
+                        </template>
+                        <el-row v-for="(i, index) in functionList" :style="{ '--delay': (0.2 + index * 0.05) + 's' }"
+                            class="a-card hwitem fade-item" :gutter="12" @click="i.function(item)">
+                            {{ i.text }}
+                        </el-row>
+                    </el-collapse-item>
 
-                </el-collapse-item>
+                </div>
 
             </el-collapse>
         </div>

@@ -21,3 +21,22 @@
     display: flex;
   }
 }
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 公共动画类 */
+.fade-item {
+  opacity: 0;
+  animation: fadeInUp 0.2s ease-in-out forwards;
+  animation-delay: var(--delay);
+}
