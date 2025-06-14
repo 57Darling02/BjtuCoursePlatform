@@ -88,7 +88,8 @@ export default defineConfig({
         secure: false, // 若目标服务器使用https证书不受信任时需要
         headers: {
           Host: '123.121.147.7:88',
-          Origin: 'https://123.121.147.7:88/ve'
+          Origin: 'https://123.121.147.7:88/ve',
+          Referer: 'http://123.121.147.7:88/ve'
         },
         cookieDomainRewrite: "localhost",
         cookiePathRewrite: {
