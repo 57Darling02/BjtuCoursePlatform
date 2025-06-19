@@ -6,9 +6,7 @@
         </div>
     </template>
     <template v-else>
-        <div class="a-card-static">
-            <NavMoudule />
-        </div>
+        
         <div class="a-card-static">
             <el-space wrap :size="5">
                 <el-tag type="warning" round>共{{ userStore.courseList.length }} 门</el-tag>
@@ -39,7 +37,6 @@ import { ref } from 'vue';
 import { useUserStore } from '@/stores/user'
 import type { CourseInfo } from '@/api';
 const userStore = useUserStore();
-import NavMoudule from '@/module/NavModule.vue'
 import router from '@/router';
 const isLoading = ref(false);
 const active_colomn = ref(userStore.courseList.length > 0 ? userStore.courseList[0].name : ''); // 默认展开第一门课程

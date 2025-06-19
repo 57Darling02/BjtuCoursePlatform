@@ -81,6 +81,17 @@ export default defineConfig({
         cookieDomainRewrite: "localhost",
 
       },
+      '/api_ai': {
+        target: 'https://aiservice.bjtu.edu.cn',
+        changeOrigin: true,
+        secure: false, // 允许HTTPS代理
+        rewrite: (path) => path.replace(/^\/api_ai/, ''),
+        headers: {
+          Host: 'aiservice.bjtu.edu.cn',
+          Origin: 'https://aiservice.bjtu.edu.cn'
+        },
+        cookieDomainRewrite: "localhost",
+      },
       '/api': {
         target: 'http://123.121.147.7:88/ve',
         changeOrigin: true,
@@ -88,8 +99,8 @@ export default defineConfig({
         secure: false, // 若目标服务器使用https证书不受信任时需要
         headers: {
           Host: '123.121.147.7:88',
-          Origin: 'https://123.121.147.7:88/ve',
-          Referer: 'http://123.121.147.7:88/ve'
+          Origin: 'https://123.121.147.7:88/',
+          Referer: 'http://123.121.147.7:88/'
         },
         cookieDomainRewrite: "localhost",
         cookiePathRewrite: {

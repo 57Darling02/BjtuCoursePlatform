@@ -19,8 +19,10 @@ import { useRoute } from 'vue-router';  // 新增：获取当前路由
 
 // 1. 定义按钮配置（核心配置，后续新增按钮只需修改此处）
 const buttonConfigs = [
-    { text: '主页/作业', routeName: 'homespace' },
-    { text: '课程学习', routeName: 'learnspace' },
+    { text: '主页/作业', routeName: 'home' },
+    { text: '课程学习', routeName: 'learn' },
+    { text: '交大AI', routeName: 'ai' },
+    { text: '关于本站', routeName: 'about' },
 ];
 
 // 2. 获取响应式路由对象

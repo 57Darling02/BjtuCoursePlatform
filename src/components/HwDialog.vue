@@ -108,13 +108,13 @@ const handleDelHw = () => {
     if (ActiveHomework.status == 2) {
         ElMessage({
             type: 'error',
-            message: '已批改的作业不能删除!',
+            message: '已批改的作业不能删除，不许删!',
         })
         return
     } else if (ActiveHomework.subStatus == 2) {
         ElMessage({
             type: 'error',
-            message: '删了不能补交，不许删！',
+            message: '老师不允许补交，不许删！',
         })
         return
     }

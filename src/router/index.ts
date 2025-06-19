@@ -7,9 +7,9 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: () => import('@/views/HomeView.vue'),
-      redirect: { name: 'homespace' },
+      name: 'root',
+      component: () => import('@/views/RootView.vue'),
+      redirect: { name: 'home' },
       children: [
         {
           path: '/about',
@@ -17,14 +17,19 @@ const router = createRouter({
           component: () => import('@/views/AboutView.vue'),
         },
         {
-          path: '/homespace',
-          name: 'homespace',
-          component: () => import('@/views/HomeSpace.vue'),
+          path: '/home',
+          name: 'home',
+          component: () => import('@/views/HomeView.vue'),
         },
         {
-          path: '/learnspace',
-          name: 'learnspace',
-          component: () => import('@/views/LearnSpace.vue'),
+          path: '/learn',
+          name: 'learn',
+          component: () => import('@/views/LearnView.vue'),
+        },
+        {
+          path: '/ai',
+          name: 'ai',
+          component: () => import('@/views/AIView.vue'),
         },
 
       ]

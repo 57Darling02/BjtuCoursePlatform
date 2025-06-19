@@ -42,7 +42,7 @@ const getHomeworkItemx = async (cId: number, subType = 0): Promise<HomeworkItem[
     const allHomework: HomeworkItem[] = []
     for (const item of response.courseNoteList) {
         const makeup_time = item.makeup_flag === '1' ? item.makeup_time : null;
-        const subStatus = new Date() < new Date(item.end_time) ? 0 : (new Date()< new Date(item.makeup_time)? 1 : 2);
+        const subStatus = new Date() < new Date(item.end_time) ? 0 : ((item.makeup_flag === "1" && new Date()<new Date(item.makeup_time))? 1 : 2);
         const hwitem: HomeworkItem = {
             id: item.id,
             title: item.title,

@@ -34,7 +34,8 @@ import { el_alert, emitter } from '@/utils';
 import type { UploadFile, UploadProps } from 'element-plus';
 import { onMounted, ref } from 'vue';
 import { UploadFilled } from '@element-plus/icons-vue'
-
+import { useUserStore } from '@/stores/user';
+const userStore = useUserStore();
 const props = defineProps({
     hwid: {
         type: Number,
@@ -45,6 +46,10 @@ const props = defineProps({
         type: String,
         default: "0"
     },
+    force_push:{
+        type: Boolean,
+        default: false
+    }
 
 });
 
@@ -62,7 +67,8 @@ const form = ref({
     fileList: "" as string,
     upId: `${props.hwid}`,
     return_num: "0",
-    isTeacher: "0"
+    isTeacher: props.force_push ? "1" : "0",
+    stuId: userStore.userinfo?.qxkt_id
 });
 
 // 上传文件的响应结果

@@ -29,7 +29,7 @@ export const getCaptcha = async (loginType: '1' | '2'):Promise<CaptchaResponse> 
                 captchaUrl:await getCaptcha_ve(),
                 captchaId: '',
                 csrfmiddlewaretoken: '',
-                captchaText:await getCaptchaText_ve() 
+                captchaText:'' 
             }
         case '2':
             const res = await getCaptcha_cas()

@@ -21,7 +21,7 @@
             <el-collapse v-model="active_colomn" accordion>
                 <div class="fade-item">
                     <el-collapse-item v-for="(group, courseId, index) in groupedByCourse" :key="courseId" :name="courseId" 
-                        class="a-card fade-item" :style="{ '--delay': (0.2 + index * 0.05) + 's' }">
+                        class="a-card ">
                         <template #title>
                             <el-space wrap>
                                 <el-text>{{ group.courseName }}</el-text>
@@ -37,15 +37,16 @@
                                 </el-space>
                             </el-space>
                         </template>
-                        <el-row v-for="hw in group.items" :key="hw.id" class="a-card hwitem" :gutter="12"
-                            @click="handleClick(hw)" v-if="active_colomn == courseId">
-                            <PublicHwPanel :activehomework="hw" />
-                        </el-row>
-                        <div class="a-card hwitem" v-else>
+                        <div class="a-card hwitem"v-if="active_colomn != courseId">
                             <el-skeleton :rows="group.items.length * 3" v-if="group.items.length > 0" animated
                                 class="skeleton-header" />
                             <el-skeleton :rows="1" animated class="skeleton-header" v-else />
                         </div>
+                        <el-row v-for="(hw, index) in group.items" :key="hw.id" class="a-card hwitem fade-item" :gutter="12"  :style="{ '--delay': (0.2 + index * 0.05) + 's' }"
+                            @click="handleClick(hw)" v-else>
+                            <PublicHwPanel :activehomework="hw" />
+                        </el-row>
+                        
 
                     </el-collapse-item>
                 </div>

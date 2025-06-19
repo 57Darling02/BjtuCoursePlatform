@@ -28,7 +28,7 @@
     <el-dialog align-center v-model="addhwdialog" width="90%" :title="hw.title" v-if="hw" destroy-on-close
         append-to-body style="border-radius: 12px;">
 
-        <AddHwPanel v-if="showaddhw" :hwid="hw.id" :courseId="`${hw.course_id}`" />
+        <AddHwPanel v-if="showaddhw" :hwid="hw.id" :courseId="`${hw.course_id}`" :force_push="hw.subStatus == 2" />
         <div v-else>
             <el-text v-if="hw.status == 1">
                 您的作业状态已经提交过了，如果再次提交，将会覆盖之前的作业。
@@ -37,8 +37,7 @@
                 您的作业状态已经完成了批改，如果再次提交，将会覆盖之前的作业，并且成绩会被重置。
             </el-text>
             <el-text v-else-if="hw.subStatus == 2 && hw.status == 0">
-                没办法咯，您的作业已经过期了，无法再次提交。不过你可以试试,服务器接不接受我就管不着了。
-                如果实在来不及交作业，建议先提交点什么东西，使用覆盖提交实现作业修改。
+                你个大笨蛋！你的作业已经过期了，而且老师不允许你补交。将尝试强行帮你交上去，如果老师问起来，请你装傻。不然封了以后大家都没得交。
             </el-text>
             <el-divider />
             <el-button type="primary" @click="showaddhw = true">
