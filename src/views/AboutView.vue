@@ -11,9 +11,10 @@
             <div class="a-card-static">
                 <NavMoudule />
             </div>
-            <div class="a-card-static">
-                hahaha
-            </div>
+            <el-space class="a-card-static" wrap>
+                <ProfieldCard :avatar="Darling02" name="57Darling02" position="" bio="朴素的胆小鬼" />
+                <ProfieldCard :avatar="stdm" name="上条当咩" position="" bio="也许是个体育生" />
+            </el-space>
         </template>
     </div>
 
@@ -23,11 +24,10 @@ import { ref } from 'vue';
 import { useUserStore } from '@/stores/user'
 const userStore = useUserStore();
 import NavMoudule from '@/module/NavModule.vue'
-
+import ProfieldCard from '@/components/ProfileCard.vue'
 const isLoading = ref(false);
-
-
+import stdm from '@/assets/team/stdm.jpg'
+import Darling02 from '@/assets/team/57Darling02.jpg'
 
 </script>
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

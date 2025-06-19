@@ -50,6 +50,7 @@ declare module 'vue' {
     Loading: typeof import('./src/components/Loading.vue')['default']
     Navbar: typeof import('./src/components/Navbar.vue')['default']
     PdfPreview: typeof import('./src/components/PdfPreview.vue')['default']
+    ProfileCard: typeof import('./src/components/ProfileCard.vue')['default']
     PublicHwPanel: typeof import('./src/components/PublicHwPanel.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
