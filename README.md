@@ -1,5 +1,5 @@
 # 北交大课程平台青春版
-
+由于作者毕业+平台乱改 现已停用
 [![Vue3](https://img.shields.io/badge/Vue3-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
