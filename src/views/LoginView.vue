@@ -148,7 +148,7 @@ const handleLogin = async () => {
           userStore.isAuthenticated = true
           userStore.username = loginForm.username
           userStore.password = loginForm.password
-          await router.push('/homespace')
+          await router.push({name: 'home'})
           await nextTick()
           el_alert({
             title: '登录成功',
