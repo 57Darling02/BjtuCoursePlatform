@@ -12,7 +12,6 @@
                 <NavMoudule />
             </div>
             <div class="a-card-static" style="display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 800px;">
-                
                 <iframe style="flex: 1;" src="https://aiservice.bjtu.edu.cn/robots/?#/cover"/>
             </div>
         </template>

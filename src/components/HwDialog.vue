@@ -116,7 +116,7 @@ const handleDelHw = () => {
             type: 'error',
             message: '老师不允许补交，不许删！',
         })
-        return
+        // return
     }
     ElMessageBox.confirm(
         '确认删除作业?',

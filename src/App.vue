@@ -1,25 +1,13 @@
 <script setup lang="ts">
+
 import Loading from './components/Loading.vue';
-import { ref, onMounted } from 'vue';
+import BgStarrySkySass from './components/Bg_StarrySkySass.vue';
+import { onMounted } from 'vue';
 import { useUserStore } from '@/stores/user';
 const userStore = useUserStore();
 userStore.isLoading = true;
 
-const showNotice = () => {
-  ElMessageBox.confirm(
-    '由于课程平台官方追着封ip，请迁移至http备用站点继续使用服务。',
-    '重要提示',
-    {
-      confirmButtonText: '前往备用站点',
-      cancelButtonText: '暂不迁移',
-      type: 'warning',
-    }
-  ).then(() => {
-    window.location.href = 'http://hw.57d02.cn:8080';
-  }).catch(() => {
-    showNotice();
-  });
-}
+
 // showNotice();
 onMounted(() => {
   setTimeout(() => {
@@ -30,6 +18,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <BgStarrySkySass />
   <Loading v-if="userStore.isLoading" />
 
   <div id="mainview">
@@ -42,6 +31,7 @@ $white_bg: rgba(255, 255, 255, 0.888);
 
 #mainview {
   position: fixed;
+  z-index: 1;
   top: 0;
   left: 0;
   width: 100vw;

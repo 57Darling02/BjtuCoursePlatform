@@ -4,7 +4,7 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 
 // 定义新的参数类型
-export interface CASLoginParams {
+interface CasLoginParams {
     loginname: string;
     password: string; // 注意这里使用明文密码
     csrfmiddlewaretoken: string;
@@ -12,7 +12,7 @@ export interface CASLoginParams {
     captcha_1: string; // 用户输入的验证码
 }
 
-export async function login_cas(params: CASLoginParams): Promise<boolean> {
+export async function login_cas(params: CasLoginParams): Promise<boolean> {
     try {
         const response = await service.post('/auth/login/?next=/homespcace/', new URLSearchParams({
             next: '',

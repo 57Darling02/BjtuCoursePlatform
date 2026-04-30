@@ -2,12 +2,12 @@
 import { md5 } from "@/utils";
 import { login_app } from "./api_app";
 import { login_ve } from "./api_ve";
-import type { CaptchaResponse, loginParams } from "./types"
+import type { CaptchaResponse, LoginParams, LoginType } from "./types"
 import { login_cas } from "./api_cas";
 import { getCaptcha as getCaptcha_ve, getCaptchaText as getCaptchaText_ve} from '@/api/api_ve'
 import { getCaptcha as getCaptcha_cas } from '@/api/api_cas'
 
-export const login = async (params: loginParams) => {
+export const login = async (params: LoginParams) => {
     const { username, password, passcode, loginType, captcha_id, csrfmiddlewaretoken} = params;
     switch (loginType) {
         case '1':
@@ -22,7 +22,7 @@ export const login = async (params: loginParams) => {
             throw new Error('loginType错误')
     }
 }
-export const getCaptcha = async (loginType: '1' | '2'):Promise<CaptchaResponse> => {
+export const getCaptcha = async (loginType: LoginType): Promise<CaptchaResponse> => {
     switch (loginType) {
         case '1':
             return {

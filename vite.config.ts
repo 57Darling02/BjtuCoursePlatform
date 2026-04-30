@@ -8,6 +8,36 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import postcssPresetEnv from "postcss-preset-env"
+
+const veOrigin = 'http://123.121.147.7:88'
+
+const buildVeReferer = (url = '') => {
+  const requestUrl = new URL(url, 'http://localhost')
+  const coursePlatformUrl = `${veOrigin}/ve/back/coursePlatform/coursePlatform.shtml`
+
+  if (!requestUrl.pathname.endsWith('/back/coursePlatform/courseResource.shtml')) {
+    return coursePlatformUrl
+  }
+
+  const params = requestUrl.searchParams
+  const referer = new URL(coursePlatformUrl)
+  referer.searchParams.set('method', 'toCoursePlatform')
+  referer.searchParams.set('courseToPage', '10450')
+  referer.searchParams.set('dataSource', '1')
+
+  const courseId = params.get('courseId')
+  const cId = params.get('cId')
+  const xkhId = params.get('xkhId')
+  const xqCode = params.get('xqCode')
+
+  if (courseId) referer.searchParams.set('courseId', courseId)
+  if (cId) referer.searchParams.set('cId', cId)
+  if (xkhId) referer.searchParams.set('xkhId', xkhId)
+  if (xqCode) referer.searchParams.set('xqCode', xqCode)
+
+  return referer.toString()
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   css: {
@@ -92,15 +122,38 @@ export default defineConfig({
         },
         cookieDomainRewrite: "localhost",
       },
+      '/api_weiyun': {
+        target: 'https://sharechain.qq.com',
+        changeOrigin: true,
+        secure: false, // 允许HTTPS代理
+        rewrite: (path) => path.replace(/^\/api_weiyun/, ''),
+        headers: {
+          Host: 'sharechain.qq.com',
+          Origin: 'https://share.weiyun.com'
+        },
+        cookieDomainRewrite: "localhost",
+      },
       '/api': {
         target: 'http://123.121.147.7:88/ve',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req) => {
+            proxyReq.setHeader('Origin', veOrigin);
+            proxyReq.setHeader('Referer', buildVeReferer(req.url));
+            proxyReq.setHeader('X-Requested-With', 'XMLHttpRequest');
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            if (proxyRes.statusCode === 302) {
+              proxyRes.statusCode = 200;
+            }
+          });
+        },
         rewrite: (path) => path.replace(/^\/api/, ''),
         secure: false, // 若目标服务器使用https证书不受信任时需要
         headers: {
           Host: '123.121.147.7:88',
-          Origin: 'https://123.121.147.7:88/',
-          Referer: 'http://123.121.147.7:88/'
+          Origin: veOrigin,
+          Referer: `${veOrigin}/ve/back/coursePlatform/coursePlatform.shtml`
         },
         cookieDomainRewrite: "localhost",
         cookiePathRewrite: {

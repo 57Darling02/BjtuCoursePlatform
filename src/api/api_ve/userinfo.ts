@@ -51,6 +51,7 @@ const createRoleArray = (...roles: (string | undefined)[]) =>
 // 接口函数
 const getResponse = async (): Promise<UserInfoResponse> => {
     try {
+        service.defaults.headers.common['sessionId'] = localStorage.getItem("sessionId") || ''
         const response = await service.get('/back/coursePlatform/userInfo.shtml',
             {
                 params: {
@@ -58,7 +59,8 @@ const getResponse = async (): Promise<UserInfoResponse> => {
                 },
             }
         )
-        if (response.headers['content-type'].includes('html') || !response.data?.userInfo) {
+        const contentType = String(response.headers['content-type'] || '')
+        if (contentType.includes('html') || !response.data?.userInfo) {
             throw (extractAlertMessage(response.data) || undefined)
         }
         return response.data?.userInfo

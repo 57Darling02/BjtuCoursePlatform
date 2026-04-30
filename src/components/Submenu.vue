@@ -28,14 +28,16 @@
                     </el-tag>
                 </el-descriptions-item>
                 <el-descriptions-item label="状态" :span="2">
-                    <el-tag round :type="userStore.status_ve ? 'success' : 'danger'" style="margin-right: 5px;"
-                        :effect="userStore.status_ve ? 'light' : 'dark'">
-                        {{ userStore.status_ve ? '✅' : '🚫' }}ve服务器
-                    </el-tag>
-                    <el-tag round :type="userStore.status_app ? 'success' : 'danger'"
-                        :effect="userStore.status_app ? 'light' : 'dark'">
-                        {{ userStore.status_app ? '✅' : '🚫' }}app服务器
-                    </el-tag>
+                    <div class="status-row" @click="handleReconnect">
+                        <el-tag round :type="userStore.status_ve ? 'success' : 'danger'"
+                            :effect="userStore.status_ve ? 'light' : 'dark'">
+                            {{ reconnecting ? '🔄' : userStore.status_ve ? '✅' : '🚫' }}网页端
+                        </el-tag>
+                        <el-tag round :type="userStore.status_app ? 'success' : 'danger'"
+                            :effect="userStore.status_app ? 'light' : 'dark'">
+                            {{ reconnecting ? '🔄' : userStore.status_app ? '✅' : '🚫' }}app
+                        </el-tag>
+                    </div>
                 </el-descriptions-item>
 
             </el-descriptions>
@@ -67,6 +69,7 @@ import { useUserStore } from '@/stores/user'
 import { onMounted, onUnmounted, ref } from 'vue';
 const userStore = useUserStore()
 const loading = ref(true)
+const reconnecting = ref(false)
 const avatarSrc = ref<string>("")
 const actionButtons = [
     { text: '同步密码', type: 'primary', function: userStore.handleSyncPassword },
@@ -74,9 +77,23 @@ const actionButtons = [
     { text: '退出登录', type: 'danger', function: userStore.handlelogout },
 ]
 
+const handleReconnect = async () => {
+    if (reconnecting.value) return
+    reconnecting.value = true
+    try {
+        await userStore.reconnect()
+    } finally {
+        reconnecting.value = false
+    }
+}
 
 onMounted(async () => {
-    await userStore.checkAuth_force()
+    reconnecting.value = true
+    try {
+        await userStore.reconnect({ notify: false })
+    } finally {
+        reconnecting.value = false
+    }
     loading.value = false
     setTimeout(() => {
         avatarSrc.value = userStore.Cache['avatar'];
@@ -86,4 +103,12 @@ onUnmounted(() => {
     document.querySelectorAll('.el-popper').forEach(el => el.remove())
 })
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.status-row {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    cursor: pointer;
+}
+</style>

@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory, type NavigationGuardNext, type RouteLocationNormalized } from 'vue-router'
 import { useUserStore } from '@/stores/user';
-import { emitter } from '@/utils';
 import useVisitData from '@/utils/useVisitData';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -63,8 +62,3 @@ router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, n
   }
 });
 export default router
-emitter.on('UPDATE_INFO', () => {
-  if (router.currentRoute.value.path === '/login') {
-    router.push('/');
-  }
-})

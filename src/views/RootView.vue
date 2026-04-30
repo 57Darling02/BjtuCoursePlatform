@@ -3,9 +3,10 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import type { ScrollbarInstance } from 'element-plus'
 import { throttle } from 'lodash-es'
 import Navbar from '@/components/Navbar.vue'
-import { emitter } from '@/utils'
+import { useUserStore } from '@/stores/user'
 import router from '@/router'
 const version = '1.0.1'; // 版本号 大版本.小版本.修复版本/patch版本
+const userStore = useUserStore()
 const last_scrollY = ref(0)
 const scrollbarRef = ref<ScrollbarInstance>()
 const show_navbar = ref(true)
@@ -21,7 +22,7 @@ const scroll = throttle(({ scrollTop }: { scrollTop: number }) => {
 }, 200, { trailing: true })
 
 const footer_content = ['Powered by 57Darling02 © 2025']
-emitter.emit('UPDATE_INFO')
+userStore.refreshUserInfo()
 
 const showNotice = () => {
   ElMessageBox.confirm(
@@ -82,7 +83,6 @@ $footer_size: 50px;
   z-index: 100;
   position: fixed;
   display: flex;
-
 }
 
 #nav_fill_space {

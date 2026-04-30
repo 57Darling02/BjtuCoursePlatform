@@ -18,6 +18,11 @@ export const getUserInfo = async (username: string, password: string): Promise<U
     }));
   if (!response.data?.result?.sessionId) throw new Error('登录失败')
   service.defaults.headers.common['sessionId'] = response.data?.result?.sessionId
+  localStorage.setItem("sessionId", response.data?.result?.sessionId);
+
+
+  // service.defaults.headers.common['sessionId'] = localStorage.getItem("sessionId") || ''
+
   const result: UserInfoResponse = response.data
   const userInfo: UserInfo = {
     id: result.result.studentNo,

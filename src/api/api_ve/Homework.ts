@@ -279,10 +279,23 @@ export const getHomeworkDetail_pg = async (
 }
 
 
-export async function submitHomeworkAPI(formData: Record<string, any>): Promise<any> {
+type SubmitHomeworkForm = Record<string, string | number | boolean | undefined>
+
+interface SubmitHomeworkResponse {
+    flag: string
+}
+
+export async function submitHomeworkAPI(formData: SubmitHomeworkForm): Promise<SubmitHomeworkResponse> {
     try {
+        const body = new URLSearchParams()
+        Object.entries(formData).forEach(([key, value]) => {
+            if (value !== undefined) {
+                body.append(key, String(value))
+            }
+        })
+
         const response = await service.post('/back/course/courseWorkInfo.shtml',
-            new URLSearchParams(formData).toString(),  // Send as URL-encoded string
+            body.toString(),
             {
                 params: {
                     method: 'sendStuHomeWorks',
@@ -487,19 +500,19 @@ interface StudentHomeworkDetail {
 }
 
 /** 教师作业详情响应 */
-export interface TeacherHomeworkResponse extends BaseHomeworkDetailResponse {
+interface TeacherHomeworkResponse extends BaseHomeworkDetailResponse {
     homeWork: TeacherHomeworkDetail
     pgInfo?:StudentSubmission
 }
 
 /** 学生作业详情响应 */
-export interface StudentHomeworkResponse extends BaseHomeworkDetailResponse {
+interface StudentHomeworkResponse extends BaseHomeworkDetailResponse {
     homeWork: StudentHomeworkDetail
     pgInfo?:StudentSubmission
 }
 
 /** 作业详情联合类型 */
-export type HomeworkDetailResponse = TeacherHomeworkResponse | StudentHomeworkResponse
+type HomeworkDetailResponse = TeacherHomeworkResponse | StudentHomeworkResponse
 
 
 type delectHomeworkResponse = {
