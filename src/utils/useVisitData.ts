@@ -3,7 +3,9 @@
  * 网站访问量统计 hooks
  */
 function useVisitData() {
+  if (document.head.querySelector('script[data-visit-data="vercount"]')) return
   const script = document.createElement('script')
+  script.dataset.visitData = 'vercount'
   script.defer = true
   script.async = true
   // 调用 Vercount 接口

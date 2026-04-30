@@ -1,18 +1,16 @@
 <template>
-    <div style="display: flex; flex-direction: column; gap: 6px; flex: 1; max-width: 985px;width: 100%;">
+    <div class="view-page-shell">
         <template v-if="isLoading">
-            <div class="a-card-static" style="flex: 1;">
+            <div class="ai-loading-shell view-soft-surface">
                 <el-skeleton :rows="1" animated class="skeleton-header" />
                 <el-skeleton v-for="m in 3" :key="m" :rows="2" animated class="homework-skeleton"
                     style="margin: 12px 0;" />
             </div>
         </template>
         <template v-else>
-            <div class="a-card-static">
-                <NavMoudule />
-            </div>
-            <div class="a-card-static" style="display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 800px;">
-                <iframe style="flex: 1;" src="https://aiservice.bjtu.edu.cn/robots/?#/cover"/>
+            <DayCourseModule />
+            <div class="ai-frame-shell view-soft-surface">
+                <iframe class="ai-frame" src="https://aiservice.bjtu.edu.cn/robots/?#/cover" />
             </div>
         </template>
     </div>
@@ -20,9 +18,7 @@
 </template>
 <script lang='ts' setup>
 import { ref } from 'vue';
-import { useUserStore } from '@/stores/user'
-const userStore = useUserStore();
-import NavMoudule from '@/module/NavModule.vue'
+import DayCourseModule from '@/module/DayCourseModule.vue'
 
 const isLoading = ref(false);
 
@@ -30,4 +26,22 @@ const isLoading = ref(false);
 
 </script>
 <style lang="scss" scoped>
+.ai-loading-shell {
+    flex: 1;
+    padding: 18px;
+}
+
+.ai-frame-shell {
+    min-height: 800px;
+    padding: 12px;
+    display: flex;
+}
+
+.ai-frame {
+    width: 100%;
+    flex: 1;
+    border: 0;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.86);
+}
 </style>

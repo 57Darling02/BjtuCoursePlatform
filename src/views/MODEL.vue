@@ -1,17 +1,15 @@
 <template>
-    <div style="display: flex; flex-direction: column; gap: 6px; flex: 1; max-width: 985px;width: 100%;">
+    <div class="view-page-shell">
         <template v-if="isLoading">
-            <div class="a-card-static" style="flex: 1;">
+            <div class="model-loading-shell view-soft-surface">
                 <el-skeleton :rows="1" animated class="skeleton-header" />
                 <el-skeleton v-for="m in 3" :key="m" :rows="2" animated class="homework-skeleton"
                     style="margin: 12px 0;" />
             </div>
         </template>
         <template v-else>
-            <div class="a-card-static">
-                <NavMoudule />
-            </div>
-            <div class="a-card-static">
+            <DayCourseModule />
+            <div class="model-panel view-soft-surface">
                 hahaha
             </div>
         </template>
@@ -20,9 +18,7 @@
 </template>
 <script lang='ts' setup>
 import { ref } from 'vue';
-import { useUserStore } from '@/stores/user'
-const userStore = useUserStore();
-import NavMoudule from '@/module/NavModule.vue'
+import DayCourseModule from '@/module/DayCourseModule.vue'
 
 const isLoading = ref(false);
 
@@ -30,4 +26,15 @@ const isLoading = ref(false);
 
 </script>
 <style lang="scss" scoped>
+.model-loading-shell {
+    flex: 1;
+    padding: 18px;
+}
+
+.model-panel {
+    min-height: 180px;
+    padding: 20px;
+    border-radius: 20px;
+    color: #30435f;
+}
 </style>

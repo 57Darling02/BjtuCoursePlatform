@@ -33,7 +33,16 @@ interface ReconnectOptions {
     notify?: boolean
 }
 
+interface InitialReconnectOptions {
+    notifyOnFailure?: boolean
+}
+
 interface RefreshOptions {
+    silent?: boolean
+    force?: boolean
+}
+
+interface HomeworkDetailRefreshOptions {
     silent?: boolean
     force?: boolean
 }
@@ -93,6 +102,7 @@ export const useUserStore = defineStore('user', () => {
     const isProcessingQueue = ref(false);
     const connectionStatus = ref<boolean | null>(null)
     const retryConnect = ref<number>(0)
+    const hasTriedInitialReconnect = ref(false)
 
     // 缓存部分数据
     const Cache = ref<Record<string, any>>(initialState.Cache || {});
@@ -345,6 +355,30 @@ export const useUserStore = defineStore('user', () => {
         return success;
     }
 
+    const reconnectOnFirstEntryIfDisconnected = async (options: InitialReconnectOptions = {}) => {
+        const notifyOnFailure = options.notifyOnFailure ?? true
+        if (hasTriedInitialReconnect.value) {
+            return connectionStatus.value !== false
+        }
+        hasTriedInitialReconnect.value = true
+        if (!isAuthenticated.value) return false
+
+        const connected = await refreshConnectionStatus({ silent: true, force: true })
+        if (connected) return true
+
+        const success = await reconnect({ notify: false })
+        if (!success && notifyOnFailure) {
+            el_alert({
+                title: '重连失败',
+                message: '检测到会话断开且自动重连失败，请手动重连或重新登录',
+                type: 'error',
+                showClose: true,
+                duration: 2500
+            })
+        }
+        return success
+    }
+
     const refreshUserInfoTask = async (options: RefreshOptions = {}) => {
         const force = options.force ?? false
         const silent = options.silent ?? true
@@ -432,6 +466,56 @@ export const useUserStore = defineStore('user', () => {
         return await checkAuth_ve({ ...options, force: true })
     }
 
+    const refreshHomeworkDetail = async (
+        homeworkId: number,
+        options: HomeworkDetailRefreshOptions = {}
+    ) => {
+        const silent = options.silent ?? true
+        const force = options.force ?? false
+        if (!await checkAuth_ve({ silent: true })) return false
+
+        const homework = homeworkList.value.find((item) => item.id === homeworkId)
+        if (!homework) return false
+        if (!force && homework.detail?.courseNoteList?.length) return true
+
+        try {
+            const allSubmissions = (await getAllStudentSubmissions(homework.id)).sort((a, b) => {
+                const scoreA = a.score as number | null
+                const scoreB = b.score as number | null
+                if (scoreA === null) return 1
+                if (scoreB === null) return -1
+                return scoreB - scoreA
+            })
+            const reviewedSubmissions = allSubmissions.filter((item) => item.pgFlag !== 's')
+            homework.detail = {
+                my_homework: homework.detail?.my_homework,
+                courseNoteList: allSubmissions,
+                topFive: reviewedSubmissions.slice(0, 5).map((item) => item.id)
+            }
+            const mhw = reviewedSubmissions.find((item) => item.id == homework.detail?.my_homework)
+            if (mhw && homework.returned !== true && mhw.score !== null) {
+                homework.status = 2
+                homework.detail.score = Number(mhw.score)
+                homework.detail.rank = reviewedSubmissions.findIndex((item) => item.id == homework.detail?.my_homework) + 1
+                homework.detail.is_excellent = Number(mhw.is_excellent)
+                homework.detail.average_score = reviewedSubmissions.map((item) => Number(item.score)).reduce((a, b) => a + b, 0) / reviewedSubmissions.length
+                homework.detail.comment = mhw.content
+            }
+            return true
+        } catch (error) {
+            if (!silent) {
+                el_alert({
+                    title: '作业细节加载失败',
+                    message: `${error}`,
+                    type: 'error',
+                    showClose: true,
+                    duration: 800
+                })
+            }
+            return false
+        }
+    }
+
     const refreshHomeworkDetails = async () => {
         if (!await checkAuth_ve({ silent: true })) return;
         try {
@@ -446,28 +530,7 @@ export const useUserStore = defineStore('user', () => {
                 return;
             };
             for (const homework of homeworkList.value) {
-                const allSubmissions = (await getAllStudentSubmissions(homework.id)).sort((a, b) => {
-                    const scoreA = a.score as number | null
-                    const scoreB = b.score as number | null
-                    if (scoreA === null) return 1
-                    if (scoreB === null) return -1
-                    return scoreB - scoreA
-                })
-                const reviewedSubmissions = allSubmissions.filter((item) => item.pgFlag !== 's')
-                homework.detail = {
-                    my_homework: homework.detail?.my_homework,
-                    courseNoteList: allSubmissions,
-                    topFive: reviewedSubmissions.slice(0, 5).map((item) => item.id)
-                }
-                const mhw = reviewedSubmissions.find((item) => item.id == homework.detail?.my_homework)
-                if (mhw && homework.returned !== true && mhw.score !== null) {
-                    homework.status = 2;
-                    homework.detail.score = Number(mhw.score);
-                    homework.detail.rank = reviewedSubmissions.findIndex((item) => item.id == homework.detail?.my_homework) + 1;
-                    homework.detail.is_excellent = Number(mhw.is_excellent);
-                    homework.detail.average_score = reviewedSubmissions.map((item) => Number(item.score)).reduce((a, b) => a + b, 0) / reviewedSubmissions.length;
-                    homework.detail.comment = mhw.content;
-                }
+                await refreshHomeworkDetail(homework.id, { silent: true, force: true })
             }
             el_alert({
                 title: '作业细节更新',
@@ -532,10 +595,12 @@ export const useUserStore = defineStore('user', () => {
         connectionStatus,
         checkAuth,
         reconnect,
+        reconnectOnFirstEntryIfDisconnected,
         refreshConnectionStatus,
         addTaskToQueue,
         refreshUserInfo,
         refreshHomeworks,
+        refreshHomeworkDetail,
         refreshHomeworkDetails,
         Cache,
         checkAuth_force,

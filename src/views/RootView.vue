@@ -39,6 +39,9 @@ const showNotice = () => {
   });
 }
 onMounted(() => {
+  userStore.addTaskToQueue(async () => {
+    await userStore.reconnectOnFirstEntryIfDisconnected()
+  })
   userStore.refreshUserInfo({ silent: true })
   scrollbarRef.value?.update()
   const current_version = localStorage.getItem('version')

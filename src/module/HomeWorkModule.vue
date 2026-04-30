@@ -1,7 +1,7 @@
 <template>
 
     <template v-if="isLoading">
-        <div class="a-card-static" style="flex: 1;">
+        <div class="module-surface module-loading">
             <el-skeleton :rows="1" animated class="skeleton-header" />
             <el-skeleton v-for="m in 3" :key="m" :rows="2" animated class="homework-skeleton" style="margin: 12px 0;" />
         </div>
@@ -9,19 +9,22 @@
     <template v-else>
 
 
-        <div class="a-card-static">
-            <el-space wrap :size="5">
-                <el-tag type="warning" v-if="countWaitMakeup(userStore.homeworkList)" round>{{
-                    countWaitMakeup(userStore.homeworkList) }}项待补交</el-tag>
-                <el-tag type="warning" round>{{ countUncompleted(userStore.homeworkList) }}项待完成</el-tag>
-                <el-tag type="danger" v-if="countExpired(userStore.homeworkList)" round>{{
-                    countExpired(userStore.homeworkList) }}项过期</el-tag>
-                <el-tag type="info" round>共{{ userStore.homeworkList.length }}项</el-tag>
-            </el-space>
-            <el-collapse v-model="active_colomn" accordion>
+        <div class="module-surface">
+            <div class="module-header">
+                <el-text class="module-title">作业概览</el-text>
+                <el-space class="module-tags" wrap :size="5">
+                    <el-tag type="warning" v-if="countWaitMakeup(userStore.homeworkList)" round>{{
+                        countWaitMakeup(userStore.homeworkList) }}项待补交</el-tag>
+                    <el-tag type="warning" round>{{ countUncompleted(userStore.homeworkList) }}项待完成</el-tag>
+                    <el-tag type="danger" v-if="countExpired(userStore.homeworkList)" round>{{
+                        countExpired(userStore.homeworkList) }}项过期</el-tag>
+                    <el-tag type="info" round>共{{ userStore.homeworkList.length }}项</el-tag>
+                </el-space>
+            </div>
+            <el-collapse v-model="activeColumn" accordion @change="handleCollapseChange">
                 <div class="fade-item">
-                    <el-collapse-item v-for="(group, courseId, index) in groupedByCourse" :key="courseId" :name="courseId" 
-                        class="a-card ">
+                    <el-collapse-item v-for="(group, courseId) in groupedByCourse" :key="courseId" :name="courseId"
+                        class="a-card">
                         <template #title>
                             <el-space wrap>
                                 <el-text>{{ group.courseName }}</el-text>
@@ -37,16 +40,23 @@
                                 </el-space>
                             </el-space>
                         </template>
-                        <div class="a-card hwitem" v-if="active_colomn != courseId">
-                            <el-skeleton :rows="group.items.length * 3" v-if="group.items.length > 0" animated
-                                class="skeleton-header" />
-                            <el-skeleton :rows="1" animated class="skeleton-header" v-else />
-                        </div>
-                        <el-row v-for="(hw, index) in group.items" :key="hw.id" class="a-card hwitem fade-item" :gutter="12"  :style="{ '--delay': (0.2 + index * 0.05) + 's' }"
-                            @click="handleClick(hw)" v-else>
-                            <PublicHwPanel :activehomework="hw" />
-                        </el-row>
-                        
+                        <transition-group
+                            v-if="shouldRenderGroup(courseId)"
+                            name="hw-stagger"
+                            tag="div"
+                            class="homework-list"
+                        >
+                            <el-row
+                                v-for="(hw, index) in group.items"
+                                :key="hw.id"
+                                class="a-card hwitem fade-item"
+                                :gutter="12"
+                                :style="{ '--delay': (0.2 + index * 0.05) + 's' }"
+                                @click="handleClick(hw)"
+                            >
+                                <PublicHwPanel :activehomework="hw" />
+                            </el-row>
+                        </transition-group>
 
                     </el-collapse-item>
                 </div>
@@ -86,6 +96,28 @@ if (!userStore?.homeworkList || userStore.homeworkList?.length == 0) isLoading.v
 
 
 const groupedByCourse = computed(() => groupHomeworksByCourse(userStore.homeworkList));
+const renderedCourseIds = ref<Set<string>>(new Set())
+
+const normalizeCourseId = (value: unknown) => {
+    if (value === undefined || value === null) return ''
+    return String(value)
+}
+
+const ensureRenderedCourse = (value: unknown) => {
+    const normalized = normalizeCourseId(value)
+    if (!normalized) return
+    renderedCourseIds.value.add(normalized)
+}
+
+const shouldRenderGroup = (courseId: unknown) => renderedCourseIds.value.has(normalizeCourseId(courseId))
+
+const handleCollapseChange = (value: unknown) => {
+    if (Array.isArray(value)) {
+        value.forEach(ensureRenderedCourse)
+        return
+    }
+    ensureRenderedCourse(value)
+}
 
 const handleClick = (hw: HomeworkItem) => {
     activeHomework.value = hw;
@@ -120,31 +152,32 @@ const refreshHomeworksTask = async (options: { force?: boolean } = {}) => {
     }
 }
 
-const refreshHomeworkDetailsTask = async () => {
-    await userStore.refreshHomeworkDetails();
-}
-
 const syncHomeworkOnEnter = () => {
     const manualReload = isManualPageReload()
     const forceRefreshHomeworkList = manualReload || shouldRefreshHomeworkList()
 
+    userStore.addTaskToQueue(async () => {
+        await userStore.reconnectOnFirstEntryIfDisconnected()
+    })
+
     if (manualReload) {
-        userStore.addTaskToQueue(() => userStore.reconnect({ notify: false }))
         userStore.refreshUserInfo({ force: true, silent: true })
     }
 
     userStore.addTaskToQueue(() => refreshHomeworksTask({ force: forceRefreshHomeworkList }))
-    userStore.addTaskToQueue(refreshHomeworkDetailsTask)
 }
 
-const active_colomn = ref('0')
+const initialCourseId = Object.keys(groupedByCourse.value)[0] ?? ''
+const activeColumn = ref<string>(initialCourseId)
+ensureRenderedCourse(initialCourseId)
 emitter.on('UPDATE_HOMEWORKS', () => {
     try {
         isLoading.value = true;
         userStore.homeworkList = [];
         HomeworkDialogVisible.value = false;
+        activeColumn.value = ''
+        renderedCourseIds.value.clear()
         userStore.addTaskToQueue(refreshHomeworksTask);
-        userStore.addTaskToQueue(refreshHomeworkDetailsTask);
     } catch (error) {
         console.error('获取作业列表失败:', error)
     }
@@ -159,9 +192,52 @@ onMounted(() => {
 })
 </script>
 <style lang="scss" scoped>
+.module-surface {
+    padding: 16px 18px;
+    border-radius: 20px;
+}
+
+.module-loading {
+    flex: 1;
+}
+
+.module-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.module-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2f3f57;
+}
+
+.module-tags {
+    flex: 1;
+}
+
 .hwitem {
-    background-color: rgba(224, 219, 219, 0.425);
+    background-color: rgba(240, 245, 252, 0.82);
     width: 95%;
     padding-left: 23px;
+}
+
+.homework-list {
+    contain: layout paint;
+}
+
+.hw-stagger-enter-active {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.hw-stagger-enter-from {
+    opacity: 0;
+    transform: translateY(6px);
+}
+
+.hw-stagger-leave-active {
+    display: none;
 }
 </style>

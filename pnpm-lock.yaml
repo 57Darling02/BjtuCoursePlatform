@@ -21,7 +21,7 @@ importers:
         specifier: ^1.4.7
         version: 1.4.7
       element-plus:
-        specifier: ^2.9.8
+        specifier: ^2.13.7
         version: 2.13.7(typescript@5.8.3)(vue@3.5.33(typescript@5.8.3))
       iconv-lite:
         specifier: ^0.6.3

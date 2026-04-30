@@ -27,15 +27,33 @@
                         {{ i }}
                     </el-tag>
                 </el-descriptions-item>
-                <el-descriptions-item label="资料同步" :span="2">
-                    {{ profileSyncedAt }}
-                </el-descriptions-item>
-                <el-descriptions-item label="会话状态" :span="2">
-                    <div class="status-row" :title="statusHint" @click="handleStatusAction">
-                        <span>{{ statusSyncedAt }}，</span>
-                        <el-tag round :type="statusOk ? 'success' : 'danger'" :effect="statusOk ? 'light' : 'dark'">
-                            {{ statusOk ? '✅已连接' : '🚫未连接' }}
-                        </el-tag>
+                <el-descriptions-item :span="2">
+                    <template #label>
+                        <div class="sync-label">
+                            <span>检测时间</span>
+                            <span class="sync-time">{{ statusSyncedAt }}</span>
+                        </div>
+                    </template>
+                    <div class="status-panel" :class="statusOk ? 'is-ok' : 'is-bad'">
+                        <div class="status-main">
+                            <div class="status-indicator">
+                                <span class="status-dot" />
+                                <span class="status-title">{{ statusOk ? '会话已连接' : '会话未连接' }}</span>
+                            </div>
+                            <el-text size="small" class="status-subtext">
+                                {{ statusOk ? '状态正常，可继续访问课程平台数据。' : '会话可能已过期，请重连后再试。' }}
+                            </el-text>
+                        </div>
+                        <el-button
+                            class="status-action"
+                            size="default"
+                            :type="statusOk ? 'primary' : 'danger'"
+                            plain
+                            :loading="reconnecting"
+                            @click="handleStatusAction"
+                        >
+                            {{ statusOk ? '点击刷新状态' : '点击尝试重连' }}
+                        </el-button>
                     </div>
                 </el-descriptions-item>
             </el-descriptions>
@@ -54,9 +72,7 @@ const formatSyncTime = (timestamp: number) => {
     if (!timestamp) return '尚未同步'
     return new Date(timestamp).toLocaleString()
 }
-const profileSyncedAt = computed(() => formatSyncTime(userStore.dataTimestamps.userInfo))
 const statusSyncedAt = computed(() => formatSyncTime(userStore.dataTimestamps.status))
-const statusHint = computed(() => statusOk.value ? '点击刷新状态' : '点击尝试重连')
 
 const runStatusRefresh = async () => {
     if (reconnecting.value) return
@@ -93,12 +109,80 @@ onMounted(() => {
     gap: 8px;
 }
 
-.status-row {
+.sync-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+}
+
+.sync-time {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.status-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.status-panel.is-ok {
+    border-color: #bbf7d0;
+    background: linear-gradient(180deg, #f7fee7 0%, #f0fdf4 100%);
+}
+
+.status-panel.is-bad {
+    border-color: #fecaca;
+    background: linear-gradient(180deg, #fef2f2 0%, #fff1f2 100%);
+}
+
+.status-main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.status-indicator {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    color: #334155;
-    font-size: 13px;
+    gap: 8px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.14);
+}
+
+.status-panel.is-ok .status-dot {
+    background: #16a34a;
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.14);
+}
+
+.status-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.status-subtext {
+    color: #475569;
+    line-height: 1.45;
+}
+
+.status-action {
+    width: 100%;
+    justify-content: center;
 }
 </style>

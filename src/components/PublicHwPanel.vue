@@ -4,23 +4,26 @@
         <el-col :xs="24" :sm="16" :md="16">
             <h3 class="title">{{ hw.title }}</h3>
             <el-space wrap>
-                <el-tag type="info">📅{{ hw.create_date.split(' ')[0] }}</el-tag>
-                <el-tag type="info">🚫{{ hw.end_time.split(' ')[0] }}</el-tag>
-                <el-tag>👥已完成:{{ hw.submitCount }}/{{ hw.allCount }}</el-tag>
-                <el-tag type="warning" v-if="isReturned">↩️被打回</el-tag>
-                <el-tag type="danger" v-if="hw.status == 0 && hw.subStatus != 2 && !isReturned"><el-countdown
+                <el-tag type="info"><i class="fa-solid fa-calendar-days tag-icon" />{{ hw.create_date.split(' ')[0] }}</el-tag>
+                <el-tag type="info"><i class="fa-solid fa-ban tag-icon" />{{ hw.end_time.split(' ')[0] }}</el-tag>
+                <el-tag><i class="fa-solid fa-users tag-icon" />已完成:{{ hw.submitCount }}/{{ hw.allCount }}</el-tag>
+                <el-tag type="warning" v-if="isReturned"><i class="fa-solid fa-reply tag-icon" />被打回</el-tag>
+                <el-tag type="danger" v-if="hw.status == 0 && hw.subStatus != 2 && !isReturned">
+                    <i class="fa-solid fa-hourglass-half tag-icon" />
+                    <el-countdown
                         :style="{ display: 'inline-block', verticalAlign: 'middle', marginLeft: '4px' }"
                         value-style="color: #666; font-size: 14px; font-weight: 700; height:100%; display:flex "
-                        format="⏳DD[天] HH:mm:ss"
+                        format="DD[天] HH:mm:ss"
                         :value="countdownTarget" /></el-tag>
                 <el-tag type="success" v-if="hw.detail && hw.detail.score">
-                    ✍️分数:{{ hw.detail.score }}/{{ hw.full_score }}</el-tag>
+                    <i class="fa-solid fa-pen-to-square tag-icon" />分数:{{ hw.detail.score }}/{{ hw.full_score }}</el-tag>
                 <el-tag type="info" v-if="hw.detail && hw.detail.rank">
-                    rank:{{ hw.detail.rank }}/{{ hw.submitCount }}</el-tag>
+                    <i class="fa-solid fa-ranking-star tag-icon" />排名:{{ hw.detail.rank }}/{{ hw.submitCount }}</el-tag>
             </el-space>
         </el-col>
         <el-col :xs="24" :sm="8" :md="8">
             <el-button round style="width: 100%" class="a-card" :class="button_status.type" @click="addhwdialog = true">
+                <i class="fa-solid status-icon" :class="button_status.icon" />
                 {{ button_status.text }}
             </el-button>
         </el-col>
@@ -86,20 +89,20 @@ const canOpenSubmitPanel = computed(() => {
 const showaddhw = ref(canOpenSubmitPanel.value)
 const button_status = computed(() => {
     if (isReturned.value) {
-        return { text: '↩️待重交', type: 'warning' }
+        return { text: '待重交', type: 'warning', icon: 'fa-reply' }
     }
     if (hw.value.status == 0) {
         if (hw.value.subStatus == 0) {
-            return { text: '⏰待提交', type: 'warning' }
+            return { text: '待提交', type: 'warning', icon: 'fa-hourglass-half' }
         } else if (hw.value.subStatus == 1) {
-            return { text: '⏰待补', type: 'danger' }
+            return { text: '待补', type: 'danger', icon: 'fa-hourglass-half' }
         } else {
-            return { text: '⏰过期', type: 'danger' }
+            return { text: '过期', type: 'danger', icon: 'fa-clock' }
         }
     } else if (hw.value.status == 1) {
-        return { text: '✅已提交', type: 'success' }
+        return { text: '已提交', type: 'success', icon: 'fa-circle-check' }
     } else {
-        return { text: '✅已批改', type: 'success' }
+        return { text: '已批改', type: 'success', icon: 'fa-square-check' }
     }
 })
 emitter.on('UPDATE_HOMEWORKS', () => {
@@ -128,5 +131,13 @@ emitter.on('UPDATE_HOMEWORKS', () => {
 .success {
     background: rgba(0, 128, 0, 0.2);
     color: #006400;
+}
+
+.tag-icon {
+    margin-right: 4px;
+}
+
+.status-icon {
+    margin-right: 6px;
 }
 </style>

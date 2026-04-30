@@ -1,14 +1,19 @@
 <template>
     <template v-if="isLoading">
-        <div class="a-card-static" style="flex: 1;">
+        <div class="module-surface module-loading">
             <el-skeleton :rows="1" animated class="skeleton-header" />
             <el-skeleton v-for="m in 3" :key="m" :rows="2" animated class="homework-skeleton" style="margin: 12px 0;" />
         </div>
     </template>
     <template v-else>
-        <div class="a-card-static">
-            <el-tag type="info">{{ data?.length ? `今日共${data?.length}节` : '今日无课' }}</el-tag>&nbsp;
-            <el-tag type="danger">剩余{{ remainCourse.length }}节</el-tag>&nbsp;
+        <div class="module-surface">
+            <div class="module-header">
+                <el-text class="module-title">今日课表</el-text>
+                <el-space class="module-tags" wrap :size="6">
+                    <el-tag type="info" round>{{ data?.length ? `今日共${data?.length}节` : '今日无课' }}</el-tag>
+                    <el-tag type="danger" round>剩余{{ remainCourse.length }}节</el-tag>
+                </el-space>
+            </div>
             <CourseScheduleItemPanel v-for="i in remainCourse" :coursescheduleitem="i" />
             <div class="a-card" v-if="remainCourse.length == 0">
                 <el-text>没课啦(*￣3￣)╭</el-text>
@@ -87,4 +92,30 @@ onMounted(async () => {
     }
 })
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.module-surface {
+    padding: 16px 18px;
+    border-radius: 20px;
+}
+
+.module-loading {
+    flex: 1;
+}
+
+.module-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.module-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2f3f57;
+}
+
+.module-tags {
+    flex: 1;
+}
+</style>

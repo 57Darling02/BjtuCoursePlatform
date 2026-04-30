@@ -11,11 +11,10 @@
             >
                 <button
                     class="nav-item nav-menu-trigger"
-                    :class="{ 'nav-item-active': isMenuActive() }"
                     type="button"
                 >
                     <i class="fa-solid fa-compass nav-menu-icon" aria-hidden="true" />
-                    <span>传送</span>
+                    <span>导航</span>
                 </button>
 
                 <template #dropdown>
@@ -24,7 +23,11 @@
                             v-for="item in menuItems"
                             :key="item.key"
                             :command="item.key"
-                            :class="{ 'dropdown-item-active': item.routeName ? isActiveRoute(item.routeName) : false }"
+                            :divided="item.divided === true"
+                            :class="{
+                                'dropdown-item-active': item.routeName ? isActiveRoute(item.routeName) : false,
+                                'dropdown-item-danger': item.danger === true
+                            }"
                         >
                             <i :class="item.icon" aria-hidden="true" />
                             <span>{{ item.label }}</span>
@@ -37,11 +40,6 @@
         <button class="nav-item nav-profile" type="button" aria-label="打开个人中心" @click="visible = true">
             <i class="fa-solid fa-user" aria-hidden="true" />
             <span>个人</span>
-        </button>
-
-        <button class="nav-item nav-logout" type="button" aria-label="退出登录" @click="handleLogout">
-            <i class="fa-solid fa-right-from-bracket" aria-hidden="true" />
-            <span>退出</span>
         </button>
     </nav>
 
@@ -71,15 +69,14 @@ const menuItems = [
     { key: 'home', label: '作业', routeName: 'home', icon: 'fa-solid fa-house' },
     { key: 'learn', label: '课程学习', routeName: 'learn', icon: 'fa-solid fa-book-open' },
     { key: 'ai', label: '交大AI', routeName: 'ai', icon: 'fa-solid fa-wand-magic-sparkles' },
-    { key: 'course-platform', label: '进入课程平台', icon: 'fa-solid fa-arrow-up-right-from-square', action: () => userStore.go_kcpt() },
+    { key: 'course-platform', label: '官方课程平台', icon: 'fa-solid fa-arrow-up-right-from-square', action: () => userStore.go_kcpt() },
     { key: 'about', label: '关于', routeName: 'about', icon: 'fa-solid fa-circle-info' },
+    { key: 'logout', label: '重新登录', icon: 'fa-solid fa-right-from-bracket', action: () => handleLogout(), divided: true, danger: true },
 ]
 
 const isActiveRoute = (routeName: string) => {
     return route.name === routeName || route.matched.some(item => item.name === routeName)
 }
-
-const isMenuActive = () => menuItems.some(item => item.routeName && isActiveRoute(item.routeName))
 
 const navigateTo = (routeName: string) => {
     if (isActiveRoute(routeName)) return
@@ -177,14 +174,12 @@ $transition-time: 0.25s;
         pointer-events: none;
     }
 
-    &:hover,
-    &.nav-item-active {
+    &:hover {
         color: #0f5f9c;
         background-color: rgba(255, 255, 255, 0.38);
     }
 
-    &:hover::after,
-    &.nav-item-active::after {
+    &:hover::after {
         transform: scaleX(1);
     }
 }
@@ -219,10 +214,6 @@ $transition-time: 0.25s;
     flex: 0 0 auto;
 }
 
-.nav-logout {
-    flex: 0 0 auto;
-}
-
 :global(.app-navbar-dropdown) {
     border: none;
     border-radius: 16px;
@@ -251,6 +242,16 @@ $transition-time: 0.25s;
 :global(.app-navbar-dropdown .el-dropdown-menu__item.dropdown-item-active) {
     color: #0f5f9c;
     background-color: rgba(52, 152, 219, 0.12);
+}
+
+:global(.app-navbar-dropdown .el-dropdown-menu__item.dropdown-item-danger) {
+    color: #c0392b;
+}
+
+:global(.app-navbar-dropdown .el-dropdown-menu__item.dropdown-item-danger:not(.is-disabled):focus),
+:global(.app-navbar-dropdown .el-dropdown-menu__item.dropdown-item-danger:not(.is-disabled):hover) {
+    color: #c0392b;
+    background-color: rgba(192, 57, 43, 0.12);
 }
 
 :global(.profile-drawer.el-drawer) {

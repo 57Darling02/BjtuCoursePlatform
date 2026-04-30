@@ -1,6 +1,5 @@
 // 鉴权方法
 import { md5 } from "@/utils";
-import { login_app } from "./api_app";
 import { login_ve } from "./api_ve";
 import type { CaptchaResponse, LoginParams, LoginType } from "./types"
 import { login_cas } from "./api_cas";
@@ -12,7 +11,6 @@ export const login = async (params: LoginParams) => {
     switch (loginType) {
         case '1':
             await login_ve({ username, password: md5(password), passcode, loginType })
-            await login_app(username, password)
             break
         case '2':
             await login_cas({ loginname: username, password: password, captcha_1: passcode, captcha_0: captcha_id, csrfmiddlewaretoken: csrfmiddlewaretoken })

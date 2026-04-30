@@ -1,8 +1,7 @@
 <template>
-  <el-skeleton :rows="9" animated v-if="is_loading" class="a-card" style="width: 80%; max-width: 420px;">
-  </el-skeleton>
+  <Loading v-if="is_loading" />
   <el-form ref="loginFormRef" class="a-card" :model="loginForm" :rules="loginRules" label-width="auto"
-    style="width: 80%; max-width: 420px;" v-else label-position="right">
+    style="width: 80%; max-width: 420px;" label-position="right">
     <div style="display: flex; justify-content: center; width: 100%;">
       <h1>课程平台青春版</h1>
     </div>
@@ -39,7 +38,7 @@
 
     <!-- 提交按钮 -->
     <el-form-item>
-      <el-button type="primary" class="login-btn" @click="handleLogin" round>
+      <el-button type="primary" class="login-btn" @click="handleLogin" :loading="is_loading" :disabled="is_loading" round>
         立即登录
       </el-button>
     </el-form-item>
@@ -47,13 +46,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { login, getCaptcha, type loginParams } from '@/api'
 import { el_alert } from '@/utils'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 import { logout } from '@/api/api_ve'
+import Loading from '@/components/Loading.vue'
 const userStore = useUserStore();
 
 // 表单实例
@@ -139,40 +139,34 @@ const is_loading = ref(false)
 // 提交登录
 const handleLogin = async () => {
   if (!loginFormRef.value) return
+  const isValid = await loginFormRef.value.validate().then(() => true).catch(() => false)
+  if (!isValid) return
+
   is_loading.value = true
   try {
-    await loginFormRef.value.validate(async (valid) => {
-      if (valid) {
-        try {
-          await login(loginForm)
-          userStore.isAuthenticated = true
-          userStore.username = loginForm.username
-          userStore.password = loginForm.password
-          await router.push({name: 'home'})
-          await nextTick()
-          el_alert({
-            title: '登录成功',
-            message: '欢迎回来！',
-            type: 'success',
-          })
-          if(loginForm.loginType === '2') {
-            userStore.handleSyncPassword()
-          }
-          
-        } catch (error) {
-          el_alert({
-            title: '登录失败',
-            message: error as string,
-            type: 'error',
-          })
-          await refreshCaptcha()
-        }
-      }
+    await login(loginForm)
+    userStore.isAuthenticated = true
+    userStore.username = loginForm.username
+    userStore.password = loginForm.password
+    await router.replace({ name: 'home' })
+    el_alert({
+      title: '登录成功',
+      message: '欢迎回来！',
+      type: 'success',
     })
+    if (loginForm.loginType === '2') {
+      userStore.handleSyncPassword()
+    }
+  } catch (error) {
+    el_alert({
+      title: '登录失败',
+      message: error as string,
+      type: 'error',
+    })
+    await refreshCaptcha()
   } finally {
     is_loading.value = false
   }
-
 }
 </script>
 

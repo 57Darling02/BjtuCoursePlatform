@@ -1,16 +1,19 @@
 <template>
     <template v-if="isLoading">
-        <div class="a-card-static" style="flex: 1;">
+        <div class="module-surface module-loading">
             <el-skeleton :rows="1" animated class="skeleton-header" />
             <el-skeleton v-for="m in 3" :key="m" :rows="2" animated class="homework-skeleton" style="margin: 12px 0;" />
         </div>
     </template>
     <template v-else>
         
-        <div class="a-card-static">
-            <el-space wrap :size="5">
-                <el-tag type="warning" round>共{{ userStore.courseList.length }} 门</el-tag>
-            </el-space>
+        <div class="module-surface">
+            <div class="module-header">
+                <el-text class="module-title">课程列表</el-text>
+                <el-space class="module-tags" wrap :size="5">
+                    <el-tag type="warning" round>共{{ userStore.courseList.length }} 门</el-tag>
+                </el-space>
+            </div>
             <el-collapse v-model="active_colomn" accordion>
                 <div class="fade-item" v-for="(item, index) in userStore.courseList" :style="{ '--delay': (0.2 + index * 0.05) + 's' }">
                     <el-collapse-item :key="item.id" :name="item.name" class="a-card">
@@ -74,8 +77,34 @@ const functionList = [
 
 </script>
 <style lang="scss" scoped>
+.module-surface {
+    padding: 16px 18px;
+    border-radius: 20px;
+}
+
+.module-loading {
+    flex: 1;
+}
+
+.module-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.module-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2f3f57;
+}
+
+.module-tags {
+    flex: 1;
+}
+
 .hwitem {
-    background-color: rgba(224, 219, 219, 0.425);
+    background-color: rgba(240, 245, 252, 0.82);
     width: 95%;
     padding-left: 23px;
 }

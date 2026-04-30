@@ -79,11 +79,12 @@
     </el-tabs>
 </template>
 <script lang='ts' setup>
-import { ref, type PropType } from 'vue'
+import { onMounted, ref, type PropType } from 'vue'
 import { type HomeworkItem } from '@/api';
 import PublicHwPanel from './PublicHwPanel.vue';
 import Hwcontent from '@/components/Hwcontent.vue'
 import HwStucontent from '@/components/HwStucontent.vue'
+import { useUserStore } from '@/stores/user'
 
 import { deleteHomework, getHomeworkDetail_pg } from '@/api/api_ve';
 import { emitter } from '@/utils';
@@ -93,14 +94,30 @@ const props = defineProps({
         required: true
     }
 })
+const userStore = useUserStore()
 const ActiveHomework = props.activehomework
 const active_tab = ref('相关信息')
 const active_tab2 = ref(0)
 const active_tab3 = ref(0)
+const detailLoading = ref(false)
+
+const ensureHomeworkDetailLoaded = async () => {
+    if (detailLoading.value) return
+    detailLoading.value = true
+    try {
+        await userStore.refreshHomeworkDetail(ActiveHomework.id, { silent: true })
+    } finally {
+        detailLoading.value = false
+    }
+}
 
 if (ActiveHomework.detail?.my_homework) {
     getHomeworkDetail_pg(ActiveHomework.detail?.my_homework, ActiveHomework.id, 1)
 }
+
+onMounted(() => {
+    void ensureHomeworkDetailLoaded()
+})
 
 
 const handleDelHw = () => {

@@ -1,34 +1,27 @@
 <template>
-    <div style="display: flex; flex-direction: column; gap: 6px; flex: 1; max-width: 985px;width: 100%;">
-        <div class="a-card-static">
-                <NavMoudule />
-            </div>
+    <div class="view-page-shell">
+        <DayCourseModule />
         <template v-if="isLoading">
-            <div class="a-card-static" style="flex: 1;">
+            <div class="about-loading-shell view-soft-surface">
                 <el-skeleton :rows="1" animated class="skeleton-header" />
                 <el-skeleton v-for="m in 3" :key="m" :rows="2" animated class="homework-skeleton"
                     style="margin: 12px 0;" />
             </div>
         </template>
         <template v-else>
-            
-            <div class="a-card-static" v-html="compiledMarkdown"></div>
+            <div class="about-markdown view-soft-surface" v-html="compiledMarkdown"></div>
             <!-- <iframe class="a-card-static" src="/readme.html" style="min-height: 500px;"/> -->
-            <el-space class="a-card-static" wrap>
-                
+            <el-space class="about-team-grid" wrap>
                 <ProfieldCard :avatar="Darling02" name="57Darling02" position="" bio="朴素的胆小鬼" />
                 <ProfieldCard :avatar="stdm" name="上条当咩" position="" bio="也许是个体育生" />
-  
             </el-space>
         </template>
-        
     </div>
-
 </template>
 <script lang='ts' setup>
 import { onMounted, ref } from 'vue';
 
-import NavMoudule from '@/module/NavModule.vue'
+import DayCourseModule from '@/module/DayCourseModule.vue'
 import ProfieldCard from '@/components/ProfileCard.vue'
 const isLoading = ref(true);
 import stdm from '@/assets/team/stdm.jpg'
@@ -54,4 +47,21 @@ onMounted(() => {
     fetchMarkdown();
 });
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.about-loading-shell {
+    flex: 1;
+    padding: 18px;
+}
+
+.about-markdown {
+    padding: 18px;
+    border-radius: 20px;
+    line-height: 1.7;
+    color: #2f3f57;
+}
+
+.about-team-grid {
+    width: 100%;
+    padding: 2px 10px 8px;
+}
+</style>

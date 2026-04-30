@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type NavigationGuardNext, type RouteLocationNormalized } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user';
 import useVisitData from '@/utils/useVisitData';
 const router = createRouter({
@@ -50,15 +50,11 @@ const router = createRouter({
     },
   ],
 })
-router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
+router.beforeEach((to) => {
   const userStore = useUserStore();
   useVisitData();
-  if (to.path !== '/login' && !userStore.isAuthenticated) {
-    next('/login');
-  } else if (userStore.isAuthenticated && to.path === '/login') {
-    next('/')
-  } else {
-    next();
-  }
+  if (!userStore.isAuthenticated && to.path !== '/login') return { name: 'login' }
+  if (userStore.isAuthenticated && to.path === '/login') return { name: 'home' }
+  return true
 });
 export default router

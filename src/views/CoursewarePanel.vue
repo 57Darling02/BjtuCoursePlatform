@@ -1,112 +1,184 @@
 <template>
-    <div class="CoursewarePanel">
-        <Loading v-if="isLoading && !userStore.isLoading" />
-        <div style="flex: 1; display: flex;" v-else-if="coursewareList.length > 0">
-            <el-menu default-active="2" class="el-menu-vertical-demo" :collapse="isCollapse">
-                <el-menu-item @click="toggleCollapse" index="2">
-                    <i class="fa-solid fa-angles-right menu-icon arrow-icon" :class="{ 'rotate-180': !isCollapse }" />
-                    <template #title>点击{{ isCollapse ? '展开' : '收起' }}菜单</template>
-                </el-menu-item>
-                <el-menu-item @click="isCollapse = false" index="2">
-                    <i class="fa-solid fa-file-lines menu-icon" />
-                    <template #title>
-                        <el-select-v2 class="courseware-select" v-model="active_value" :options="options"
-                            placeholder="请选择课件" filterable :loading="isLoading" @click.stop>
-                            <template #default="{ item }">
-                                <el-tooltip effect="dark" :content="item.label" placement="right">
-                                    <div class="courseware-option">
-                                        <el-text truncated>{{ item.label }}</el-text>
-                                    </div>
-                                </el-tooltip>
-                            </template>
-                        </el-select-v2>
-                    </template>
-                </el-menu-item>
-                <el-menu-item index="2">
-                    <i class="fa-solid fa-folder-open menu-icon" />
-                    <span>
-                        资源大小:
-                        {{ coursewareList[active_value].rpSize }}MB
-                    </span>
-                </el-menu-item>
-                <el-menu-item index="2">
-                    <i class="fa-solid fa-folder-open menu-icon" />
-                    <span>
-                        资源类型:
-                        {{ coursewareList[active_value].extName }}
-                    </span>
-                </el-menu-item>
-                <el-menu-item index="2">
-                    <i
-                        class="fa-solid menu-icon"
-                        :class="coursewareList[active_value].share_type == 2 ? 'fa-unlock' : 'fa-lock'"
-                    />
-                    <span>
-                        资源状态:{{ coursewareList[active_value].share_type == 2 ? '公开' : '未公开' }}
-                    </span>
-                </el-menu-item>
-                <el-menu-item index="2">
-                    <i class="fa-solid fa-user menu-icon" />
-                    <span>
-                        上传人:{{ coursewareList[active_value].teacherName }}
-                    </span>
-                </el-menu-item>
-                <el-menu-item index="2">
-                    <i class="fa-solid fa-clock menu-icon" />
-                    <span>
-                        上传时间:{{ coursewareList[active_value].inputTime }}
-                        <!-- {{ coursewareList[active_value].res_url }} -->
-                    </span>
-                </el-menu-item>
+    <Loading v-if="listLoading && !userStore.isLoading" />
+    <div class="courseware-layout" v-else-if="hasCourseware">
+        <el-menu
+            ref="menuRef"
+            default-active="2"
+            class="el-menu-vertical-demo courseware-menu"
+            :collapse="isCollapse"
+            popper-class="courseware-menu-popper"
+        >
+            <el-menu-item @click="toggleCollapse" index="2">
+                <i class="fa-solid fa-angles-right menu-icon arrow-icon" :class="{ 'rotate-180': !isCollapse }" />
+                <template #title>点击{{ isCollapse ? '展开' : '收起' }}菜单</template>
+            </el-menu-item>
+            <el-menu-item @click="isCollapse = false" index="2">
+                <i class="fa-solid fa-book-open menu-icon" />
+                <template #title>
+                    <span v-if="isCollapse">选择课件</span>
+                    <el-select-v2
+                        v-else
+                        class="courseware-select"
+                        v-model="selectedIndex"
+                        :options="options"
+                        placeholder="请选择课件"
+                        filterable
+                        :loading="listLoading"
+                        :show-arrow="false"
+                        @click.stop
+                    >
+                        <template #default="{ item }">
+                            <el-tooltip
+                                effect="dark"
+                                :content="item.label"
+                                placement="right"
+                                :show-arrow="false"
+                                popper-class="courseware-option-tooltip"
+                            >
+                                <div class="courseware-option">
+                                    <el-text truncated>{{ item.label }}</el-text>
+                                </div>
+                            </el-tooltip>
+                        </template>
+                    </el-select-v2>
+                </template>
+            </el-menu-item>
+            <el-menu-item index="2">
+                <i class="fa-solid fa-hard-drive menu-icon" />
+                <template #title>{{ resourceSizeText }}</template>
+            </el-menu-item>
+            <el-menu-item index="2">
+                <i class="fa-solid fa-tag menu-icon" />
+                <template #title>{{ resourceTypeText }}</template>
+            </el-menu-item>
+            <el-menu-item index="2">
+                <i
+                    class="fa-solid menu-icon"
+                    :class="currentItem?.share_type == 2 ? 'fa-unlock' : 'fa-lock'"
+                />
+                <template #title>{{ resourceStatusText }}</template>
+            </el-menu-item>
+            <el-menu-item index="2">
+                <i class="fa-solid fa-user-pen menu-icon" />
+                <template #title>{{ resourceTeacherText }}</template>
+            </el-menu-item>
+            <el-menu-item index="2">
+                <i class="fa-solid fa-calendar-days menu-icon" />
+                <template #title>{{ resourceTimeText }}</template>
+            </el-menu-item>
+            <el-menu-item index="2" @click="downloadFile">
+                <i class="fa-solid fa-download menu-icon" />
+                <template #title>
+                    下载
+                </template>
+            </el-menu-item>
+        </el-menu>
 
-
-                <el-menu-item index="2" @click="downloadFile">
-                    <i class="fa-solid fa-download menu-icon" />
-                    <template #title>
-                        下载
-                    </template>
-                </el-menu-item>
-            </el-menu>
-
-            <iframe style="flex: 1;width: 100px;" v-if="!isLoading && pdfUrl" :src="pdfUrl" frameborder="0"
-                v-show="isShow" />
-            <div style="flex: 1;display: flex;flex-direction: row;justify-content: center;align-items: center;" v-else>
-                <div class="a-card"
-                    style="display: flex;flex-direction: column;justify-content: center;align-items: center;"
-                    @click="downloadFile">
-                    <i class="fa-solid fa-file courseware-file-icon" />
-                    {{ coursewareList[active_value].rpName }}
-                    <el-text class="text-muted" style="font-size: 12px; margin-top: 8px;">
-                        该课件暂无预览功能，请点击此处下载后查看
-                    </el-text>
-                </div>
+        <iframe
+            class="courseware-preview-frame"
+            v-if="!previewLoading && pdfUrl"
+            v-show="!previewFrozen"
+            :src="pdfUrl"
+            frameborder="0"
+        />
+        <div class="preview-freeze-mask" v-else-if="previewFrozen">
+            <el-text type="info">正在调整布局...</el-text>
+        </div>
+        <div class="courseware-empty-state" v-else>
+            <div class="courseware-fallback-card" @click="downloadFile">
+                <i class="fa-solid fa-file courseware-file-icon" />
+                {{ currentItem?.rpName }}
+                <el-text class="text-muted courseware-fallback-tip">
+                    该课件暂无预览功能，请点击此处下载后查看
+                </el-text>
             </div>
         </div>
     </div>
-
 </template>
 <script lang='ts' setup>
 import Loading from '@/components/Loading.vue';
-import { onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { type CourseResourceItem } from '@/api';
 import { getCourseResourceList } from '@/api/api_ve';
 import { useUserStore } from '@/stores/user';
 const userStore = useUserStore();
 import router from '@/router';
-const isLoading = ref(true);
-const isShow = ref(true)
-const active_value = ref()
-const options = ref<{ value: number; label: string }[]>([])
+
+const listLoading = ref(true);
+const previewLoading = ref(false);
+const selectedIndex = ref(0);
 const coursewareList = ref<CourseResourceItem[]>([])
 const isCollapse = ref(true)
-const toggleCollapse = () => {
-    isShow.value = false
-    isCollapse.value = !isCollapse.value;
-    setTimeout(() => {
-        isShow.value = true
-    }, 300)
+const previewFrozen = ref(false)
+const menuRef = ref<any>(null)
+let previewUnfreezeTimer: number | null = null
+let releaseTransitionListener: (() => void) | null = null
 
+const options = computed(() =>
+    coursewareList.value.map((item, idx) => ({
+        value: idx,
+        label: item.rpName
+    }))
+)
+const hasCourseware = computed(() => coursewareList.value.length > 0)
+const currentItem = computed(() => coursewareList.value[selectedIndex.value] ?? null)
+const resourceSizeText = computed(() => `资源大小: ${currentItem.value?.rpSize ?? '--'}MB`)
+const resourceTypeText = computed(() => `资源类型: ${currentItem.value?.extName ?? '--'}`)
+const resourceStatusText = computed(() => `资源状态: ${currentItem.value?.share_type == 2 ? '公开' : '未公开'}`)
+const resourceTeacherText = computed(() => `上传人: ${currentItem.value?.teacherName ?? '--'}`)
+const resourceTimeText = computed(() => `上传时间: ${currentItem.value?.inputTime ?? '--'}`)
+
+const clearPreviewFreezeResources = () => {
+    if (previewUnfreezeTimer !== null) {
+        window.clearTimeout(previewUnfreezeTimer)
+        previewUnfreezeTimer = null
+    }
+    releaseTransitionListener?.()
+    releaseTransitionListener = null
+}
+
+const unfreezePreview = () => {
+    clearPreviewFreezeResources()
+    previewFrozen.value = false
+}
+
+const getMenuElement = () => {
+    const maybeComponent = menuRef.value
+    if (!maybeComponent) return null
+    const element = maybeComponent.$el ?? maybeComponent
+    return element instanceof HTMLElement ? element : null
+}
+
+const freezePreviewDuringMenuTransition = async () => {
+    clearPreviewFreezeResources()
+    previewFrozen.value = true
+    await nextTick()
+
+    const menuElement = getMenuElement()
+    const finish = () => unfreezePreview()
+    if (!menuElement) {
+        previewUnfreezeTimer = window.setTimeout(finish, 320)
+        return
+    }
+
+    const onTransitionEnd = (event: TransitionEvent) => {
+        if (event.propertyName && event.propertyName !== 'width') return
+        finish()
+    }
+    menuElement.addEventListener('transitionend', onTransitionEnd, true)
+    releaseTransitionListener = () => {
+        menuElement.removeEventListener('transitionend', onTransitionEnd, true)
+    }
+
+    // Fallback: avoid permanent freeze when transitionend is skipped.
+    previewUnfreezeTimer = window.setTimeout(finish, 420)
+}
+
+const toggleCollapse = () => {
+    void freezePreviewDuringMenuTransition()
+    isCollapse.value = !isCollapse.value;
 };
+
 const props = defineProps({
     course_num: {
         type: String,
@@ -139,12 +211,7 @@ const fetchCoursewareList = async () => {
         if (coursewareList.value.length === 0) {
             ElMessage.warning('该课程暂无课件资源')
         }
-        // 更新选项列表
-        options.value = coursewareList.value.map((item, idx) => ({
-            value: idx,
-            label: item.rpName
-        }))
-        active_value.value = 0
+        selectedIndex.value = 0
     } catch (error) {
         ElMessage.error({
             message: `获取课件列表失败`,
@@ -152,8 +219,7 @@ const fetchCoursewareList = async () => {
         })
         router.push({ name: 'learnspace' })
     } finally {
-        isLoading.value = false
-        // console.log(coursewareList.value)
+        listLoading.value = false
     }
 }
 
@@ -190,69 +256,94 @@ const getFilePlayUrl = async (resId: string) => {
 };
 
 const pdfUrl = ref('')
+let previewRequestId = 0
+const previewUrlCache = new Map<string, string>()
+
+const canPreviewDirectly = (item: CourseResourceItem) => {
+    const extName = (item.extName || '').toLowerCase()
+    return !!item.play_url && (extName.endsWith('pdf') || extName === 'docx')
+}
+
+const needsServerResolvedPdf = (item: CourseResourceItem) => {
+    const extName = (item.extName || '').toLowerCase()
+    return !!item.play_url?.endsWith('pdf') && extName !== 'pdf'
+}
+
+const extractViewerUrlFromHtml = (htmlContent: string) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const scripts = Array.from(doc.querySelectorAll('script[type="text/javascript"]'));
+    let scriptContent = '';
+    for (const script of scripts) {
+        if (script.textContent && script.textContent.includes('var url =')) {
+            scriptContent = script.textContent;
+            break;
+        }
+    }
+    if (!scriptContent) return ''
+
+    const urlMatch = scriptContent.match(/var url = ['"]([^'"]+)['"]/);
+    const extractedUrl = urlMatch?.[1];
+    if (!extractedUrl) return ''
+
+    const match = extractedUrl.match(/kk\/(.*)$/);
+    if (!match || !match[0]) return ''
+
+    return `/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api_server1936/${match[0]}`
+}
+
+const resolvePreviewUrl = async (item: CourseResourceItem): Promise<string> => {
+    if (canPreviewDirectly(item)) {
+        return `/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api/pdf/${item.play_url}`
+    }
+    if (!needsServerResolvedPdf(item)) {
+        return ''
+    }
+
+    const cacheKey = String(item.resId)
+    const cachedUrl = previewUrlCache.get(cacheKey)
+    if (cachedUrl !== undefined) {
+        return cachedUrl
+    }
+
+    const result = await getFilePlayUrl(cacheKey)
+    const remoteHtmlUrl = result.url.replace('http://123.121.147.7:1936', '/api_server1936')
+    const response = await fetch(remoteHtmlUrl);
+    if (!response.ok) {
+        throw new Error(`请求失败，状态码: ${response.status}`);
+    }
+    const htmlContent = await response.text();
+    const viewerUrl = extractViewerUrlFromHtml(htmlContent)
+    previewUrlCache.set(cacheKey, viewerUrl)
+    return viewerUrl
+}
 
 // 监听课件变化
-watch(active_value, async (newVal) => {
-    const currentItem = coursewareList.value[newVal]
-    if (!currentItem) {
+watch(currentItem, async (item) => {
+    const requestId = ++previewRequestId
+    if (!item) {
         pdfUrl.value = ''
         return
     }
-    if (currentItem.play_url && (currentItem.extName.endsWith('pdf') || currentItem.extName == 'docx')) {
-        pdfUrl.value = `/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api/pdf/${currentItem.play_url}`
-    } else if (currentItem?.play_url?.endsWith('pdf') && currentItem.extName != 'pdf') {
-        try {
-            isLoading.value = true
-            const result = await getFilePlayUrl(currentItem.resId.toString())
-            pdfUrl.value = result.url.replace('http://123.121.147.7:1936', '/api_server1936')
-            const response = await fetch(pdfUrl.value);
-            if (!response.ok) {
-                throw new Error(`请求失败，状态码: ${response.status}`);
-            }
-            const htmlContent = await response.text();
-            // 使用 DOMParser 解析 HTML
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlContent, 'text/html');
-            // 查找所有 type="text/javascript" 的 script 标签
-            const scripts = Array.from(doc.querySelectorAll('script[type="text/javascript"]'));
-            let scriptContent = '';
-            for (const script of scripts) {
-                if (script.textContent && script.textContent.includes('var url =')) {
-                    scriptContent = script.textContent;
-                    break;
-                }
-            }
-
-            if (scriptContent) {
-                // 使用正则表达式提取 url 的值
-                const urlMatch = scriptContent.match(/var url = ['"]([^'"]+)['"]/);
-                if (urlMatch && urlMatch[1]) {
-                    const extractedUrl = urlMatch[1];
-
-                    const match = extractedUrl.match(/kk\/(.*)$/);
-                    if (match && match[1]) {
-                        const targetPath = match[0];
-                        pdfUrl.value = "/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api_server1936/" + targetPath;
-                    } else {
-                        console.log('未匹配到 kk/ 后面的内容');
-                        pdfUrl.value = '';
-                    }
-                    // console.log('提取的 PDF URLaa:',pdfUrl.value);
-                }
-            }
-
-        } catch (error) {
-            ElMessage.error('获取PDF地址失败')
-        } finally {
-            isLoading.value = false
-        }
-    } else {
+    previewLoading.value = true
+    try {
+        const url = await resolvePreviewUrl(item)
+        if (requestId !== previewRequestId) return
+        pdfUrl.value = url
+    } catch (error) {
+        if (requestId !== previewRequestId) return
         pdfUrl.value = ''
+        ElMessage.error('获取PDF地址失败')
+    } finally {
+        if (requestId === previewRequestId) {
+            previewLoading.value = false
+        }
     }
 }, { immediate: true })
 
 const downloadFile = () => {
-    const item = coursewareList.value[active_value.value];
+    const item = currentItem.value;
+    if (!item) return
     const encodedName = encodeURIComponent(item.rpName);
     const url = `api/download.shtml?userId=null&id=${item.rpId}&p=rp&g=${encodedName}`;
     fetch(url)
@@ -282,16 +373,73 @@ const downloadFile = () => {
 onMounted(async () => {
     await fetchCoursewareList()
 })
+onBeforeUnmount(() => {
+    clearPreviewFreezeResources()
+})
 
 </script>
 <style lang="scss" scoped>
-.CoursewarePanel {
+.courseware-layout {
+    --cw-accent: #2f7fca;
+    --cw-accent-soft: rgba(47, 127, 202, 0.09);
+    --cw-border: rgba(101, 142, 197, 0.16);
+    --cw-text: #2d3d50;
     width: 100%;
     height: 100%;
-    border-color: rgba(234, 228, 228, 0.13);
+    display: flex;
+    overflow: hidden;
+    border: 1px solid var(--cw-border);
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(252, 254, 255, 0.88), rgba(241, 248, 255, 0.76));
     backdrop-filter: blur(5px);
+}
+
+.courseware-menu {
+    flex-shrink: 0;
+    border-right: 1px solid var(--cw-border);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(239, 248, 255, 0.66));
+    --el-menu-bg-color: transparent;
+    --el-menu-hover-bg-color: var(--cw-accent-soft);
+    --el-menu-active-color: var(--cw-accent);
+    --el-menu-text-color: var(--cw-text);
+}
+
+.courseware-preview-frame {
+    flex: 1;
+    width: 100px;
+    background: rgba(255, 255, 255, 0.88);
+}
+
+.courseware-empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.courseware-fallback-card {
+    max-width: 420px;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid var(--cw-border);
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--cw-text);
     display: flex;
     flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 16px rgba(43, 92, 156, 0.1);
+    }
+}
+
+.courseware-fallback-tip {
+    font-size: 12px;
+    margin-top: 8px;
 }
 
 .arrow-icon {
@@ -307,15 +455,26 @@ onMounted(async () => {
     width: 1em;
     margin-right: 8px;
     text-align: center;
+    color: rgba(45, 71, 103, 0.8);
 }
 
 .courseware-file-icon {
-    margin-right: 8px;
-    font-size: 100px;
+    margin: 2px 0 12px;
+    font-size: 68px;
+    color: var(--cw-accent);
 }
 
 .el-menu-vertical-demo:not(.el-menu--collapse) {
     width: 260px;
+}
+
+:global(.el-menu-vertical-demo .el-menu-item.is-active) {
+    color: var(--cw-accent) !important;
+    background: var(--cw-accent-soft) !important;
+}
+
+:global(.el-menu-vertical-demo .el-menu-item.is-active .menu-icon) {
+    color: var(--cw-accent) !important;
 }
 
 .courseware-select {
@@ -327,5 +486,24 @@ onMounted(async () => {
     min-width: 0;
     display: flex;
     align-items: center;
+}
+
+.preview-freeze-mask {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(237, 246, 255, 0.72);
+}
+
+:global(.courseware-menu-popper .el-popper__arrow) {
+    display: none !important;
+}
+
+:global(.courseware-option-tooltip) {
+    max-width: min(80vw, 560px);
+    white-space: normal;
+    word-break: break-all;
+    line-height: 1.45;
 }
 </style>
