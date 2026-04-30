@@ -17,6 +17,7 @@ import {
     getAllHomeworkItem,
     getAllStudentSubmissions,
     modifyPassword,
+    syncCoursePlatformSession,
 } from '@/api/api_ve';
 import router from '@/router';
 import { throttle } from 'lodash-es';
@@ -25,11 +26,38 @@ const CACHE_STORAGE_KEY = 'user_cache'
 
 interface AuthCheckOptions {
     silent?: boolean
+    force?: boolean
 }
 
 interface ReconnectOptions {
     notify?: boolean
 }
+
+interface RefreshOptions {
+    silent?: boolean
+    force?: boolean
+}
+
+interface DataTimestamps {
+    userInfo: number
+    status: number
+    courseList: number
+    homeworkList: number
+}
+
+const createDefaultDataTimestamps = (): DataTimestamps => ({
+    userInfo: 0,
+    status: 0,
+    courseList: 0,
+    homeworkList: 0,
+})
+
+const DATA_TTL = {
+    userInfo: 30 * 60 * 1000,
+    status: 5 * 60 * 1000,
+    courseList: 12 * 60 * 60 * 1000,
+    homeworkList: 10 * 60 * 1000,
+} as const
 
 export const useUserStore = defineStore('user', () => {
     // 从 localStorage 恢复状态，如果没有则使用默认值
@@ -46,6 +74,7 @@ export const useUserStore = defineStore('user', () => {
             courseList: [],
             homeworkList: [],
             Cache: {},
+            dataTimestamps: createDefaultDataTimestamps(),
         };
 
     // 合并认证数据和缓存数据到初始状态
@@ -62,8 +91,7 @@ export const useUserStore = defineStore('user', () => {
     const isLoading = ref(false)
     const taskQueue = ref<Array<() => Promise<void>>>([]);
     const isProcessingQueue = ref(false);
-    const status_ve = ref<boolean>(false)
-    const status_app = ref<boolean | null>(null)
+    const connectionStatus = ref<boolean | null>(null)
     const retryConnect = ref<number>(0)
 
     // 缓存部分数据
@@ -75,6 +103,26 @@ export const useUserStore = defineStore('user', () => {
     const activeSemester = ref<TermInfo | null>(initialState.activeSemester)
     const courseList = ref<CourseInfo[]>(initialState.courseList)
     const homeworkList = ref<HomeworkItem[]>(initialState.homeworkList)
+    const dataTimestamps = ref<DataTimestamps>({
+        ...createDefaultDataTimestamps(),
+        ...(initialState.dataTimestamps || {}),
+    })
+
+    const markDataFresh = (key: keyof DataTimestamps) => {
+        dataTimestamps.value[key] = Date.now()
+    }
+
+    const hasFreshData = (key: keyof DataTimestamps) => {
+        return Date.now() - dataTimestamps.value[key] < DATA_TTL[key]
+    }
+
+    const hasCourseSnapshot = () => {
+        return Boolean(activeSemester.value?.xqCode) && courseList.value.length > 0
+    }
+
+    const hasHomeworkSnapshot = () => {
+        return homeworkList.value.length > 0
+    }
 
     const addTaskToQueue = (task: () => Promise<void>) => {
         taskQueue.value.push(task);
@@ -113,6 +161,8 @@ export const useUserStore = defineStore('user', () => {
             courseList.value = []
             homeworkList.value = []
             Cache.value = {}
+            connectionStatus.value = false
+            dataTimestamps.value = createDefaultDataTimestamps()
             saveCache.flush()
             saveState.flush()
             router.push('/login')
@@ -150,10 +200,29 @@ export const useUserStore = defineStore('user', () => {
         }, 500);
     }
 
+    const syncVeUserInfo = async () => {
+        const veUserInfo = await getUserInfo_ve()
+        userinfo.value = {
+            ...(userinfo.value ?? {} as UserInfo),
+            ...veUserInfo,
+        } as UserInfo
+        markDataFresh('userInfo')
+        useCache('avatar', userinfo.value.avatarPath || '')
+        return userinfo.value
+    }
+
     let isCheckingAuth = false
+    const veAuthCheckInterval = 5 * 60 * 1000
+    const lastVeCheckTime = ref<number>(0)
+    const lastVeCheckResult = ref<boolean>(false)
 
     const checkAuth_ve = async (options: AuthCheckOptions = {}) => {
         const silent = options.silent ?? true;
+        const force = options.force ?? false;
+        const now = Date.now();
+        if (!force && now - lastVeCheckTime.value < veAuthCheckInterval) {
+            return lastVeCheckResult.value
+        }
         // 如果已经在检查，则返回当前状态的Promise
         if (isCheckingAuth) {
             console.log('已有checkAuth_ve实例在运行，跳过本次调用')
@@ -161,7 +230,7 @@ export const useUserStore = defineStore('user', () => {
                 const checkInterval = setInterval(() => {
                     if (!isCheckingAuth) {
                         clearInterval(checkInterval)
-                        resolve(status_ve.value)
+                        resolve(lastVeCheckResult.value)
                     }
                 }, 500)
             })
@@ -176,17 +245,20 @@ export const useUserStore = defineStore('user', () => {
         }
 
         try {
-            const veUserInfo = await getUserInfo_ve()
-            userinfo.value = { ...userinfo.value, ...veUserInfo }
-            status_ve.value = true
+            await syncCoursePlatformSession()
+            connectionStatus.value = true
+            lastVeCheckResult.value = true
+            markDataFresh('status')
             return true
         } catch (error) {
-            console.error('获取VE用户信息失败:', error)
-            status_ve.value = false
+            console.error('刷新课程平台会话失败:', error)
+            connectionStatus.value = false
+            lastVeCheckResult.value = false
+            markDataFresh('status')
             if (!silent) {
                 el_alert({
                     title: '连接错误',
-                    message: '无法连接到VE服务器，请检查网络连接或重新登录',
+                    message: '无法同步课程平台会话，请检查网络连接或重新登录',
                     type: 'error',
                     showClose: true,
                     duration: 3000
@@ -195,24 +267,18 @@ export const useUserStore = defineStore('user', () => {
             return false
         } finally {
             retryConnect.value = 0
+            lastVeCheckTime.value = Date.now()
             isCheckingAuth = false
         }
-    }
-    const checkAuth_app = async () => {
-        if (!isAuthenticated.value) {
-            status_app.value = false;
-            return false
-        }
-        status_app.value = Boolean(localStorage.getItem('sessionId'));
-        return status_app.value
     }
     const checkAuthInterval = 5 * 60 * 1000; // 5 分钟的间隔，可按需调整
     const lastCheckTime = ref<number>(0);
     const lastCheckResult = ref<boolean>(false);
     const checkAuth = async (options: AuthCheckOptions = {}) => {
         const now = Date.now();
+        const force = options.force ?? false;
         // 若在间隔时间内，直接返回缓存结果
-        if (now - lastCheckTime.value < checkAuthInterval) {
+        if (!force && now - lastCheckTime.value < checkAuthInterval) {
             return lastCheckResult.value;
         }
         const result = await checkAuth_force(options);
@@ -224,26 +290,18 @@ export const useUserStore = defineStore('user', () => {
         return result;
     };
     const checkAuth_force = async (options: AuthCheckOptions = {}) => {
-        const silent = options.silent ?? true;
-        const a = await checkAuth_ve(options)
-        const b = await checkAuth_app()
-        if (a && !b && !silent) {
-            el_alert({
-                title: '警告',
-                message: '网页端服务器连接成功，但轻新课堂服务器连接失败,已挂起轻新课堂相关功能',
-                type: 'warning',
-                showClose: true,
-                duration: 3000
-            });
-        }
-        if (a || b) return true;
-        return false
+        return await checkAuth_ve({ ...options, force: true })
     }
 
     const reconnectVe = async () => {
-        if (await checkAuth_ve({ silent: true })) return true;
+        if (await checkAuth_ve({ silent: true, force: true })) {
+            if (!userinfo.value || !hasFreshData('userInfo')) {
+                await syncVeUserInfo()
+            }
+            return true;
+        }
         if (!username.value || !password.value) {
-            status_ve.value = false;
+            connectionStatus.value = false;
             return false;
         }
 
@@ -259,25 +317,26 @@ export const useUserStore = defineStore('user', () => {
                 passcode: '',
                 loginType: '2',
             });
-            return await checkAuth_ve({ silent: true });
+            const connected = await checkAuth_ve({ silent: true, force: true });
+            if (!connected) return false;
+            await syncVeUserInfo()
+            return true
         } catch (error) {
             console.error('VE重连失败:', error);
-            status_ve.value = false;
+            connectionStatus.value = false;
             return false;
         }
     }
 
     const reconnect = async (options: ReconnectOptions = {}) => {
         const notify = options.notify ?? true;
-        const veConnected = await reconnectVe();
-        const appConnected = await checkAuth_app();
-        const success = veConnected || !!appConnected;
+        const success = await reconnectVe();
         lastCheckTime.value = Date.now();
         lastCheckResult.value = success;
         if (notify) {
             el_alert({
                 title: success ? '重连完成' : '重连失败',
-                message: `VE：${status_ve.value ? '已连接' : '未连接'}；APP：${status_app.value ? '已连接' : '未连接'}`,
+                message: success ? '课程平台会话已恢复并同步' : '课程平台会话恢复失败',
                 type: success ? 'success' : 'error',
                 showClose: true,
                 duration: 2000
@@ -286,70 +345,92 @@ export const useUserStore = defineStore('user', () => {
         return success;
     }
 
-    const refreshUserInfoTask = async () => {
+    const refreshUserInfoTask = async (options: RefreshOptions = {}) => {
+        const force = options.force ?? false
+        const silent = options.silent ?? true
+        const needsUserInfo = force || !userinfo.value || !hasFreshData('userInfo')
+        const needsCourseList = force || !hasCourseSnapshot() || !hasFreshData('courseList')
+
+        if (!needsUserInfo && !needsCourseList) return
         if (userinfo.value == null) isLoading.value = true;
         try {
-            if (!await checkAuth({ silent: true })) return;
-            const semesterRes = await getAllTerm();
-            activeSemester.value = semesterRes[0];
-            const xqCode = activeSemester.value?.xqCode;
-            if (xqCode) {
-                courseList.value = await getAllCourses(xqCode);
+            if (needsUserInfo) {
+                await syncVeUserInfo()
             }
-            try {
-                const response = await fetch(userinfo.value.avatarPath);
-                const blob = await response.blob();
-                useCache('avatar', URL.createObjectURL(blob))
-            } catch {
-                useCache('avatar', '')
-                throw ('头像获取失败')
+
+            if (needsCourseList) {
+                const semesterRes = await getAllTerm();
+                activeSemester.value = semesterRes[0] || null;
+                const xqCode = activeSemester.value?.xqCode;
+                courseList.value = xqCode ? await getAllCourses(xqCode) : [];
+                markDataFresh('courseList')
             }
-            await el_alert({
-                title: '用户数据',
-                message: `${new Date().toLocaleString()}更新成功`,
-                type: 'success',
-                showClose: true,
-                duration: 1000
-            });
+
+            if (!silent) {
+                await el_alert({
+                    title: '用户数据',
+                    message: `${new Date().toLocaleString()}更新成功`,
+                    type: 'success',
+                    showClose: true,
+                    duration: 1000
+                });
+            }
         } catch (error) {
-            el_alert({
-                title: '信息更新失败',
-                message: `${error}`,
-                type: 'error',
-                showClose: true,
-                duration: 1000
-            });
+            if (!silent) {
+                el_alert({
+                    title: '信息更新失败',
+                    message: `${error}`,
+                    type: 'error',
+                    showClose: true,
+                    duration: 1000
+                });
+            }
         } finally {
             isLoading.value = false;
         }
     };
 
-    const refreshUserInfo = () => {
-        addTaskToQueue(refreshUserInfoTask);
+    const refreshUserInfo = (options: RefreshOptions = {}) => {
+        addTaskToQueue(() => refreshUserInfoTask(options));
     };
 
-    const refreshHomeworks = async () => {
-        if (!await checkAuth_ve({ silent: true })) return;
+    const refreshHomeworks = async (options: RefreshOptions = {}) => {
+        const force = options.force ?? false
+        const silent = options.silent ?? true
+        if (!force && hasHomeworkSnapshot() && hasFreshData('homeworkList')) return;
+        if (!await checkAuth({ silent: true })) return;
+        if (!hasCourseSnapshot()) {
+            await refreshUserInfoTask({ silent: true })
+        }
         if (courseList.value.length === 0) return;
         try {
             homeworkList.value = await getAllHomeworkItem(courseList.value.map(course => course.id));
-            el_alert({
-                title: '作业信息更新',
-                message: `${new Date().toLocaleString()}`,
-                type: 'success',
-                showClose: true,
-                duration: 1000
-            });
+            markDataFresh('homeworkList')
+            if (!silent) {
+                el_alert({
+                    title: '作业信息更新',
+                    message: `${new Date().toLocaleString()}`,
+                    type: 'success',
+                    showClose: true,
+                    duration: 1000
+                });
+            }
         } catch (error) {
-            el_alert({
-                title: '作业加载失败',
-                message: `${error}`,
-                type: 'error',
-                showClose: true,
-                duration: 0
-            });
+            if (!silent) {
+                el_alert({
+                    title: '作业加载失败',
+                    message: `${error}`,
+                    type: 'error',
+                    showClose: true,
+                    duration: 0
+                });
+            }
         }
     };
+
+    const refreshConnectionStatus = async (options: AuthCheckOptions = {}) => {
+        return await checkAuth_ve({ ...options, force: true })
+    }
 
     const refreshHomeworkDetails = async () => {
         if (!await checkAuth_ve({ silent: true })) return;
@@ -372,18 +453,19 @@ export const useUserStore = defineStore('user', () => {
                     if (scoreB === null) return -1
                     return scoreB - scoreA
                 })
+                const reviewedSubmissions = allSubmissions.filter((item) => item.pgFlag !== 's')
                 homework.detail = {
                     my_homework: homework.detail?.my_homework,
                     courseNoteList: allSubmissions,
-                    topFive: allSubmissions.filter((item) => item.pgFlag !== 's').slice(0, 5).map((item) => item.id)
+                    topFive: reviewedSubmissions.slice(0, 5).map((item) => item.id)
                 }
-                const mhw = allSubmissions.filter((item) => item.pgFlag !== 's').find((item) => item.id == homework.detail?.my_homework)
-                if (mhw) {
+                const mhw = reviewedSubmissions.find((item) => item.id == homework.detail?.my_homework)
+                if (mhw && homework.returned !== true && mhw.score !== null) {
                     homework.status = 2;
                     homework.detail.score = Number(mhw.score);
-                    homework.detail.rank = allSubmissions.filter((item) => item.pgFlag !== 's').findIndex((item) => item.id == homework.detail?.my_homework) + 1;
+                    homework.detail.rank = reviewedSubmissions.findIndex((item) => item.id == homework.detail?.my_homework) + 1;
                     homework.detail.is_excellent = Number(mhw.is_excellent);
-                    homework.detail.average_score = allSubmissions.filter((item) => item.pgFlag !== 's').map((item) => Number(item.score)).reduce((a, b) => a + b, 0) / allSubmissions.filter((item) => item.pgFlag !== 's').length;
+                    homework.detail.average_score = reviewedSubmissions.map((item) => Number(item.score)).reduce((a, b) => a + b, 0) / reviewedSubmissions.length;
                     homework.detail.comment = mhw.content;
                 }
             }
@@ -425,6 +507,7 @@ export const useUserStore = defineStore('user', () => {
                 courseList: courseList.value,
                 homeworkList: homeworkList.value,
                 Cache: Cache.value,
+                dataTimestamps: dataTimestamps.value,
             })
         );
     }, 1000);
@@ -446,16 +529,16 @@ export const useUserStore = defineStore('user', () => {
         go_kcpt,
         handleSyncPassword,
         checkAuth_ve,
-        status_ve,
-        checkAuth_app,
-        status_app,
+        connectionStatus,
         checkAuth,
         reconnect,
+        refreshConnectionStatus,
         addTaskToQueue,
         refreshUserInfo,
         refreshHomeworks,
         refreshHomeworkDetails,
         Cache,
-        checkAuth_force
+        checkAuth_force,
+        dataTimestamps
     };
 });

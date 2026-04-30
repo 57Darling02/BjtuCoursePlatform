@@ -4,7 +4,7 @@
          <NavModule/>
       </div>
          <div>
-            <DayCourseModule v-if="userStore.status_app" />
+            <DayCourseModule v-if="userStore.connectionStatus" />
          </div>
       
       

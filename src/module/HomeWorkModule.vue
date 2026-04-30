@@ -77,6 +77,7 @@ import {
 } from '@/utils';
 const userStore = useUserStore();
 
+const THREE_MINUTES = 3 * 60 * 1000
 
 const activeHomework = ref<HomeworkItem | null>(null)
 const HomeworkDialogVisible = ref(false);
@@ -91,12 +92,29 @@ const handleClick = (hw: HomeworkItem) => {
     HomeworkDialogVisible.value = true;
 }
 
-const refreshHomeworksTask = async () => {
+const getNavigationType = () => {
+    const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
+    if (navigationEntry?.type) return navigationEntry.type
+    const legacyNavigation = (performance as Performance & { navigation?: { type?: number } }).navigation
+    if (legacyNavigation?.type === 1) return 'reload'
+    if (legacyNavigation?.type === 0) return 'navigate'
+    return undefined
+}
+
+const isManualPageReload = () => getNavigationType() === 'reload'
+
+const shouldRefreshHomeworkList = () => {
+    const lastSyncedAt = userStore.dataTimestamps.homeworkList || 0
+    if (!lastSyncedAt) return true
+    return Date.now() - lastSyncedAt > THREE_MINUTES
+}
+
+const refreshHomeworksTask = async (options: { force?: boolean } = {}) => {
     if (!userStore?.homeworkList || userStore.homeworkList?.length == 0) {
         isLoading.value = true;
     }
     try {
-        await userStore.refreshHomeworks();
+        await userStore.refreshHomeworks({ force: options.force ?? false });
     } finally {
         isLoading.value = false;
     }
@@ -105,6 +123,20 @@ const refreshHomeworksTask = async () => {
 const refreshHomeworkDetailsTask = async () => {
     await userStore.refreshHomeworkDetails();
 }
+
+const syncHomeworkOnEnter = () => {
+    const manualReload = isManualPageReload()
+    const forceRefreshHomeworkList = manualReload || shouldRefreshHomeworkList()
+
+    if (manualReload) {
+        userStore.addTaskToQueue(() => userStore.reconnect({ notify: false }))
+        userStore.refreshUserInfo({ force: true, silent: true })
+    }
+
+    userStore.addTaskToQueue(() => refreshHomeworksTask({ force: forceRefreshHomeworkList }))
+    userStore.addTaskToQueue(refreshHomeworkDetailsTask)
+}
+
 const active_colomn = ref('0')
 emitter.on('UPDATE_HOMEWORKS', () => {
     try {
@@ -120,8 +152,7 @@ emitter.on('UPDATE_HOMEWORKS', () => {
 
 onMounted(() => {
     try {
-        userStore.addTaskToQueue(refreshHomeworksTask);
-        userStore.addTaskToQueue(refreshHomeworkDetailsTask);
+        syncHomeworkOnEnter()
     } catch (error) {
         console.error('获取作业列表失败:', error)
     }

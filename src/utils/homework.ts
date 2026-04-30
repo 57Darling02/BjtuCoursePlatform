@@ -6,18 +6,25 @@ export interface HomeworkGroup {
 }
 
 export const countUncompleted = (list: HomeworkItem[]) =>
-    list.filter(hw => hw.status === 0 && hw.subStatus === 0).length;
+    list.filter(hw => hw.returned === true || (hw.status === 0 && hw.subStatus === 0)).length;
 
 export const countExpired = (list: HomeworkItem[]) =>
-    list.filter(hw => hw.status === 0 && hw.subStatus === 2).length;
+    list.filter(hw => hw.status === 0 && hw.subStatus === 2 && hw.returned !== true).length;
 
 export const countWaitMakeup = (list: HomeworkItem[]) =>
-    list.filter(hw => hw.status === 0 && hw.subStatus === 1).length;
+    list.filter(hw => hw.status === 0 && hw.subStatus === 1 && hw.returned !== true).length;
 
 export const sortTodoHomeworks = (homeworkList: HomeworkItem[]) => {
     return [...homeworkList].sort((a, b) => {
-        const aUncompleted = a.status === 0;
-        const bUncompleted = b.status === 0;
+        const aUncompleted = a.status === 0 || a.returned === true;
+        const bUncompleted = b.status === 0 || b.returned === true;
+
+        const aReturned = a.returned === true;
+        const bReturned = b.returned === true;
+
+        if (aReturned !== bReturned) {
+            return aReturned ? -1 : 1;
+        }
 
         const aIsOverdueButCanMakeup = aUncompleted && a.subStatus === 1;
         const bIsOverdueButCanMakeup = bUncompleted && b.subStatus === 1;
@@ -59,7 +66,7 @@ export const sortTodoHomeworks = (homeworkList: HomeworkItem[]) => {
         }
 
         return 0;
-    }).filter(hw => hw.status === 0 && hw.subStatus !== 2);
+    }).filter(hw => hw.returned === true || (hw.status === 0 && hw.subStatus !== 2));
 };
 
 export const groupHomeworksByCourse = (homeworkList: HomeworkItem[]): Record<string, HomeworkGroup> => {

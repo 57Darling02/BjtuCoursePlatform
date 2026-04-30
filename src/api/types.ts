@@ -54,9 +54,16 @@ export interface HomeworkItem {
     full_score: number
     subStatus: 0 | 1 | 2
     status: 0 | 1 | 2
+    submitted_at?: string | null
+    sub_status_text?: string
+    score_id?: number | null
+    return_flag?: number | string | null
+    return_num?: number
+    returned?: boolean
     submitCount: number
     allCount: number
     is_repeat: 0 | 1
+    fz?: number
     refAnswer: string | null
     subType: number
     detail?: {

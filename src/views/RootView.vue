@@ -22,7 +22,6 @@ const scroll = throttle(({ scrollTop }: { scrollTop: number }) => {
 }, 200, { trailing: true })
 
 const footer_content = ['Powered by 57Darling02 © 2025']
-userStore.refreshUserInfo()
 
 const showNotice = () => {
   ElMessageBox.confirm(
@@ -40,6 +39,7 @@ const showNotice = () => {
   });
 }
 onMounted(() => {
+  userStore.refreshUserInfo({ silent: true })
   scrollbarRef.value?.update()
   const current_version = localStorage.getItem('version')
   if (current_version === version) return

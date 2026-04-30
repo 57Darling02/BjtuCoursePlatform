@@ -1,15 +1,5 @@
 <template>
     <nav class="app-navbar" aria-label="顶部导航">
-        <button
-            class="nav-item nav-brand"
-            :class="{ 'nav-item-active': isActiveRoute('home') }"
-            type="button"
-            @click="navigateTo('home')"
-        >
-            <i class="fa-solid fa-house" aria-hidden="true" />
-            <span>主页</span>
-        </button>
-
         <div class="nav-menu">
             <el-dropdown
                 class="nav-dropdown"
@@ -25,7 +15,7 @@
                     type="button"
                 >
                     <i class="fa-solid fa-compass nav-menu-icon" aria-hidden="true" />
-                    <span>传送门</span>
+                    <span>传送</span>
                 </button>
 
                 <template #dropdown>
@@ -46,10 +36,12 @@
 
         <button class="nav-item nav-profile" type="button" aria-label="打开个人中心" @click="visible = true">
             <i class="fa-solid fa-user" aria-hidden="true" />
+            <span>个人</span>
         </button>
 
         <button class="nav-item nav-logout" type="button" aria-label="退出登录" @click="handleLogout">
             <i class="fa-solid fa-right-from-bracket" aria-hidden="true" />
+            <span>退出</span>
         </button>
     </nav>
 
@@ -76,6 +68,7 @@ const userStore = useUserStore()
 const visible = ref(false)
 
 const menuItems = [
+    { key: 'home', label: '作业', routeName: 'home', icon: 'fa-solid fa-house' },
     { key: 'learn', label: '课程学习', routeName: 'learn', icon: 'fa-solid fa-book-open' },
     { key: 'ai', label: '交大AI', routeName: 'ai', icon: 'fa-solid fa-wand-magic-sparkles' },
     { key: 'course-platform', label: '进入课程平台', icon: 'fa-solid fa-arrow-up-right-from-square', action: () => userStore.go_kcpt() },
@@ -211,13 +204,6 @@ $transition-time: 0.25s;
     text-align: center;
 }
 
-.nav-brand {
-    flex: 0 0 auto;
-}
-
-.nav-menu-trigger {
-    min-width: 108px;
-}
 
 .nav-menu-icon {
     transition: transform $transition-time ease;
@@ -230,17 +216,11 @@ $transition-time: 0.25s;
 }
 
 .nav-profile {
-    flex: 0 0 $nav-height;
-    width: $nav-height;
-    padding: 0;
-    border-radius: 50%;
+    flex: 0 0 auto;
 }
 
 .nav-logout {
-    flex: 0 0 $nav-height;
-    width: $nav-height;
-    padding: 0;
-    border-radius: 50%;
+    flex: 0 0 auto;
 }
 
 :global(.app-navbar-dropdown) {

@@ -2,6 +2,32 @@ import { service } from "./instance";
 import { extractAlertMessage } from "@/utils";
 import * as cheerio from "cheerio";
 import type { HomeworkItem, StudentSubmission,HomeWorkDetail, HomeworkFile } from "@/api/types";
+
+const submittedLabels = ["已提交", "已完成", "已交"]
+const unsubmittedLabels = ["未提交", "未完成", "待提交"]
+
+const inferSubmitStateFromText = (value: unknown): boolean | undefined => {
+    const text = String(value ?? "").trim()
+    if (!text) return undefined
+    if (unsubmittedLabels.some(label => text.includes(label))) return false
+    if (submittedLabels.some(label => text.includes(label))) return true
+    return undefined
+}
+
+const resolveHomeworkSubmitted = (item: CourseNote): boolean => {
+    const fromSubStatus = inferSubmitStateFromText(item.subStatus)
+    if (fromSubStatus !== undefined) return fromSubStatus
+
+    const fromScoreStatus = inferSubmitStateFromText(item.stu_score)
+    if (fromScoreStatus !== undefined) return fromScoreStatus
+
+    return Boolean(String(item.subTime ?? "").trim())
+}
+
+const isReturnedHomework = (item: CourseNote): boolean => {
+    if (String(item.return_flag ?? "") === "1") return true
+    return String(item.subStatus ?? "").trim() === "被打回"
+}
 /**
  * 1.获取作业列表getHomeWorkList
  * @param cId 课程ID (必填)
@@ -43,6 +69,10 @@ const getHomeworkItemx = async (cId: number, subType = 0): Promise<HomeworkItem[
     for (const item of response.courseNoteList) {
         const makeup_time = item.makeup_flag === '1' ? item.makeup_time : null;
         const subStatus = new Date() < new Date(item.end_time) ? 0 : ((item.makeup_flag === "1" && new Date()<new Date(item.makeup_time))? 1 : 2);
+        const submitted = resolveHomeworkSubmitted(item)
+        const returned = isReturnedHomework(item)
+        const reviewed = !returned && Boolean(item.scoreId)
+        const myHomeworkId = submitted && Number(item.snId) > 0 ? item.snId : undefined
         const hwitem: HomeworkItem = {
             id: item.id,
             title: item.title,
@@ -54,15 +84,22 @@ const getHomeworkItemx = async (cId: number, subType = 0): Promise<HomeworkItem[
             course_id: item.course_id,
             course_name: item.course_name,
             subStatus: subStatus,
-            status: item.snId ? 1 : 0,
+            status: reviewed ? 2 : (submitted && !returned ? 1 : 0),
+            submitted_at: item.subTime || null,
+            sub_status_text: item.subStatus || '',
+            score_id: item.scoreId ?? null,
+            return_flag: item.return_flag ?? null,
+            return_num: Number(item.return_num || 0),
+            returned,
             submitCount: item.submitCount,
             allCount: item.allCount,
             is_repeat: item.is_repeat,
+            fz: Number((item as CourseNote & { fz?: number | string }).fz ?? item.is_fz ?? 0),
             refAnswer: item.refAnswer,
             makeup_time: makeup_time,
             subType: subType,
             detail: {
-               my_homework: item.snId 
+               my_homework: myHomeworkId
             }
         }
         allHomework.push(hwitem)
@@ -236,40 +273,97 @@ export const getHomeworkDetail_pg = async (
         )
         const html = response.data;
         const $ = cheerio.load(html);
-        
+
+        const escapeHtml = (input: string) =>
+            input
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+
+        const extractHomeworkContent = () => {
+            const fromLabelBlock = $('.markContentRightNew .commentItem .homeworkContent').first().html()
+            if (fromLabelBlock && fromLabelBlock.trim()) return fromLabelBlock.trim()
+
+            const fromLeftBlock = $('.markContentLeft .homeworkContent').first().html()
+            if (fromLeftBlock && fromLeftBlock.trim()) return fromLeftBlock.trim()
+
+            return ''
+        }
+
+        const extractReviewComment = () => {
+            const fromTextarea = String($('#pigaiContent').val() ?? '').trim()
+            if (fromTextarea) return fromTextarea
+
+            const commentLabel = $('.markContentRight .labelText').filter((_, element) => $(element).text().includes('评语')).first()
+            const fallbackText = commentLabel.closest('.commentItem').find('textarea').val()
+            return String(fallbackText ?? '').trim()
+        }
+
+        const extractScore = () => {
+            const scoreRaw = String($('#score').val() ?? '').trim()
+            return scoreRaw || ''
+        }
+
         const FileList: HomeworkFile[] = []
-        const commentHomeworkContent = $('.commentItem .homeworkContent').text();
-        const markContentLeftElements = $('.markContentLeft .homeworkContent');
-        markContentLeftElements.each((_, element) => {
-            const onclick = $(element).attr('onclick');
+        const fileElements = $('[onclick*="downloadFile("]')
+        fileElements.each((_, element) => {
+            const onclick = $(element).attr('onclick')
             if (onclick) {
-                const match = onclick.match(/downloadFile\('([^']+)','([^']+)','([^']+)'/);
-                //"//downloadZyFj.shtml?path="+url+"&filename="+fileName+"&id="+id+"";
-                
+                const match = onclick.match(/downloadFile\(\s*['"]([^'"]*)['"]\s*,\s*['"]([^'"]*)['"]\s*,\s*['"]?([^'")]+)['"]?\s*\)/)
+
                 if (match && match.length === 4) {
+                    const rawPath = match[1]
+                    const fileName = match[2]
+                    const fileId = Number(match[3] || 0)
+                    const params = new URLSearchParams({
+                        path: rawPath,
+                        filename: fileName,
+                        id: String(fileId)
+                    })
+                    const pdfIndex = rawPath.indexOf('/pdf/')
                     const FHomeworkFile: HomeworkFile = {
-                        id: match[3]? Number(match[3]) : 0,
-                        url: "api//downloadZyFj.shtml?path="+match[1]+"&filename="+match[2]+"&id="+match[3],
-                        file_name: match[2],
-                        convert_url: match[1].replace('http://123.121.147.7:88/ve/pdf/', ''),
+                        id: fileId,
+                        url: `/api//downloadZyFj.shtml?${params.toString()}`,
+                        file_name: fileName,
+                        convert_url: pdfIndex >= 0 ? rawPath.slice(pdfIndex + 5) : null,
                         pic_size: 0
                     }
-                    FileList.push(FHomeworkFile)
+                    if (!FileList.some((item) => item.id === FHomeworkFile.id && item.file_name === FHomeworkFile.file_name)) {
+                        FileList.push(FHomeworkFile)
+                    }
                 }
             }
-        });
-        console.log('downloadParams',{
+        })
+
+        const homeworkContent = extractHomeworkContent()
+        const reviewComment = extractReviewComment()
+        const score = extractScore()
+        const contentBlocks: string[] = []
+        if (homeworkContent) {
+            contentBlocks.push(homeworkContent)
+        }
+        if (reviewComment) {
+            contentBlocks.push(`<p><strong>评语：</strong>${escapeHtml(reviewComment)}</p>`)
+        }
+        if (score) {
+            contentBlocks.push(`<p><strong>分数：</strong>${escapeHtml(score)}</p>`)
+        }
+        const parsedContent = contentBlocks.join('<br />')
+
+        console.log('downloadParams', {
             id,
             create_date: '',
             title: '',
-            content: commentHomeworkContent,
+            content: parsedContent,
             FileList,
         })
         return {
             id,
             create_date: '',
             title: '',
-            content: commentHomeworkContent,
+            content: parsedContent,
             FileList,
         }
     } catch (error) {
@@ -285,10 +379,39 @@ interface SubmitHomeworkResponse {
     flag: string
 }
 
+const parseSubmitHomeworkResponse = (payload: unknown): SubmitHomeworkResponse | null => {
+    if (payload && typeof payload === 'object') {
+        const record = payload as Record<string, unknown>
+        if (typeof record.flag === 'string') {
+            return { flag: record.flag }
+        }
+        return null
+    }
+    if (typeof payload !== 'string') return null
+    try {
+        const parsed = JSON.parse(payload) as Record<string, unknown>
+        if (typeof parsed.flag === 'string') {
+            return { flag: parsed.flag }
+        }
+    } catch {
+        return null
+    }
+    return null
+}
+
 export async function submitHomeworkAPI(formData: SubmitHomeworkForm): Promise<SubmitHomeworkResponse> {
     try {
+        const normalizedFormData: SubmitHomeworkForm = { ...formData }
+        normalizedFormData.isTeacher = "0"
+        if (typeof normalizedFormData.content === 'string') {
+            normalizedFormData.content = encodeURIComponent(normalizedFormData.content)
+        }
+        if (typeof normalizedFormData.groupName === 'string') {
+            normalizedFormData.groupName = encodeURIComponent(normalizedFormData.groupName)
+        }
+
         const body = new URLSearchParams()
-        Object.entries(formData).forEach(([key, value]) => {
+        Object.entries(normalizedFormData).forEach(([key, value]) => {
             if (value !== undefined) {
                 body.append(key, String(value))
             }
@@ -306,11 +429,12 @@ export async function submitHomeworkAPI(formData: SubmitHomeworkForm): Promise<S
                 },
             }
         );
-        // console.log('提交作业', response)
-        if (response?.data?.flag !== "success") {
-            throw new Error(extractAlertMessage(response.data) || '作业提交失败，服务器返回异常状态');
+        const parsedResponse = parseSubmitHomeworkResponse(response.data)
+        if (parsedResponse?.flag !== "success") {
+            const responseText = typeof response.data === 'string' ? response.data : JSON.stringify(response.data)
+            throw new Error(extractAlertMessage(responseText) || '作业提交失败，服务器返回异常状态');
         }
-        return response.data;
+        return parsedResponse;
     } catch (error) {
         throw new Error(`提交作业失败: ${error instanceof Error ? error.message : String(error)}`);
     }

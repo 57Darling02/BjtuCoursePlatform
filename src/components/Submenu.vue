@@ -27,79 +27,78 @@
                         {{ i }}
                     </el-tag>
                 </el-descriptions-item>
-                <el-descriptions-item label="状态" :span="2">
-                    <div class="status-row" @click="handleReconnect">
-                        <el-tag round :type="userStore.status_ve ? 'success' : 'danger'"
-                            :effect="userStore.status_ve ? 'light' : 'dark'">
-                            {{ reconnecting ? '🔄' : userStore.status_ve ? '✅' : '🚫' }}网页端
-                        </el-tag>
-                        <el-tag round :type="userStore.status_app ? 'success' : 'danger'"
-                            :effect="userStore.status_app ? 'light' : 'dark'">
-                            {{ reconnecting ? '🔄' : userStore.status_app ? '✅' : '🚫' }}app
+                <el-descriptions-item label="资料同步" :span="2">
+                    {{ profileSyncedAt }}
+                </el-descriptions-item>
+                <el-descriptions-item label="会话状态" :span="2">
+                    <div class="status-row" :title="statusHint" @click="handleStatusAction">
+                        <span>{{ statusSyncedAt }}，</span>
+                        <el-tag round :type="statusOk ? 'success' : 'danger'" :effect="statusOk ? 'light' : 'dark'">
+                            {{ statusOk ? '✅已连接' : '🚫未连接' }}
                         </el-tag>
                     </div>
                 </el-descriptions-item>
-
             </el-descriptions>
-
-
-            <NavMoudule />
-            <el-divider />
-            <el-row>
-                <el-text style="font-size: 14px; font-weight: bold; color: var(--el-text-color-primary); margin-bottom: 10px;">
-                    个人中心
-                </el-text>
-            </el-row>
-            <el-space wrap>
-                <el-button type="primary" round @click="userStore.handleSyncPassword">
-                    同步密码
-                </el-button>
-            </el-space>
-
         </div>
-
-
-
     </el-card>
 </template>
 <script lang='ts' setup>
-import NavMoudule from '@/module/NavModule.vue'
 import { useUserStore } from '@/stores/user'
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 const userStore = useUserStore()
-const loading = ref(true)
+const loading = computed(() => userStore.isLoading && !userStore.userinfo)
 const reconnecting = ref(false)
-const avatarSrc = ref<string>("")
+const avatarSrc = computed(() => userStore.Cache['avatar'] || userStore.userinfo?.avatarPath || '')
+const statusOk = computed(() => userStore.connectionStatus === true)
+const formatSyncTime = (timestamp: number) => {
+    if (!timestamp) return '尚未同步'
+    return new Date(timestamp).toLocaleString()
+}
+const profileSyncedAt = computed(() => formatSyncTime(userStore.dataTimestamps.userInfo))
+const statusSyncedAt = computed(() => formatSyncTime(userStore.dataTimestamps.status))
+const statusHint = computed(() => statusOk.value ? '点击刷新状态' : '点击尝试重连')
 
-const handleReconnect = async () => {
+const runStatusRefresh = async () => {
     if (reconnecting.value) return
     reconnecting.value = true
     try {
+        await userStore.refreshConnectionStatus({ silent: true })
+    } finally {
+        reconnecting.value = false
+    }
+}
+
+const handleStatusAction = async () => {
+    if (reconnecting.value) return
+    reconnecting.value = true
+    try {
+        if (statusOk.value) {
+            await userStore.refreshConnectionStatus({ silent: true })
+            return
+        }
         await userStore.reconnect()
     } finally {
         reconnecting.value = false
     }
 }
 
-onMounted(async () => {
-    reconnecting.value = true
-    try {
-        await userStore.reconnect({ notify: false })
-    } finally {
-        reconnecting.value = false
-    }
-    loading.value = false
-    setTimeout(() => {
-        avatarSrc.value = userStore.Cache['avatar'];
-    }, 200);
+onMounted(() => {
+    void runStatusRefresh()
 })
 </script>
 <style lang="scss" scoped>
+.sidebar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .status-row {
     display: inline-flex;
-    flex-wrap: wrap;
-    gap: 6px;
     align-items: center;
+    gap: 6px;
     cursor: pointer;
+    color: #334155;
+    font-size: 13px;
 }
 </style>

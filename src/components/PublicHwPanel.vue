@@ -7,7 +7,8 @@
                 <el-tag type="info">📅{{ hw.create_date.split(' ')[0] }}</el-tag>
                 <el-tag type="info">🚫{{ hw.end_time.split(' ')[0] }}</el-tag>
                 <el-tag>👥已完成:{{ hw.submitCount }}/{{ hw.allCount }}</el-tag>
-                <el-tag type="danger" v-if="hw.status == 0 && hw.subStatus != 2"><el-countdown
+                <el-tag type="warning" v-if="isReturned">↩️被打回</el-tag>
+                <el-tag type="danger" v-if="hw.status == 0 && hw.subStatus != 2 && !isReturned"><el-countdown
                         :style="{ display: 'inline-block', verticalAlign: 'middle', marginLeft: '4px' }"
                         value-style="color: #666; font-size: 14px; font-weight: 700; height:100%; display:flex "
                         format="⏳DD[天] HH:mm:ss"
@@ -28,21 +29,27 @@
     <el-dialog align-center v-model="addhwdialog" width="90%" :title="hw.title" v-if="hw" destroy-on-close
         append-to-body style="border-radius: 12px;">
 
-        <AddHwPanel v-if="showaddhw" :hwid="hw.id" :courseId="`${hw.course_id}`" :force_push="hw.subStatus == 2" />
+        <AddHwPanel
+            v-if="showaddhw"
+            :hwid="hw.id"
+            :courseId="`${hw.course_id}`"
+            :force_push="isReturned || hw.subStatus == 2"
+            :return_num="hw.return_num || 0"
+            :fz="hw.fz ?? 0"
+        />
         <div v-else>
-            <el-text v-if="hw.status == 1">
+            <el-text v-if="isReturned">
+                作业已被老师打回，可修改后重新提交。
+            </el-text>
+            <el-text v-else-if="hw.status == 1">
                 您的作业状态已经提交过了，如果再次提交，将会覆盖之前的作业。
             </el-text>
             <el-text v-else-if="hw.status == 2">
                 您的作业状态已经完成了批改，如果再次提交，将会覆盖之前的作业，并且成绩会被重置。
             </el-text>
             <el-text v-else-if="hw.subStatus == 2 && hw.status == 0">
-                你个大笨蛋！你的作业已经过期了，而且老师不允许你补交。将尝试强行帮你交上去，如果老师问起来，请你装傻。不然封了以后大家都没得交。
+                作业已过截止时间，且当前不允许补交。
             </el-text>
-            <el-divider />
-            <el-button type="primary" @click="showaddhw = true">
-                继续提交
-            </el-button>
         </div>
     </el-dialog>
 
@@ -61,6 +68,7 @@ const props = defineProps({
 })
 const hw = computed(() => props.activehomework)
 const addhwdialog = ref(false)
+const isReturned = computed(() => hw.value.returned === true || String(hw.value.return_flag ?? '') === '1' || hw.value.sub_status_text === '被打回')
 const countdownTarget = computed(() => {
     const now = Date.now();
     const endTime = new Date(hw.value.end_time).getTime();
@@ -68,8 +76,18 @@ const countdownTarget = computed(() => {
     return now < endTime ? endTime : makeupTime;
 });
 
-const showaddhw = ref(hw.value.status === 0 && hw.value.subStatus === 0)
+const canSubmitAgain = computed(() => hw.value.is_repeat === 1 || isReturned.value)
+const canOpenSubmitPanel = computed(() => {
+    if (hw.value.status === 2) return false
+    if (hw.value.status === 1) return canSubmitAgain.value
+    if (hw.value.subStatus === 2 && !isReturned.value) return false
+    return true
+})
+const showaddhw = ref(canOpenSubmitPanel.value)
 const button_status = computed(() => {
+    if (isReturned.value) {
+        return { text: '↩️待重交', type: 'warning' }
+    }
     if (hw.value.status == 0) {
         if (hw.value.subStatus == 0) {
             return { text: '⏰待提交', type: 'warning' }
@@ -79,14 +97,14 @@ const button_status = computed(() => {
             return { text: '⏰过期', type: 'danger' }
         }
     } else if (hw.value.status == 1) {
-        return { text: '✅已完成', type: 'success' }
+        return { text: '✅已提交', type: 'success' }
     } else {
         return { text: '✅已批改', type: 'success' }
     }
 })
 emitter.on('UPDATE_HOMEWORKS', () => {
     addhwdialog.value = false;
-    showaddhw.value = hw.value.status === 0 && hw.value.subStatus === 0;
+    showaddhw.value = canOpenSubmitPanel.value;
 })
 
 </script>

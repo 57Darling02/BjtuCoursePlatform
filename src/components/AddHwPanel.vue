@@ -48,6 +48,14 @@ const props = defineProps({
     force_push:{
         type: Boolean,
         default: false
+    },
+    return_num: {
+        type: Number,
+        default: 0
+    },
+    fz: {
+        type: Number,
+        default: 0
     }
 
 });
@@ -61,12 +69,12 @@ const form = ref({
     groupId: "",
     courseId: props.courseId,
     contentType: "0",
-    fz: "0",
+    fz: `${props.fz}`,
     jxrl_id: "",
     fileList: "" as string,
     upId: `${props.hwid}`,
-    return_num: "0",
-    isTeacher: props.force_push ? "1" : "0",
+    return_num: `${props.return_num}`,
+    isTeacher: "0",
     stuId: userStore.userinfo?.qxkt_id
 });
 
@@ -133,6 +141,8 @@ const submitHomework = async () => {
         if (!form.value.fileList) {
             form.value.fileList = "[]";
         }
+        // 学生端提交必须固定为 0，避免被 UI 状态误改
+        form.value.isTeacher = "0";
         const response = await submitHomeworkAPI(form.value);
         el_alert({
             title: '作业提交成功',
