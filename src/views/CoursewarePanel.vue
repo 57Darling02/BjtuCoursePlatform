@@ -193,31 +193,31 @@ const props = defineProps({
         required: true
     }
 })
+
+const handleUnavailableCourseware = () => {
+    ElMessage.warning('当前课程无课件或登入已过期，正在返回主页')
+    router.replace({ name: 'home' })
+}
+
 // 封装数据获取逻辑
 const fetchCoursewareList = async () => {
     const { course_num, fz_id, xq_code } = props
     if (!course_num || !fz_id || !xq_code) {
-        ElMessage.error({
-            message: `参数错误: ${!course_num ? '课程编号' : ''} ${!fz_id ? '分组ID' : ''} ${!xq_code ? '学期代码' : ''}`,
-            duration: 3000
-        })
+        ElMessage.error(`参数错误: ${!course_num ? '课程编号' : ''} ${!fz_id ? '分组ID' : ''} ${!xq_code ? '学期代码' : ''}`)
         console.error('缺失参数:', { course_num, fz_id, xq_code })
-        router.push({ name: 'learnspace' })
+        handleUnavailableCourseware()
         return
     }
     try {
         const data = await getCourseResourceList(course_num, fz_id, xq_code)
         coursewareList.value = data || []
         if (coursewareList.value.length === 0) {
-            ElMessage.warning('该课程暂无课件资源')
+            handleUnavailableCourseware()
+            return
         }
         selectedIndex.value = 0
     } catch (error) {
-        ElMessage.error({
-            message: `获取课件列表失败`,
-            duration: 3000
-        })
-        router.push({ name: 'learnspace' })
+        handleUnavailableCourseware()
     } finally {
         listLoading.value = false
     }

@@ -10,17 +10,23 @@
         <template v-else>
             <DayCourseModule />
             <div class="ai-frame-shell view-soft-surface">
-                <iframe class="ai-frame" src="https://aiservice.bjtu.edu.cn/robots/?#/cover" />
+                <iframe class="ai-frame" :src="aiUrl" />
             </div>
         </template>
     </div>
 
 </template>
 <script lang='ts' setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import DayCourseModule from '@/module/DayCourseModule.vue'
+import { useUserStore } from '@/stores/user'
 
 const isLoading = ref(false);
+const userStore = useUserStore()
+const aiUrl = computed(() => {
+    const studentId = userStore.userinfo?.id || userStore.username || ''
+    return `http://10.126.59.109:6074/aw//#/login?redirect=%2FaigcUtils%2FaiQuestionAnswer`
+})
 
 
 
