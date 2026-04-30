@@ -1,6 +1,5 @@
 import { service } from "./instance";
-import { extractAlertMessage } from "@/utils";
-import { logout } from "./logout";
+import { service as appService } from "../api_app/instance";
 
 //定义输入参数类型
 interface VeLoginParams {
@@ -13,7 +12,7 @@ interface VeLoginParams {
 export async function login_ve(loginparams: VeLoginParams): Promise<boolean> {
     const { username, password, passcode, loginType } = loginparams;
     try {
-        const response = await service.post(
+        await service.post(
             "/s.shtml",
             new URLSearchParams({
                 login: "main_2",
@@ -34,62 +33,48 @@ export async function login_ve(loginparams: VeLoginParams): Promise<boolean> {
                 },
             }
         );
-        // const alertMessage = extractAlertMessage(response.data);
-        // if (alertMessage) {
-        //     throw alertMessage
-        // }
-        // 访问api/back/core/main/index.shtml?method=index&type=qxkt 正确的话将返回302，我们不需要跳转，但是需要得到响应头中的Location中的sessionid，例如
-        // http://123.121.147.7:88/ve/back/coursePlatform/coursePlatform.shtml?method=toCoursePlatformIndex&sessionId=6264B6E14F334D7482314E1DAF9D3106
-        // try {
-        //     // 禁止自动重定向以获取302响应头，添加validateStatus允许302状态码
-        //     const response_2 = await service.get(
-        //         "/back/core/main/index.shtml?method=index&type=qxkt",
-        //         {
-        //             withCredentials: true,
-        //         }
-        //     );
-
-        //     // 从response_2获取location头
-        //     const location = response_2.headers["location"];
-        //     if (location) {
-        //         try {
-        //             // 处理相对路径URL（使用当前请求URL作为基准）
-        //             const fullUrl = new URL(location, 'http://123.121.147.7:88/');
-        //             const urlParams = new URLSearchParams(fullUrl.search);
-        //             const sessionId = urlParams.get("sessionId");
-
-        //             if (sessionId) {
-        //                 console.log("提取到的sessionId:", sessionId);
-        //                 // 将sessionId存储到localStorage
-        //                 localStorage.setItem("sessionId", sessionId);
-        //                 service.defaults.headers.common['sessionId'] = localStorage.getItem("sessionId") || ''
-        //             } else {
-        //                 throw new Error("Location URL中未找到sessionId参数");
-        //             }
-        //         } catch (urlError) {
-        //             console.error("解析Location URL失败:", urlError);
-        //             // 添加备用解析方案 - 直接字符串匹配sessionId参数
-        //             const sessionIdMatch = location.match(/sessionId=([^&]+)/);
-        //             if (sessionIdMatch && sessionIdMatch[1]) {
-        //                 console.log("备用方案提取到的sessionId:", sessionIdMatch[1]);
-        //                 localStorage.setItem("sessionId", sessionIdMatch[1]);
-        //             } else {
-        //                 throw new Error("无法解析sessionId: " + urlError.message);
-        //             }
-        //         }
-        //     } else {
-        //         throw new Error("响应头中未找到Location字段");
-        //     }
-        // } catch (error) {
-        //     console.error("获取sessionId失败:", error);
-        //     throw error; // 继续抛出错误让上层处理
-        // }
-        
+        await syncCoursePlatformSession();
         return true;
     } catch (error) {
         throw error;
     }
 }
+
+export const syncCoursePlatformSession = async (): Promise<string> => {
+    const response = await service.get<string>(
+        "/back/coursePlatform/coursePlatform.shtml",
+        {
+            params: {
+                method: "toCoursePlatformIndex",
+            },
+            headers: {
+                Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            },
+        }
+    );
+
+    const sessionId = extractCoursePlatformSessionId(String(response.data || ""));
+    if (!sessionId) {
+        throw new Error("无法从课程平台首页解析sessionId");
+    }
+
+    setCoursePlatformSessionId(sessionId);
+    return sessionId;
+};
+
+const extractCoursePlatformSessionId = (html: string): string | null => {
+    const headerMatch = html.match(/setRequestHeader\(\s*["']sessionId["']\s*,\s*["']([^"']+)["']\s*\)/i);
+    if (headerMatch?.[1]) return headerMatch[1];
+
+    const urlMatch = html.match(/[?&]sessionId=([A-Za-z0-9]+)/);
+    return urlMatch?.[1] || null;
+};
+
+const setCoursePlatformSessionId = (sessionId: string) => {
+    localStorage.setItem("sessionId", sessionId);
+    service.defaults.headers.common["sessionId"] = sessionId;
+    appService.defaults.headers.common["sessionId"] = sessionId;
+};
 
 export const modifyPassword = async (newPassword: string) => {
     try {

@@ -18,7 +18,6 @@ import {
     getAllStudentSubmissions,
     modifyPassword,
 } from '@/api/api_ve';
-import { getUserInfo as getUserInfo_app } from '@/api/api_app';
 import router from '@/router';
 import { throttle } from 'lodash-es';
 const USER_STORAGE_KEY = 'user_store'
@@ -200,16 +199,12 @@ export const useUserStore = defineStore('user', () => {
         }
     }
     const checkAuth_app = async () => {
-        if (!isAuthenticated.value) return
-        try {
-            const appUserInfo = await getUserInfo_app(username.value, password.value);
-            userinfo.value = { ...userinfo.value, ...appUserInfo };
-            status_app.value = true;
-            return true
-        } catch (error) {
+        if (!isAuthenticated.value) {
             status_app.value = false;
             return false
         }
+        status_app.value = Boolean(localStorage.getItem('sessionId'));
+        return status_app.value
     }
     const checkAuthInterval = 5 * 60 * 1000; // 5 分钟的间隔，可按需调整
     const lastCheckTime = ref<number>(0);

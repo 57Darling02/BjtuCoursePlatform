@@ -11,7 +11,7 @@
                 <el-upload drag action="/api/back/rp/common/rpUpload.shtml" :on-success="handleUploadSuccess"
                     :on-remove="handleFileRemove" v-model:file-list="uploadFileList" :auto-upload="true"
                     list-type="text" multiple>
-                    <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                    <i class="fa-solid fa-cloud-arrow-up upload-icon" aria-hidden="true" />
                     <div class="el-upload__text">
                         Drop file here or <em>click to upload</em>
                     </div>
@@ -33,7 +33,6 @@ import { submitHomeworkAPI } from '@/api/api_ve';
 import { el_alert, emitter } from '@/utils';
 import type { UploadFile, UploadProps } from 'element-plus';
 import { onMounted, ref } from 'vue';
-import { UploadFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user';
 const userStore = useUserStore();
 const props = defineProps({
@@ -154,4 +153,11 @@ const submitHomework = async () => {
 
 </script>
 
-<style scoped></style>
+<style scoped>
+.upload-icon {
+    color: var(--el-text-color-placeholder);
+    font-size: 67px;
+    line-height: 50px;
+    margin-bottom: 16px;
+}
+</style>

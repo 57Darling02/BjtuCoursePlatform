@@ -50,11 +50,10 @@
                     个人中心
                 </el-text>
             </el-row>
-            <!-- Action Buttons -->
             <el-space wrap>
-                <el-button v-for="i in actionButtons" :type="i.type" style="" @click="i.function" round>{{ i.text
-                    }}</el-button>
-
+                <el-button type="primary" round @click="userStore.handleSyncPassword">
+                    同步密码
+                </el-button>
             </el-space>
 
         </div>
@@ -66,16 +65,11 @@
 <script lang='ts' setup>
 import NavMoudule from '@/module/NavModule.vue'
 import { useUserStore } from '@/stores/user'
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 const userStore = useUserStore()
 const loading = ref(true)
 const reconnecting = ref(false)
 const avatarSrc = ref<string>("")
-const actionButtons = [
-    { text: '同步密码', type: 'primary', function: userStore.handleSyncPassword },
-    { text: '进入课程平台', type: 'success', function: userStore.go_kcpt },
-    { text: '退出登录', type: 'danger', function: userStore.handlelogout },
-]
 
 const handleReconnect = async () => {
     if (reconnecting.value) return
@@ -98,9 +92,6 @@ onMounted(async () => {
     setTimeout(() => {
         avatarSrc.value = userStore.Cache['avatar'];
     }, 200);
-})
-onUnmounted(() => {
-    document.querySelectorAll('.el-popper').forEach(el => el.remove())
 })
 </script>
 <style lang="scss" scoped>

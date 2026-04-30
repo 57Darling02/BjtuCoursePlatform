@@ -4,86 +4,55 @@
         <div style="flex: 1; display: flex;" v-else-if="coursewareList.length > 0">
             <el-menu default-active="2" class="el-menu-vertical-demo" :collapse="isCollapse">
                 <el-menu-item @click="toggleCollapse" index="2">
-                    <el-icon class="arrow-icon" :class="{ 'rotate-180': !isCollapse }">
-                        <DArrowRight />
-                    </el-icon>
+                    <i class="fa-solid fa-angles-right menu-icon arrow-icon" :class="{ 'rotate-180': !isCollapse }" />
                     <template #title>点击{{ isCollapse ? '展开' : '收起' }}菜单</template>
                 </el-menu-item>
                 <el-menu-item @click="isCollapse = false" index="2">
-                    <el-icon>
-                        <Files />
-                    </el-icon>
-                    <span>
-                        <el-select-v2 v-model="active_value" :options="options" placeholder="Please select" filterable
-                            style="width: 100%" :loading="isLoading">
+                    <i class="fa-solid fa-file-lines menu-icon" />
+                    <template #title>
+                        <el-select-v2 class="courseware-select" v-model="active_value" :options="options"
+                            placeholder="请选择课件" filterable :loading="isLoading" @click.stop>
                             <template #default="{ item }">
-                                <el-tooltip class="box-item" effect="dark" :content="item.label" style="width: 50px;"
-                                    placement="right">
-                                    <el-row>
+                                <el-tooltip effect="dark" :content="item.label" placement="right">
+                                    <div class="courseware-option">
                                         <el-text truncated>{{ item.label }}</el-text>
-                                    </el-row>
+                                    </div>
                                 </el-tooltip>
                             </template>
                         </el-select-v2>
-                    </span>
-                </el-menu-item>
-                <!-- <el-menu-item index="2">
-                    <el-icon>
-                        <Tools />
-                    </el-icon>
-                    <span>
-                        是否允许下载:
-                        {{ coursewareList[active_value]. }}
-                    </span>
+                    </template>
                 </el-menu-item>
                 <el-menu-item index="2">
-                    <el-icon>
-                        <Tools />
-                    </el-icon>
-                    <span>
-                        资源Id:
-                        {{ coursewareList[active_value].resId }}
-                    </span>
-                </el-menu-item> -->
-                <el-menu-item index="2">
-                    <el-icon>
-                        <FolderOpened />
-                    </el-icon>
+                    <i class="fa-solid fa-folder-open menu-icon" />
                     <span>
                         资源大小:
                         {{ coursewareList[active_value].rpSize }}MB
                     </span>
                 </el-menu-item>
                 <el-menu-item index="2">
-                    <el-icon>
-                        <FolderOpened />
-                    </el-icon>
+                    <i class="fa-solid fa-folder-open menu-icon" />
                     <span>
                         资源类型:
                         {{ coursewareList[active_value].extName }}
                     </span>
                 </el-menu-item>
                 <el-menu-item index="2">
-                    <el-icon>
-                        <Unlock v-if="coursewareList[active_value].share_type == 2" />
-                        <Lock v-else />
-                    </el-icon>
+                    <i
+                        class="fa-solid menu-icon"
+                        :class="coursewareList[active_value].share_type == 2 ? 'fa-unlock' : 'fa-lock'"
+                    />
                     <span>
                         资源状态:{{ coursewareList[active_value].share_type == 2 ? '公开' : '未公开' }}
                     </span>
                 </el-menu-item>
                 <el-menu-item index="2">
-                    <el-icon>
-                        <Avatar />
-                    </el-icon>
+                    <i class="fa-solid fa-user menu-icon" />
                     <span>
                         上传人:{{ coursewareList[active_value].teacherName }}
                     </span>
                 </el-menu-item>
                 <el-menu-item index="2">
-                    <el-icon>
-                        <Timer />
-                    </el-icon>
+                    <i class="fa-solid fa-clock menu-icon" />
                     <span>
                         上传时间:{{ coursewareList[active_value].inputTime }}
                         <!-- {{ coursewareList[active_value].res_url }} -->
@@ -92,9 +61,7 @@
 
 
                 <el-menu-item index="2" @click="downloadFile">
-                    <el-icon>
-                        <Download />
-                    </el-icon>
+                    <i class="fa-solid fa-download menu-icon" />
                     <template #title>
                         下载
                     </template>
@@ -107,7 +74,7 @@
                 <div class="a-card"
                     style="display: flex;flex-direction: column;justify-content: center;align-items: center;"
                     @click="downloadFile">
-                    <Document style="width: 100px; height: 100px; margin-right: 8px" />
+                    <i class="fa-solid fa-file courseware-file-icon" />
                     {{ coursewareList[active_value].rpName }}
                     <el-text class="text-muted" style="font-size: 12px; margin-top: 8px;">
                         该课件暂无预览功能，请点击此处下载后查看
@@ -119,7 +86,6 @@
 
 </template>
 <script lang='ts' setup>
-import { Files, FolderOpened, DArrowRight, Download, Timer, Avatar, Document, Unlock, Lock } from '@element-plus/icons-vue'
 import Loading from '@/components/Loading.vue';
 import { onMounted, ref, watch } from 'vue'
 import { type CourseResourceItem } from '@/api';
@@ -193,8 +159,22 @@ const fetchCoursewareList = async () => {
 
 const getFilePlayUrl = async (resId: string) => {
     try {
-        // Make HTTP GET request to the endpoint
-        const response = await fetch(`/api/back/coursePlatform/dataSynAction.shtml?method=getFilePlayUrl&id=${resId}&type=2`);
+        const headers = new Headers({
+            Accept: '*/*',
+            'X-Requested-With': 'XMLHttpRequest',
+        })
+        const sessionId = localStorage.getItem('sessionId')
+        if (sessionId) {
+            headers.set('sessionId', sessionId)
+        }
+
+        const response = await fetch(
+            `/api/back/coursePlatform/dataSynAction.shtml?method=getFilePlayUrl&id=${resId}&type=2`,
+            {
+                credentials: 'include',
+                headers,
+            }
+        );
 
         // Validate response status
         if (!response.ok) {
@@ -214,6 +194,10 @@ const pdfUrl = ref('')
 // 监听课件变化
 watch(active_value, async (newVal) => {
     const currentItem = coursewareList.value[newVal]
+    if (!currentItem) {
+        pdfUrl.value = ''
+        return
+    }
     if (currentItem.play_url && (currentItem.extName.endsWith('pdf') || currentItem.extName == 'docx')) {
         pdfUrl.value = `/static/pdfjs-5.2.133-dist/web/viewer.html?file=/api/pdf/${currentItem.play_url}`
     } else if (currentItem?.play_url?.endsWith('pdf') && currentItem.extName != 'pdf') {
@@ -317,5 +301,31 @@ onMounted(async () => {
         transform: rotate(180deg);
         transition: transform 0.5s;
     }
+}
+
+.menu-icon {
+    width: 1em;
+    margin-right: 8px;
+    text-align: center;
+}
+
+.courseware-file-icon {
+    margin-right: 8px;
+    font-size: 100px;
+}
+
+.el-menu-vertical-demo:not(.el-menu--collapse) {
+    width: 260px;
+}
+
+.courseware-select {
+    width: 100%;
+}
+
+.courseware-option {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
 }
 </style>

@@ -79,7 +79,7 @@
     </el-tabs>
 </template>
 <script lang='ts' setup>
-import { markRaw, ref, type PropType } from 'vue'
+import { ref, type PropType } from 'vue'
 import { type HomeworkItem } from '@/api';
 import PublicHwPanel from './PublicHwPanel.vue';
 import Hwcontent from '@/components/Hwcontent.vue'
@@ -87,7 +87,6 @@ import HwStucontent from '@/components/HwStucontent.vue'
 
 import { deleteHomework, getHomeworkDetail_pg } from '@/api/api_ve';
 import { emitter } from '@/utils';
-import { Delete } from '@element-plus/icons-vue'
 const props = defineProps({
     activehomework: {
         type: Object as PropType<HomeworkItem>,
@@ -128,7 +127,6 @@ const handleDelHw = () => {
             borderRadius: '12px', // 圆角  
         },
         type: 'warning',
-        icon: markRaw(Delete),
     }).then(async () => {
         // 调用删除接口
         ActiveHomework.detail?.my_homework && await deleteHomework(ActiveHomework.detail?.my_homework)

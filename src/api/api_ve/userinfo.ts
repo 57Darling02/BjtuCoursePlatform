@@ -17,6 +17,7 @@ export const getUserInfo = async (): Promise<UserInfo> => {
             name: "",
             avatarPath: "",
             role: [] as string[],
+            qxkt_id: String(response.QXKT_ID),
         };
         if (isStudent(response)) {
             const student = response as StudentUserInfo;
@@ -51,7 +52,6 @@ const createRoleArray = (...roles: (string | undefined)[]) =>
 // 接口函数
 const getResponse = async (): Promise<UserInfoResponse> => {
     try {
-        service.defaults.headers.common['sessionId'] = localStorage.getItem("sessionId") || ''
         const response = await service.get('/back/coursePlatform/userInfo.shtml',
             {
                 params: {

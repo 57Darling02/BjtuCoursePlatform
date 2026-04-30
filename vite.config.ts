@@ -13,29 +13,18 @@ const veOrigin = 'http://123.121.147.7:88'
 
 const buildVeReferer = (url = '') => {
   const requestUrl = new URL(url, 'http://localhost')
+  const veRootUrl = `${veOrigin}/ve`
   const coursePlatformUrl = `${veOrigin}/ve/back/coursePlatform/coursePlatform.shtml`
 
-  if (!requestUrl.pathname.endsWith('/back/coursePlatform/courseResource.shtml')) {
-    return coursePlatformUrl
+  const isCourseResource = requestUrl.pathname.endsWith('/back/coursePlatform/courseResource.shtml')
+  const isFilePlayUrl = requestUrl.pathname.endsWith('/back/coursePlatform/dataSynAction.shtml')
+    && requestUrl.searchParams.get('method') === 'getFilePlayUrl'
+
+  if (isCourseResource || isFilePlayUrl) {
+    return veRootUrl
   }
 
-  const params = requestUrl.searchParams
-  const referer = new URL(coursePlatformUrl)
-  referer.searchParams.set('method', 'toCoursePlatform')
-  referer.searchParams.set('courseToPage', '10450')
-  referer.searchParams.set('dataSource', '1')
-
-  const courseId = params.get('courseId')
-  const cId = params.get('cId')
-  const xkhId = params.get('xkhId')
-  const xqCode = params.get('xqCode')
-
-  if (courseId) referer.searchParams.set('courseId', courseId)
-  if (cId) referer.searchParams.set('cId', cId)
-  if (xkhId) referer.searchParams.set('xkhId', xkhId)
-  if (xqCode) referer.searchParams.set('xqCode', xqCode)
-
-  return referer.toString()
+  return coursePlatformUrl
 }
 
 // https://vite.dev/config/
