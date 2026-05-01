@@ -109,6 +109,7 @@ export const useUserStore = defineStore('user', () => {
     const hasTriedInitialReconnect = ref(false)
     let suppressAuthPersistence = false
     let isTemporaryAccountSwitching = false
+    let ongoingReconnect: Promise<boolean> | null = null
 
     // 缓存部分数据
     const Cache = ref<Record<string, any>>(initialState.Cache || {});
@@ -278,47 +279,59 @@ export const useUserStore = defineStore('user', () => {
     const checkAuth = async (options: AuthCheckOptions = {}) => {
         return await checkAuth_ve(options)
     }
-
+    
     const reconnect = async (options: ReconnectOptions = {}) => {
-        const notify = options.notify ?? true;
-        let success = false
-        if (await checkAuth_ve({ silent: true, force: true })) {
-            if (!userinfo.value || !hasFreshData('userInfo')) {
-                await syncVeUserInfo()
-            }
-            success = true
-        } else if (!username.value || !password.value) {
-            connectionStatus.value = false
-            success = false
-        } else {
-            try {
-                await login_ve({
-                    username: username.value,
-                    password: /^[a-f0-9]{32}$/i.test(password.value) ? password.value : md5(password.value),
-                    passcode: '',
-                    loginType: '2',
-                });
-                const connected = await checkAuth_ve({ silent: true, force: true });
-                if (connected) {
+        if (ongoingReconnect) {
+            return await ongoingReconnect
+        }
+        ongoingReconnect = (async () => {
+            await logout()
+            const notify = options.notify ?? true;
+            let success = false
+            if (await checkAuth_ve({ silent: true, force: true })) {
+                if (!userinfo.value || !hasFreshData('userInfo')) {
                     await syncVeUserInfo()
                 }
-                success = connected
-            } catch (error) {
-                console.error('VE重连失败:', error);
-                connectionStatus.value = false;
+                success = true
+            } else if (!username.value || !password.value) {
+                connectionStatus.value = false
                 success = false
+            } else {
+                try {
+                    await login_ve({
+                        username: username.value,
+                        password: /^[a-f0-9]{32}$/i.test(password.value) ? password.value : md5(password.value),
+                        passcode: '',
+                        loginType: '2',
+                    });
+                    const connected = await checkAuth_ve({ silent: true, force: true });
+                    if (connected) {
+                        await syncVeUserInfo()
+                    }
+                    success = connected
+                } catch (error) {
+                    console.error('VE重连失败:', error);
+                    connectionStatus.value = false;
+                    success = false
+                }
             }
+            if (notify) {
+                el_alert({
+                    title: success ? '重连完成' : '重连失败',
+                    message: success ? '课程平台会话已恢复并同步' : '课程平台会话恢复失败',
+                    type: success ? 'success' : 'error',
+                    showClose: true,
+                    duration: 2000
+                });
+            }
+            return success;
+        })()
+
+        try {
+            return await ongoingReconnect
+        } finally {
+            ongoingReconnect = null
         }
-        if (notify) {
-            el_alert({
-                title: success ? '重连完成' : '重连失败',
-                message: success ? '课程平台会话已恢复并同步' : '课程平台会话恢复失败',
-                type: success ? 'success' : 'error',
-                showClose: true,
-                duration: 2000
-            });
-        }
-        return success;
     }
 
     const runWithTemporaryAccount = async <T>(

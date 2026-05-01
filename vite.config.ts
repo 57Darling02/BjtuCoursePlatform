@@ -11,23 +11,6 @@ import postcssPresetEnv from "postcss-preset-env"
 
 const veOrigin = 'http://123.121.147.7:88'
 
-const buildVeReferer = (url = '') => {
-  const requestUrl = new URL(url, 'http://localhost')
-  const veRootUrl = `${veOrigin}/ve`
-  const coursePlatformUrl = `${veOrigin}/ve/back/coursePlatform/coursePlatform.shtml`
-
-  const isCourseResource = requestUrl.pathname.endsWith('/back/coursePlatform/courseResource.shtml')
-  const isFilePlayUrl = requestUrl.pathname.endsWith('/back/coursePlatform/dataSynAction.shtml')
-    && requestUrl.searchParams.get('method') === 'getFilePlayUrl'
-  const isReplayApi = requestUrl.pathname.endsWith('/back/rp/common/teachCalendar.shtml')
-
-  if (isCourseResource || isFilePlayUrl || isReplayApi) {
-    return veRootUrl
-  }
-
-  return coursePlatformUrl
-}
-
 // https://vite.dev/config/
 export default defineConfig({
   css: {
@@ -101,37 +84,10 @@ export default defineConfig({
         cookieDomainRewrite: "localhost",
 
       },
-      '/api_ai': {
-        target: 'https://aiservice.bjtu.edu.cn',
-        changeOrigin: true,
-        secure: false, // 允许HTTPS代理
-        rewrite: (path) => path.replace(/^\/api_ai/, ''),
-        headers: {
-          Host: 'aiservice.bjtu.edu.cn',
-          Origin: 'https://aiservice.bjtu.edu.cn'
-        },
-        cookieDomainRewrite: "localhost",
-      },
-      '/api_weiyun': {
-        target: 'https://sharechain.qq.com',
-        changeOrigin: true,
-        secure: false, // 允许HTTPS代理
-        rewrite: (path) => path.replace(/^\/api_weiyun/, ''),
-        headers: {
-          Host: 'sharechain.qq.com',
-          Origin: 'https://share.weiyun.com'
-        },
-        cookieDomainRewrite: "localhost",
-      },
       '/api': {
         target: 'http://123.121.147.7:88/ve',
         changeOrigin: true,
         configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq, req) => {
-            proxyReq.setHeader('Origin', veOrigin);
-            proxyReq.setHeader('Referer', buildVeReferer(req.url));
-            proxyReq.setHeader('X-Requested-With', 'XMLHttpRequest');
-          });
           proxy.on('proxyRes', (proxyRes, req, res) => {
             if (proxyRes.statusCode === 302) {
               proxyRes.statusCode = 200;
