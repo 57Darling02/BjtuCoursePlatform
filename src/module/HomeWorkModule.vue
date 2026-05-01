@@ -20,6 +20,16 @@
                         countExpired(userStore.homeworkList) }}项过期</el-tag>
                     <el-tag type="info" round>共{{ userStore.homeworkList.length }}项</el-tag>
                 </el-space>
+                <el-button
+                    class="module-refresh-btn"
+                    text
+                    :loading="isManualRefreshing"
+                    :disabled="isManualRefreshing"
+                    @click="triggerManualRefresh"
+                >
+                    <i v-if="!isManualRefreshing" class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                    手动刷新
+                </el-button>
             </div>
             <el-collapse v-model="activeColumn" accordion @change="handleCollapseChange">
                 <div class="fade-item">
@@ -92,6 +102,7 @@ const THREE_MINUTES = 3 * 60 * 1000
 const activeHomework = ref<HomeworkItem | null>(null)
 const HomeworkDialogVisible = ref(false);
 const isLoading = ref(false);
+const isManualRefreshing = ref(false);
 if (!userStore?.homeworkList || userStore.homeworkList?.length == 0) isLoading.value = true;
 
 
@@ -167,6 +178,19 @@ const syncHomeworkOnEnter = () => {
     userStore.addTaskToQueue(() => refreshHomeworksTask({ force: forceRefreshHomeworkList }))
 }
 
+const triggerManualRefresh = () => {
+    if (isManualRefreshing.value) return
+    isManualRefreshing.value = true
+    userStore.addTaskToQueue(async () => {
+        try {
+            await userStore.reconnectOnFirstEntryIfDisconnected({ notifyOnFailure: true })
+            await refreshHomeworksTask({ force: true })
+        } finally {
+            isManualRefreshing.value = false
+        }
+    })
+}
+
 const initialCourseId = Object.keys(groupedByCourse.value)[0] ?? ''
 const activeColumn = ref<string>(initialCourseId)
 ensureRenderedCourse(initialCourseId)
@@ -216,6 +240,17 @@ onMounted(() => {
 
 .module-tags {
     flex: 1;
+}
+
+.module-refresh-btn {
+    color: #3a5c8a;
+    padding-inline: 6px;
+    font-weight: 500;
+}
+
+.module-refresh-btn .fa-rotate-right {
+    margin-right: 6px;
+    font-size: 12px;
 }
 
 .hwitem {

@@ -7,18 +7,27 @@
     >
         <div
             class="streams-board"
-            :class="{ 'is-single': arrangedStreams.length === 1 }"
+            :class="{
+                'is-single': arrangedStreams.length === 1 || hideAuxStreams,
+                'is-main-only': hideAuxStreams
+            }"
         >
             <article
                 v-for="stream in arrangedStreams"
                 :key="stream.key"
                 class="stream-stage"
-                :class="{ 'is-featured': stream.key === featuredStream?.key }"
+                :class="[
+                    {
+                        'is-featured': stream.key === featuredStream?.key,
+                        'is-hidden-aux': hideAuxStreams && stream.key !== featuredStream?.key
+                    },
+                    stream.key === featuredStream?.key ? `featured-span-${featuredSpanRows}` : ''
+                ]"
             >
                 <button
                     class="stream-stage-media"
                     type="button"
-                    @click="setFeaturedStream(stream.key)"
+                    @click="handleStreamStageClick(stream.key)"
                 >
                     <div class="stream-stage-overlay">
                         <span class="stream-stage-label">
@@ -27,6 +36,17 @@
                         <div class="stream-stage-badges">
                             <span v-if="stream.key === featuredStream?.key" class="stream-badge stream-badge-featured">
                                 主视图
+                            </span>
+                            <span
+                                v-if="stream.key === featuredStream?.key && canToggleAuxStreams"
+                                class="stream-badge stream-badge-toggle"
+                                role="button"
+                                tabindex="0"
+                                @click.stop="toggleAuxStreams"
+                                @keydown.enter.prevent.stop="toggleAuxStreams"
+                                @keydown.space.prevent.stop="toggleAuxStreams"
+                            >
+                                {{ hideAuxStreams ? '还原' : '全屏' }}
                             </span>
                             <span v-if="stream.key === selectedAudioKey" class="stream-badge stream-badge-audio">
                                 音源
@@ -182,6 +202,7 @@ const syncTimer = ref<number | null>(null);
 const suppressSync = ref(false);
 const shellRef = ref<HTMLElement | null>(null);
 const isFullscreen = ref(false);
+const hideAuxStreams = ref(false);
 const featuredKey = ref('');
 const selectedAudioKey = ref('');
 const selectedPlaybackRate = ref(1);
@@ -222,8 +243,16 @@ const arrangedStreams = computed(() => {
     ];
 });
 
+const featuredSpanRows = computed(() => {
+    if (hideAuxStreams.value) return 1;
+    const auxCount = Math.max(orderedStreams.value.length - 1, 0);
+    if (auxCount <= 0) return 1;
+    return Math.min(auxCount, 3);
+});
+
 const safeDuration = computed(() => Math.max(duration.value, 0.1));
 const effectiveVolume = computed(() => (isMuted.value ? 0 : volume.value));
+const canToggleAuxStreams = computed(() => orderedStreams.value.length > 1);
 const selectAppendTarget = computed(() =>
     isFullscreen.value && shellRef.value ? shellRef.value : 'body'
 );
@@ -239,9 +268,13 @@ const supportsNativeHls = (video: HTMLVideoElement) =>
 const ensureSelectionState = () => {
     const keys = orderedStreams.value.map(stream => stream.key);
     if (!keys.length) {
+        hideAuxStreams.value = false;
         featuredKey.value = '';
         selectedAudioKey.value = '';
         return;
+    }
+    if (keys.length <= 1) {
+        hideAuxStreams.value = false;
     }
 
     if (!keys.includes(selectedAudioKey.value)) {
@@ -583,9 +616,22 @@ const toggleFullscreen = async () => {
     }
 };
 
+const toggleAuxStreams = () => {
+    if (!canToggleAuxStreams.value) return;
+    hideAuxStreams.value = !hideAuxStreams.value;
+};
+
 const setFeaturedStream = (key: string) => {
     if (!orderedStreams.value.some(stream => stream.key === key)) return;
     featuredKey.value = key;
+};
+
+const handleStreamStageClick = async (key: string) => {
+    if (key === featuredStream.value?.key) {
+        await togglePlayback();
+        return;
+    }
+    setFeaturedStream(key);
 };
 
 const handleControllerPlay = async () => {
@@ -710,6 +756,17 @@ defineExpose({
 
 .stream-stage.is-featured {
     grid-column: 1;
+}
+
+.stream-stage.is-featured.featured-span-1 {
+    grid-row: 1 / span 1;
+}
+
+.stream-stage.is-featured.featured-span-2 {
+    grid-row: 1 / span 2;
+}
+
+.stream-stage.is-featured.featured-span-3 {
     grid-row: 1 / span 3;
 }
 
@@ -756,6 +813,7 @@ defineExpose({
     gap: 6px;
     flex-wrap: wrap;
     justify-content: flex-end;
+    pointer-events: auto;
 }
 
 .stream-badge {
@@ -776,6 +834,26 @@ defineExpose({
     background: rgba(15, 24, 40, 0.72);
     border: 1px solid rgba(96, 170, 255, 0.92);
     color: #72b4ff;
+}
+
+.stream-badge-toggle {
+    border: 0;
+    cursor: pointer;
+    background: rgba(13, 23, 40, 0.78);
+    color: rgba(223, 238, 255, 0.96);
+}
+
+.stream-badge-toggle:hover {
+    background: rgba(27, 50, 85, 0.86);
+}
+
+.streams-board.is-main-only .stream-stage.is-hidden-aux {
+    display: none;
+}
+
+.streams-board.is-main-only .stream-stage.is-featured {
+    grid-column: 1 / -1;
+    grid-row: auto;
 }
 
 .stream-video {
@@ -922,16 +1000,15 @@ defineExpose({
     border-radius: 0;
 }
 
-.sync-player-shell.is-fullscreen .streams-board {
+.sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) {
     grid-template-columns: minmax(0, 1.75fr) minmax(320px, 0.95fr);
     grid-auto-rows: minmax(0, 1fr);
     gap: 10px;
     overflow: hidden;
 }
 
-.sync-player-shell.is-fullscreen .stream-stage.is-featured {
+.sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage.is-featured {
     grid-column: 1;
-    grid-row: 1 / span 3;
 }
 
 .sync-player-shell.is-fullscreen .stream-stage {
@@ -943,7 +1020,7 @@ defineExpose({
     aspect-ratio: auto;
 }
 
-.sync-player-shell.is-fullscreen .streams-board .stream-stage:nth-child(n + 4) {
+.sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage:nth-child(n + 4) {
     display: flex;
 }
 
@@ -1030,15 +1107,14 @@ defineExpose({
         flex: 1 1 220px;
     }
 
-    .sync-player-shell.is-fullscreen .streams-board {
+    .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) {
         grid-template-columns: minmax(0, 1.75fr) minmax(280px, 0.95fr);
         grid-auto-rows: minmax(0, 1fr);
         overflow: hidden;
     }
 
-    .sync-player-shell.is-fullscreen .stream-stage.is-featured {
+    .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage.is-featured {
         grid-column: 1;
-        grid-row: 1 / span 3;
     }
 
     .sync-player-shell.is-fullscreen .stream-stage-media {
@@ -1138,15 +1214,14 @@ defineExpose({
         font-size: 11px;
     }
 
-    .sync-player-shell.is-fullscreen .streams-board {
+    .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) {
         grid-template-columns: minmax(0, 1.75fr) minmax(240px, 0.95fr);
         grid-auto-rows: minmax(0, 1fr);
         gap: 8px;
     }
 
-    .sync-player-shell.is-fullscreen .stream-stage.is-featured {
+    .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage.is-featured {
         grid-column: 1;
-        grid-row: 1 / span 3;
     }
 
     .sync-player-shell.is-fullscreen .stream-stage-media,
@@ -1155,7 +1230,7 @@ defineExpose({
         aspect-ratio: auto;
     }
 
-    .sync-player-shell.is-fullscreen .streams-board .stream-stage:nth-child(n + 4) {
+    .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage:nth-child(n + 4) {
         display: flex;
     }
 

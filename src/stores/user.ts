@@ -78,7 +78,7 @@ export const useUserStore = defineStore('user', () => {
     const storedState = localStorage.getItem(USER_STORAGE_KEY);
     const cachedState = localStorage.getItem(CACHE_STORAGE_KEY);
     const storedAuthData = storedState
-        ? decryptData<{ isAuthenticated: boolean; username: string; password: string }>(storedState)
+        ? decryptData<{ isAuthenticated: boolean; username: string; ve_pwd?: string; mis_psd?: string; password?: string }>(storedState)
         : null;
     const cachedData = cachedState
         ? JSON.parse(cachedState)
@@ -95,13 +95,15 @@ export const useUserStore = defineStore('user', () => {
     const initialState = {
         isAuthenticated: storedAuthData?.isAuthenticated ?? false,
         username: storedAuthData?.username ?? '',
-        password: storedAuthData?.password ?? '',
+        ve_pwd: storedAuthData?.ve_pwd ?? storedAuthData?.password ?? '',
+        mis_psd: storedAuthData?.mis_psd ?? '',
         ...cachedData,
     };
 
     const isAuthenticated = ref<boolean>(initialState.isAuthenticated);
     const username = ref<string>(initialState.username);
-    const password = ref<string>(initialState.password);
+    const ve_pwd = ref<string>(initialState.ve_pwd);
+    const mis_psd = ref<string>(initialState.mis_psd);
     const isLoading = ref(false)
     const taskQueue = ref<Array<() => Promise<void>>>([]);
     const isProcessingQueue = ref(false);
@@ -173,7 +175,8 @@ export const useUserStore = defineStore('user', () => {
             await logout()
             isAuthenticated.value = false
             username.value = ''
-            password.value = ''
+            ve_pwd.value = ''
+            mis_psd.value = ''
             activeSemester.value = null
             courseList.value = []
             homeworkList.value = []
@@ -293,14 +296,14 @@ export const useUserStore = defineStore('user', () => {
                     await syncVeUserInfo()
                 }
                 success = true
-            } else if (!username.value || !password.value) {
+            } else if (!username.value || !ve_pwd.value) {
                 connectionStatus.value = false
                 success = false
             } else {
                 try {
                     await login_ve({
                         username: username.value,
-                        password: /^[a-f0-9]{32}$/i.test(password.value) ? password.value : md5(password.value),
+                        password: ve_pwd.value,
                         passcode: '',
                         loginType: '2',
                     });
@@ -342,23 +345,23 @@ export const useUserStore = defineStore('user', () => {
             throw new Error('已有帮忙提交任务正在执行，请稍后重试')
         }
         const tempUsername = options.username.trim()
-        const tempPassword = options.passwordIsMd5 ? options.password : md5(options.password)
-        if (!tempUsername || !tempPassword) {
+        const tempVePassword = options.passwordIsMd5 ? options.password : md5(options.password)
+        if (!tempUsername || !tempVePassword) {
             throw new Error('临时账号或密码不能为空')
         }
         isTemporaryAccountSwitching = true
         suppressAuthPersistence = true
 
         const originalUsername = username.value
-        const originalPassword = password.value
+        const originalVePassword = ve_pwd.value
         const restoreOriginalAccount = async () => {
             username.value = originalUsername
-            password.value = originalPassword
+            ve_pwd.value = originalVePassword
             return await reconnect({ notify: false })
         }
 
         username.value = tempUsername
-        password.value = tempPassword
+        ve_pwd.value = tempVePassword
         const switched = await reconnect({ notify: false })
         if (!switched) {
             const restored = await restoreOriginalAccount()
@@ -577,17 +580,28 @@ export const useUserStore = defineStore('user', () => {
         }
     };
 
-    const saveState = throttle(() => {
-        if (suppressAuthPersistence) return;
+    const persistAuthState = () => {
         localStorage.setItem(
             USER_STORAGE_KEY,
             encryptData({
                 isAuthenticated: isAuthenticated.value,
                 username: username.value,
-                password: password.value,
+                ve_pwd: ve_pwd.value,
+                mis_psd: mis_psd.value,
             })
         );
+    }
+
+    const saveState = throttle(() => {
+        if (suppressAuthPersistence) return;
+        persistAuthState()
     }, 500);
+
+    const saveStateNow = () => {
+        if (suppressAuthPersistence) return
+        saveState.cancel()
+        persistAuthState()
+    }
 
     const saveCache = throttle(() => {
         localStorage.setItem(
@@ -604,13 +618,14 @@ export const useUserStore = defineStore('user', () => {
     }, 1000);
 
     // 监听状态变化并持久化
-    watch([isAuthenticated, username, password], saveState);
+    watch([isAuthenticated, username, ve_pwd, mis_psd], saveState);
     watch([userinfo, activeSemester, courseList, homeworkList, Cache], saveCache, { deep: true });
 
     return {
         isAuthenticated,
         username,
-        password,
+        ve_pwd,
+        mis_psd,
         isLoading,
         userinfo,
         activeSemester: activeSemester,
@@ -631,6 +646,7 @@ export const useUserStore = defineStore('user', () => {
         refreshHomeworks,
         refreshHomeworkDetail,
         refreshHomeworkDetails,
+        saveStateNow,
         Cache,
         dataTimestamps
     };

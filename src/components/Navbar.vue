@@ -67,7 +67,7 @@ const userStore = useUserStore()
 const visible = ref(false)
 
 const menuItems = [
-    { key: 'home', label: '作业', routeName: 'home', icon: 'fa-solid fa-house' },
+    { key: 'home', label: '作业', routeName: 'home', icon: 'fa-solid fa-file-pen' },
     { key: 'learn', label: '课程学习', routeName: 'learn', icon: 'fa-solid fa-book-open' },
     { key: 'ai', label: '交大AI', icon: 'fa-solid fa-wand-magic-sparkles', action: () => userStore.go_ai() },
     { key: 'course-platform', label: '官方课程平台', icon: 'fa-solid fa-arrow-up-right-from-square', action: () => userStore.go_kcpt() },

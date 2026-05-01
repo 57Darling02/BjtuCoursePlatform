@@ -24,7 +24,10 @@
                         </template>
                         <el-row v-for="(i, index) in functionList" :style="{ '--delay': (0.2 + index * 0.05) + 's' }"
                             class="a-card hwitem fade-item" :gutter="12" @click="i.function(item)">
-                            {{ i.text }}
+                            <span class="course-action">
+                                <i :class="['course-action-icon', i.icon]" aria-hidden="true"></i>
+                                <span>{{ i.text }}</span>
+                            </span>
                         </el-row>
                     </el-collapse-item>
 
@@ -46,6 +49,7 @@ const active_colomn = ref(userStore.courseList.length > 0 ? userStore.courseList
 const functionList = [
     {
         text: '查看课件',
+        icon: 'fa-solid fa-file-lines',
         type: 'info',
         function: (courseInfo: CourseInfo) => {
             const route = router.resolve({
@@ -60,7 +64,10 @@ const functionList = [
         }
     },
     {
-        text: '查看课程回放', type: 'info', function: (courseInfo: CourseInfo) => {
+        text: '查看课程回放',
+        icon: 'fa-solid fa-circle-play',
+        type: 'info',
+        function: (courseInfo: CourseInfo) => {
             const route = router.resolve({
                 name: 'course-replay',
                 query: {
@@ -115,6 +122,32 @@ const functionList = [
 .hwitem {
     background-color: rgba(240, 245, 252, 0.82);
     width: 95%;
-    padding-left: 23px;
+    padding: 10px 23px;
+    cursor: pointer;
+}
+
+.course-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #324765;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.course-action-icon {
+    width: 16px;
+    text-align: center;
+    color: #5a78a5;
+    font-size: 13px;
+    transform: translateY(-0.5px);
+}
+
+.hwitem:hover .course-action {
+    color: #223856;
+}
+
+.hwitem:hover .course-action-icon {
+    color: #345b8f;
 }
 </style>

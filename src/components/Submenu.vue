@@ -67,9 +67,21 @@
                 </el-descriptions-item>
             </el-descriptions>
             <el-button
+                class="full-refresh-btn"
+                type="primary"
+                plain
+                :loading="fullRefreshing"
+                :disabled="reconnecting || fullRefreshing"
+                @click="handleFullRefresh"
+            >
+                <i v-if="!fullRefreshing" class="fa-solid fa-rotate" aria-hidden="true"></i>
+                全量刷新
+            </el-button>
+            <el-button
                 class="relogin-btn"
                 type="danger"
                 plain
+                :disabled="reconnecting || fullRefreshing"
                 @click="handleRelogin"
             >
                 重新登录
@@ -84,6 +96,7 @@ import { computed, onMounted, ref } from 'vue';
 const userStore = useUserStore()
 const loading = computed(() => userStore.isLoading && !userStore.userinfo)
 const reconnecting = ref(false)
+const fullRefreshing = ref(false)
 const avatarSrc = computed(() => userStore.Cache['avatar'] || userStore.userinfo?.avatarPath || '')
 const statusOk = computed(() => userStore.connectionStatus === true)
 const formatSyncTime = (timestamp: number) => {
@@ -93,7 +106,7 @@ const formatSyncTime = (timestamp: number) => {
 const statusSyncedAt = computed(() => formatSyncTime(userStore.dataTimestamps.status))
 
 const runStatusRefresh = async () => {
-    if (reconnecting.value) return
+    if (reconnecting.value || fullRefreshing.value) return
     reconnecting.value = true
     try {
         await userStore.refreshConnectionStatus({ silent: true })
@@ -103,7 +116,7 @@ const runStatusRefresh = async () => {
 }
 
 const handleStatusAction = async () => {
-    if (reconnecting.value) return
+    if (reconnecting.value || fullRefreshing.value) return
     reconnecting.value = true
     try {
         if (statusOk.value) {
@@ -113,6 +126,24 @@ const handleStatusAction = async () => {
         await userStore.reconnect()
     } finally {
         reconnecting.value = false
+    }
+}
+
+const handleFullRefresh = async () => {
+    if (fullRefreshing.value || reconnecting.value) return
+    fullRefreshing.value = true
+    try {
+        await userStore.reconnectOnFirstEntryIfDisconnected({ notifyOnFailure: true })
+        await userStore.refreshConnectionStatus({ silent: true, force: true })
+        userStore.refreshUserInfo({ force: true, silent: true })
+        await new Promise<void>((resolve) => {
+            userStore.addTaskToQueue(async () => {
+                await userStore.refreshHomeworks({ force: true, silent: true })
+                resolve()
+            })
+        })
+    } finally {
+        fullRefreshing.value = false
     }
 }
 
@@ -133,6 +164,17 @@ onMounted(() => {
 
 .relogin-btn {
     width: 100%;
+    margin-left: 0;
+}
+
+.full-refresh-btn {
+    width: 100%;
+    margin-left: 0;
+}
+
+.full-refresh-btn .fa-rotate {
+    margin-right: 6px;
+    font-size: 12px;
 }
 
 .sync-label {

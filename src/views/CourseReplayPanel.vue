@@ -30,7 +30,9 @@
                 >
                     <p class="schedule-name">{{ item.courseScheName || item.courseBetween }}</p>
                     <p class="schedule-meta">{{ item.courseBetween || '时间待定' }}</p>
-                    <p class="schedule-desc">{{ item.content || '暂无节次简介' }}</p>
+                    <p class="schedule-desc" :title="item.content || '暂无节次简介'">
+                        {{ item.content || '暂无节次简介' }}
+                    </p>
                 </button>
                 <div v-if="!scheduleList.length && !initialLoading" class="empty-tip">
                     暂无回放课节
@@ -166,7 +168,9 @@
                     >
                         <p class="schedule-name">{{ item.courseScheName || item.courseBetween }}</p>
                         <p class="schedule-meta">{{ item.courseBetween || '时间待定' }}</p>
-                        <p class="schedule-desc">{{ item.content || '暂无节次简介' }}</p>
+                        <p class="schedule-desc" :title="item.content || '暂无节次简介'">
+                            {{ item.content || '暂无节次简介' }}
+                        </p>
                     </button>
                     <div v-if="!scheduleList.length && !initialLoading" class="empty-tip">
                         暂无回放课节
@@ -661,6 +665,10 @@ onBeforeUnmount(() => {
 
 .schedule-desc {
     color: rgba(45, 61, 80, 0.6);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .player-card {

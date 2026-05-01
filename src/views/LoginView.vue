@@ -1,12 +1,12 @@
 <template>
   <Loading v-if="is_loading" />
-  <el-form ref="loginFormRef" class="a-card" :model="loginForm" :rules="loginRules" label-width="auto"
+  <el-form ref="loginFormRef" class="a-card" :model="loginForm" :rules="loginRules" label-width="72px"
     style="width: 80%; max-width: 420px;" label-position="right">
     <div style="display: flex; justify-content: center; width: 100%;">
       <h1>课程平台青春版</h1>
     </div>
     <!-- 账号输入 -->
-    <el-form-item label="账号" prop="account">
+    <el-form-item label="账号" prop="username">
       <el-input v-model="loginForm.username" placeholder="请输入账号" autocomplete="new-password" />
     </el-form-item>
 
@@ -16,7 +16,7 @@
     </el-form-item>
 
     <!-- 登录类型选择 -->
-    <el-form-item label="登录方式" prop="loginType">
+    <el-form-item label="方式" prop="loginType">
       <el-radio-group v-model="loginForm.loginType" @change="refreshCaptcha">
         <el-radio value="1">轻新课堂(原生)</el-radio>
         <el-radio value="2">mis统一认证</el-radio>
@@ -25,7 +25,7 @@
     </el-form-item>
 
     <!-- 验证码 -->
-    <el-form-item label="验证码" prop="captcha">
+    <el-form-item label="验证码" prop="passcode">
       <div class="captcha-container">
         <el-input v-model="loginForm.passcode" placeholder="请输入验证码" clearable style="width: 60%">
         </el-input>
@@ -53,6 +53,7 @@ import { el_alert, md5 } from '@/utils'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 import { logout } from '@/api/api_ve'
+import { getVePasswordHash } from '@/api/api_ve'
 import Loading from '@/components/Loading.vue'
 const userStore = useUserStore();
 
@@ -145,9 +146,15 @@ const handleLogin = async () => {
   is_loading.value = true
   try {
     await login(loginForm)
+    const plainPassword = loginForm.password
+    const vePassword = loginForm.loginType === '2'
+      ? await getVePasswordHash()
+      : md5(plainPassword)
     userStore.isAuthenticated = true
     userStore.username = loginForm.username
-    userStore.password = md5(loginForm.password)
+    userStore.ve_pwd = vePassword
+    userStore.mis_psd = loginForm.loginType === '2' ? plainPassword : ''
+    userStore.saveStateNow()
     await router.replace({ name: 'home' })
     el_alert({
       title: '登录成功',

@@ -10,18 +10,19 @@ interface VeLoginParams {
 }
 
 export async function login_ve(loginparams: VeLoginParams): Promise<boolean> {
-    const { username, password, passcode, loginType } = loginparams;
+    const { username, password, passcode } = loginparams;
     try {
         await service.post(
             "/s.shtml",
             new URLSearchParams({
                 login: "main_2",
+                goLogin: "1",
                 qxkt_type: "",
                 qxkt_url: "",
                 username,
                 password,
                 passcode,
-                loginType,
+                loginType: "1",
             }),
             {
                 headers: {
@@ -55,7 +56,7 @@ export const syncCoursePlatformSession = async (): Promise<string> => {
 
     const sessionId = extractCoursePlatformSessionId(String(response.data || ""));
     if (!sessionId) {
-        throw new Error("无法从课程平台首页解析sessionId");
+        throw new Error("无法链接课程平台会话");
     }
 
     setCoursePlatformSessionId(sessionId);
@@ -98,4 +99,28 @@ export const modifyPassword = async (newPassword: string) => {
     } catch (error) {
         throw error;
     }
+};
+
+export const getVePasswordHash = async (): Promise<string> => {
+    const response = await service.get<string>("/back/personalCenter/personalCenter.shtml", {
+        params: {
+            method: "toPersonalCenter",
+            pageToType: "2",
+        },
+        headers: {
+            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+    });
+
+    const html = String(response.data || "");
+    const inputTagMatch = html.match(/<input[^>]*id=["']odbcPassword["'][^>]*>/i);
+    const inputTag = inputTagMatch?.[0] || "";
+    const valueMatch = inputTag.match(/value=["']([^"']+)["']/i);
+    const passwordHash = (valueMatch?.[1] || "").trim().toLowerCase();
+
+    if (!/^[a-f0-9]{32}$/.test(passwordHash)) {
+        throw new Error("未能从个人中心页面解析到 VE 密码摘要");
+    }
+
+    return passwordHash;
 };
