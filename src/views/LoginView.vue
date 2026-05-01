@@ -49,7 +49,7 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { login, getCaptcha, type loginParams } from '@/api'
-import { el_alert } from '@/utils'
+import { el_alert, md5 } from '@/utils'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 import { logout } from '@/api/api_ve'
@@ -147,16 +147,13 @@ const handleLogin = async () => {
     await login(loginForm)
     userStore.isAuthenticated = true
     userStore.username = loginForm.username
-    userStore.password = loginForm.password
+    userStore.password = md5(loginForm.password)
     await router.replace({ name: 'home' })
     el_alert({
       title: '登录成功',
       message: '欢迎回来！',
       type: 'success',
     })
-    if (loginForm.loginType === '2') {
-      userStore.handleSyncPassword()
-    }
   } catch (error) {
     el_alert({
       title: '登录失败',

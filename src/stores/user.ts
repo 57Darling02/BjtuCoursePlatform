@@ -16,7 +16,6 @@ import {
     getAllCourses,
     getAllHomeworkItem,
     getAllStudentSubmissions,
-    modifyPassword,
     syncCoursePlatformSession,
 } from '@/api/api_ve';
 import router from '@/router';
@@ -31,6 +30,12 @@ interface AuthCheckOptions {
 
 interface ReconnectOptions {
     notify?: boolean
+}
+
+interface TemporaryAccountOptions {
+    username: string
+    password: string
+    passwordIsMd5?: boolean
 }
 
 interface InitialReconnectOptions {
@@ -101,8 +106,9 @@ export const useUserStore = defineStore('user', () => {
     const taskQueue = ref<Array<() => Promise<void>>>([]);
     const isProcessingQueue = ref(false);
     const connectionStatus = ref<boolean | null>(null)
-    const retryConnect = ref<number>(0)
     const hasTriedInitialReconnect = ref(false)
+    let suppressAuthPersistence = false
+    let isTemporaryAccountSwitching = false
 
     // 缓存部分数据
     const Cache = ref<Record<string, any>>(initialState.Cache || {});
@@ -182,27 +188,6 @@ export const useUserStore = defineStore('user', () => {
         }
     }
 
-    const handleSyncPassword = () => {
-        ElMessageBox.confirm(
-            '是否需要将课程平台和轻新课堂APP的密码同步设置为统一认证的密码？强烈建议同步。(如果不同步，则下次访问时将无法自动登入，同时也无法使用轻新课堂APP相关的功能。)',
-            '同步密码',
-            {
-                confirmButtonText: '同步',
-                cancelButtonText: '蒜鸟',
-                type: 'info',
-            }
-        )
-            .then(() => {
-                modifyPassword(password.value)
-            })
-            .catch(() => {
-                ElNotification({
-                    type: 'info',
-                    message: '同步了也没啥影响，建议同步',
-                })
-            })
-    }
-
     const openExternal = (targetUrl: string) => {
         window.open(targetUrl, '_blank', 'noopener,noreferrer')
     }
@@ -238,7 +223,7 @@ export const useUserStore = defineStore('user', () => {
         return userinfo.value
     }
 
-    let isCheckingAuth = false
+    let ongoingAuthCheck: Promise<boolean> | null = null
     const veAuthCheckInterval = 5 * 60 * 1000
     const lastVeCheckTime = ref<number>(0)
     const lastVeCheckResult = ref<boolean>(false)
@@ -250,116 +235,78 @@ export const useUserStore = defineStore('user', () => {
         if (!force && now - lastVeCheckTime.value < veAuthCheckInterval) {
             return lastVeCheckResult.value
         }
-        // 如果已经在检查，则返回当前状态的Promise
-        if (isCheckingAuth) {
-            console.log('已有checkAuth_ve实例在运行，跳过本次调用')
-            return new Promise<boolean>(resolve => {
-                const checkInterval = setInterval(() => {
-                    if (!isCheckingAuth) {
-                        clearInterval(checkInterval)
-                        resolve(lastVeCheckResult.value)
-                    }
-                }, 500)
-            })
+        if (ongoingAuthCheck) {
+            return ongoingAuthCheck
         }
-
-        // 设置执行标志
-        isCheckingAuth = true
 
         if (!isAuthenticated.value) {
-            isCheckingAuth = false
             return false
         }
-
-        try {
-            await syncCoursePlatformSession()
-            connectionStatus.value = true
-            lastVeCheckResult.value = true
-            markDataFresh('status')
-            return true
-        } catch (error) {
-            console.error('刷新课程平台会话失败:', error)
-            connectionStatus.value = false
-            lastVeCheckResult.value = false
-            markDataFresh('status')
-            if (!silent) {
-                el_alert({
-                    title: '连接错误',
-                    message: '无法同步课程平台会话，请检查网络连接或重新登录',
-                    type: 'error',
-                    showClose: true,
-                    duration: 3000
-                })
-            }
-            return false
-        } finally {
-            retryConnect.value = 0
-            lastVeCheckTime.value = Date.now()
-            isCheckingAuth = false
-        }
-    }
-    const checkAuthInterval = 5 * 60 * 1000; // 5 分钟的间隔，可按需调整
-    const lastCheckTime = ref<number>(0);
-    const lastCheckResult = ref<boolean>(false);
-    const checkAuth = async (options: AuthCheckOptions = {}) => {
-        const now = Date.now();
-        const force = options.force ?? false;
-        // 若在间隔时间内，直接返回缓存结果
-        if (!force && now - lastCheckTime.value < checkAuthInterval) {
-            return lastCheckResult.value;
-        }
-        const result = await checkAuth_force(options);
-
-        // 更新缓存时间和结果
-        lastCheckTime.value = now;
-        lastCheckResult.value = result;
-
-        return result;
-    };
-    const checkAuth_force = async (options: AuthCheckOptions = {}) => {
-        return await checkAuth_ve({ ...options, force: true })
-    }
-
-    const reconnectVe = async () => {
-        if (await checkAuth_ve({ silent: true, force: true })) {
-            if (!userinfo.value || !hasFreshData('userInfo')) {
-                await syncVeUserInfo()
-            }
-            return true;
-        }
-        if (!username.value || !password.value) {
-            connectionStatus.value = false;
-            return false;
-        }
-
-        try {
+        ongoingAuthCheck = (async () => {
             try {
-                await logout();
+                await syncCoursePlatformSession()
+                connectionStatus.value = true
+                lastVeCheckResult.value = true
+                markDataFresh('status')
+                return true
             } catch (error) {
-                console.warn('VE重连前退出旧会话失败，继续尝试登录:', error);
+                console.error('刷新课程平台会话失败:', error)
+                connectionStatus.value = false
+                lastVeCheckResult.value = false
+                markDataFresh('status')
+                if (!silent) {
+                    el_alert({
+                        title: '连接错误',
+                        message: '无法同步课程平台会话，请检查网络连接或重新登录',
+                        type: 'error',
+                        showClose: true,
+                        duration: 3000
+                    })
+                }
+                return false
+            } finally {
+                lastVeCheckTime.value = Date.now()
+                ongoingAuthCheck = null
             }
-            await login_ve({
-                username: username.value,
-                password: md5(password.value),
-                passcode: '',
-                loginType: '2',
-            });
-            const connected = await checkAuth_ve({ silent: true, force: true });
-            if (!connected) return false;
-            await syncVeUserInfo()
-            return true
-        } catch (error) {
-            console.error('VE重连失败:', error);
-            connectionStatus.value = false;
-            return false;
-        }
+        })()
+
+        return await ongoingAuthCheck
+    }
+
+    const checkAuth = async (options: AuthCheckOptions = {}) => {
+        return await checkAuth_ve(options)
     }
 
     const reconnect = async (options: ReconnectOptions = {}) => {
         const notify = options.notify ?? true;
-        const success = await reconnectVe();
-        lastCheckTime.value = Date.now();
-        lastCheckResult.value = success;
+        let success = false
+        if (await checkAuth_ve({ silent: true, force: true })) {
+            if (!userinfo.value || !hasFreshData('userInfo')) {
+                await syncVeUserInfo()
+            }
+            success = true
+        } else if (!username.value || !password.value) {
+            connectionStatus.value = false
+            success = false
+        } else {
+            try {
+                await login_ve({
+                    username: username.value,
+                    password: /^[a-f0-9]{32}$/i.test(password.value) ? password.value : md5(password.value),
+                    passcode: '',
+                    loginType: '2',
+                });
+                const connected = await checkAuth_ve({ silent: true, force: true });
+                if (connected) {
+                    await syncVeUserInfo()
+                }
+                success = connected
+            } catch (error) {
+                console.error('VE重连失败:', error);
+                connectionStatus.value = false;
+                success = false
+            }
+        }
         if (notify) {
             el_alert({
                 title: success ? '重连完成' : '重连失败',
@@ -370,6 +317,54 @@ export const useUserStore = defineStore('user', () => {
             });
         }
         return success;
+    }
+
+    const runWithTemporaryAccount = async <T>(
+        options: TemporaryAccountOptions,
+        request: () => Promise<T>
+    ): Promise<{ result: T; restored: boolean }> => {
+        if (isTemporaryAccountSwitching) {
+            throw new Error('已有帮忙提交任务正在执行，请稍后重试')
+        }
+        const tempUsername = options.username.trim()
+        const tempPassword = options.passwordIsMd5 ? options.password : md5(options.password)
+        if (!tempUsername || !tempPassword) {
+            throw new Error('临时账号或密码不能为空')
+        }
+        isTemporaryAccountSwitching = true
+        suppressAuthPersistence = true
+
+        const originalUsername = username.value
+        const originalPassword = password.value
+        const restoreOriginalAccount = async () => {
+            username.value = originalUsername
+            password.value = originalPassword
+            return await reconnect({ notify: false })
+        }
+
+        username.value = tempUsername
+        password.value = tempPassword
+        const switched = await reconnect({ notify: false })
+        if (!switched) {
+            const restored = await restoreOriginalAccount()
+            throw new Error(restored ? '临时账号重连失败' : '临时账号重连失败，且原账号恢复失败')
+        }
+
+        try {
+            const result = await request()
+            const restored = await restoreOriginalAccount()
+            return { result, restored }
+        } catch (error) {
+            const restored = await restoreOriginalAccount()
+            if (!restored) {
+                console.error('临时请求失败后原账号恢复失败:', error)
+            }
+            throw error
+        } finally {
+            suppressAuthPersistence = false
+            isTemporaryAccountSwitching = false
+            saveState()
+        }
     }
 
     const reconnectOnFirstEntryIfDisconnected = async (options: InitialReconnectOptions = {}) => {
@@ -568,6 +563,7 @@ export const useUserStore = defineStore('user', () => {
     };
 
     const saveState = throttle(() => {
+        if (suppressAuthPersistence) return;
         localStorage.setItem(
             USER_STORAGE_KEY,
             encryptData({
@@ -608,11 +604,11 @@ export const useUserStore = defineStore('user', () => {
         handlelogout,
         go_ai,
         go_kcpt,
-        handleSyncPassword,
         checkAuth_ve,
         connectionStatus,
         checkAuth,
         reconnect,
+        runWithTemporaryAccount,
         reconnectOnFirstEntryIfDisconnected,
         refreshConnectionStatus,
         addTaskToQueue,
@@ -621,7 +617,6 @@ export const useUserStore = defineStore('user', () => {
         refreshHomeworkDetail,
         refreshHomeworkDetails,
         Cache,
-        checkAuth_force,
         dataTimestamps
     };
 });

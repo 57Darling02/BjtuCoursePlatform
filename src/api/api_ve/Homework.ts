@@ -402,7 +402,8 @@ const parseSubmitHomeworkResponse = (payload: unknown): SubmitHomeworkResponse |
 export async function submitHomeworkAPI(formData: SubmitHomeworkForm): Promise<SubmitHomeworkResponse> {
     try {
         const normalizedFormData: SubmitHomeworkForm = { ...formData }
-        normalizedFormData.isTeacher = "0"
+        normalizedFormData.isTeacher =
+            normalizedFormData.isTeacher === undefined ? "0" : String(normalizedFormData.isTeacher)
         if (typeof normalizedFormData.content === 'string') {
             normalizedFormData.content = encodeURIComponent(normalizedFormData.content)
         }

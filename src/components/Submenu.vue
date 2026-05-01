@@ -56,6 +56,15 @@
                         </el-button>
                     </div>
                 </el-descriptions-item>
+                <el-descriptions-item :span="2">
+                    <div class="developer-mode-row">
+                        <span class="developer-mode-label">开发者模式</span>
+                        <el-switch
+                            v-model="developerModeEnabled"
+                            :before-change="beforeDeveloperModeSwitchChange"
+                        />
+                    </div>
+                </el-descriptions-item>
             </el-descriptions>
             <el-button
                 class="relogin-btn"
@@ -70,6 +79,7 @@
 </template>
 <script lang='ts' setup>
 import { useUserStore } from '@/stores/user'
+import { beforeDeveloperModeSwitchChange, developerModeEnabled } from '@/utils';
 import { computed, onMounted, ref } from 'vue';
 const userStore = useUserStore()
 const loading = computed(() => userStore.isLoading && !userStore.userinfo)
@@ -200,5 +210,17 @@ onMounted(() => {
 .status-action {
     width: 100%;
     justify-content: center;
+}
+
+.developer-mode-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.developer-mode-label {
+    color: var(--el-text-color-primary);
+    font-size: 14px;
 }
 </style>

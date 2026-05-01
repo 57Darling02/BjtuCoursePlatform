@@ -36,7 +36,7 @@
             v-if="showaddhw"
             :hwid="hw.id"
             :courseId="`${hw.course_id}`"
-            :force_push="isReturned || hw.subStatus == 2"
+            :force_push="forceOpenSubmit && isForcePushScenario && developerModeEnabled"
             :return_num="hw.return_num || 0"
             :fz="hw.fz ?? 0"
         />
@@ -71,7 +71,7 @@
 import type { HomeworkItem } from '@/api';
 import { computed, onMounted, onUnmounted, ref, type PropType } from 'vue';
 import AddHwPanel from '@/components/AddHwPanel.vue';
-import { emitter } from '@/utils';
+import { developerModeEnabled, emitter } from '@/utils';
 const props = defineProps({
     activehomework: {
         type: Object as PropType<HomeworkItem>,
@@ -96,11 +96,13 @@ const canOpenSubmitPanel = computed(() => {
     if (hw.value.subStatus === 2 && !isReturned.value) return false
     return true
 })
+const isForcePushScenario = computed(() => hw.value.status === 0 && hw.value.subStatus === 2 && !isReturned.value)
 const showaddhw = computed(() => canOpenSubmitPanel.value || forceOpenSubmit.value)
 const canForceOpenSubmitPanel = computed(() => {
     if (canOpenSubmitPanel.value) return false
     if (hw.value.status === 1 || hw.value.status === 2) return true
-    return hw.value.status === 0 && hw.value.subStatus === 2 && !isReturned.value
+    if (!isForcePushScenario.value) return false
+    return developerModeEnabled.value
 })
 
 const openSubmitDialog = () => {
