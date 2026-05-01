@@ -36,7 +36,7 @@
             v-if="showaddhw"
             :hwid="hw.id"
             :courseId="`${hw.course_id}`"
-            :force_push="forceOpenSubmit && isForcePushScenario && developerModeEnabled"
+            :force_push="forceOpenSubmit && isForcePushScenario"
             :return_num="hw.return_num || 0"
             :fz="hw.fz ?? 0"
         />
@@ -51,7 +51,7 @@
                 您的作业状态已经完成了批改，如果再次提交，将会覆盖之前的作业，并且成绩会被重置。
             </el-text>
             <el-text v-else-if="hw.subStatus == 2 && hw.status == 0">
-                作业已过截止时间，且当前不允许补交。
+                作业已过截止时间，且当前不允许补交。如果您确实需要提交，请点击下方的“我就是要交！”按钮（后果自负！！！）。
             </el-text>
             <el-button
                 v-if="canForceOpenSubmitPanel"
@@ -71,7 +71,7 @@
 import type { HomeworkItem } from '@/api';
 import { computed, onMounted, onUnmounted, ref, type PropType } from 'vue';
 import AddHwPanel from '@/components/AddHwPanel.vue';
-import { developerModeEnabled, emitter } from '@/utils';
+import { emitter } from '@/utils';
 const props = defineProps({
     activehomework: {
         type: Object as PropType<HomeworkItem>,
@@ -101,8 +101,7 @@ const showaddhw = computed(() => canOpenSubmitPanel.value || forceOpenSubmit.val
 const canForceOpenSubmitPanel = computed(() => {
     if (canOpenSubmitPanel.value) return false
     if (hw.value.status === 1 || hw.value.status === 2) return true
-    if (!isForcePushScenario.value) return false
-    return developerModeEnabled.value
+    return isForcePushScenario.value
 })
 
 const openSubmitDialog = () => {

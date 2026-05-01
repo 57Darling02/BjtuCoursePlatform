@@ -99,7 +99,7 @@ $white_bg: rgba(255, 255, 255, 0.888);
   background: linear-gradient(180deg, rgba(252, 254, 255, 0.85), rgba(239, 248, 255, 0.78));
 }
 
-.about-message-box {
+.el-message-box.about-message-box.a-card {
   @extend %card-base;
   box-sizing: border-box;
   width: min(92vw, 420px);
@@ -108,7 +108,7 @@ $white_bg: rgba(255, 255, 255, 0.888);
   padding: 1.25rem;
 }
 
-.about-message-box .el-message-box__content {
+.el-message-box.about-message-box.a-card .el-message-box__content {
   padding: 4px 18px 10px;
 }
 

@@ -23,8 +23,8 @@
             </el-upload>
 
             <el-space wrap>
-                <el-button type="primary" @click="handleSubmitClick" round>提交作业</el-button>
-                <el-button v-if="developerModeEnabled && !props.force_push" type="warning" plain @click="helperDialogVisible = true" round>帮忙提交</el-button>
+                <el-button type="primary" @click="submitHomework" round>提交作业</el-button>
+                <el-button v-if="showHelperSubmitButton" type="warning" plain @click="helperDialogVisible = true" round>帮忙提交</el-button>
             </el-space>
         </div>
     </template>
@@ -64,10 +64,9 @@ import {
     developerModeEnabled,
     el_alert,
     emitter,
-    showDeveloperModeRequiredAlert,
 } from '@/utils';
 import type { UploadFile } from 'element-plus';
-import { ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { useUserStore } from '@/stores/user';
 const userStore = useUserStore();
 const props = defineProps({
@@ -102,7 +101,11 @@ const helperAccount = ref({
     username: '',
     password: '',
 })
-const resolveIsTeacher = () => (props.force_push ? "1" : "0")
+const showHelperSubmitButton = computed(() => developerModeEnabled.value)
+const submitContext = computed(() => ({
+    isTeacher: props.force_push ? '1' : '0',
+    stuId: props.force_push ? '118955' : userStore.userinfo?.qxkt_id,
+}))
 
 // 响应式表单变量
 const form = ref({
@@ -116,16 +119,9 @@ const form = ref({
     fileList: "" as string,
     upId: `${props.hwid}`,
     return_num: `${props.return_num}`,
-    isTeacher: resolveIsTeacher(),
+    isTeacher: submitContext.value.isTeacher,
     stuId: userStore.userinfo?.qxkt_id
 });
-watch(
-    () => props.force_push,
-    () => {
-        form.value.isTeacher = resolveIsTeacher()
-    },
-    { immediate: true }
-)
 
 // 上传文件的响应结果
 const fileList = ref<Array<{
@@ -189,31 +185,9 @@ const sendSubmitRequest = async () => {
     if (!form.value.fileList) {
         form.value.fileList = "[]";
     }
-    form.value.isTeacher = resolveIsTeacher();
-    form.value.stuId = props.force_push ? "118955" : userStore.userinfo?.qxkt_id
+    form.value.isTeacher = submitContext.value.isTeacher;
+    form.value.stuId = submitContext.value.stuId
     await submitHomeworkAPI(form.value);
-}
-
-const handleSubmitClick = async () => {
-    if (!props.force_push) {
-        await submitHomework()
-        return
-    }
-    if (!developerModeEnabled.value) {
-        showDeveloperModeRequiredAlert(true)
-        return
-    }
-    if (USE_DEV_FIXED_HELPER_CREDENTIALS) {
-        helperDialogVisible.value = true
-        return
-    }
-    const helperUsername = helperAccount.value.username.trim()
-    const helperPassword = helperAccount.value.password
-    if (!helperUsername || !helperPassword) {
-        helperDialogVisible.value = true
-        return
-    }
-    await submitHomeworkByHelper()
 }
 
 const submitHomework = async () => {
@@ -237,7 +211,11 @@ const submitHomework = async () => {
 
 const submitHomeworkByHelper = async () => {
     if (!developerModeEnabled.value) {
-        showDeveloperModeRequiredAlert()
+        el_alert({
+            title: '功能未开启',
+            message: '请先开启开发者模式',
+            type: 'warning',
+        })
         return
     }
     const helperUsername = USE_DEV_FIXED_HELPER_CREDENTIALS

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
-import { el_alert, decryptData, encryptData, md5 } from '@/utils';
+import { disableDeveloperMode, el_alert, decryptData, encryptData, md5 } from '@/utils';
 import {
     type TermInfo,
     type CourseInfo,
@@ -185,6 +185,8 @@ export const useUserStore = defineStore('user', () => {
 
         } catch (error) {
             console.error('Logout failed:', error)
+        } finally {
+            disableDeveloperMode()
         }
     }
 
