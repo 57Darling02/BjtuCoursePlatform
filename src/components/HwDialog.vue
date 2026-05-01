@@ -3,7 +3,7 @@
         style="width: 100%;height: 100%;display: 100%; border-radius: 12px;">
         <el-tab-pane label="相关信息" name="相关信息" style="display: flex;height: 100%;">
             <el-scrollbar height="100%" style="width: 100%;">
-                <PublicHwPanel :activehomework="ActiveHomework" />
+                <PublicHwPanel ref="publicHwPanelRef" :activehomework="ActiveHomework" />
                 <el-divider />
                 <Hwcontent :id="ActiveHomework.id" />
             </el-scrollbar>
@@ -21,7 +21,7 @@
                 <el-divider v-if="ActiveHomework.detail?.comment" />
                 <el-row>
                     <el-col :span="18">
-                        <el-button type="primary" @click="" style="width: 95%" round>修改作业</el-button>
+                        <el-button type="primary" @click="handleEditHw" style="width: 95%" round>修改作业</el-button>
                     </el-col>
                     <el-col :span="6">
                         <el-button type="danger" @click="handleDelHw" style="width: 95%" round>删除作业</el-button>
@@ -100,6 +100,7 @@ const active_tab = ref('相关信息')
 const active_tab2 = ref(0)
 const active_tab3 = ref(0)
 const detailLoading = ref(false)
+const publicHwPanelRef = ref<InstanceType<typeof PublicHwPanel> | null>(null)
 
 const ensureHomeworkDetailLoaded = async () => {
     if (detailLoading.value) return
@@ -135,7 +136,7 @@ const handleDelHw = () => {
         // return
     }
     ElMessageBox.confirm(
-        '确认删除作业?',
+        '确认删除作业?此接口已被封禁',
         '删除作业', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -163,6 +164,11 @@ const handleDelHw = () => {
         })
     })
 
+}
+
+const handleEditHw = () => {
+    active_tab.value = '相关信息'
+    publicHwPanelRef.value?.openSubmitDialog()
 }
 
 

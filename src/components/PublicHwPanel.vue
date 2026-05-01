@@ -22,7 +22,7 @@
             </el-space>
         </el-col>
         <el-col :xs="24" :sm="8" :md="8">
-            <el-button round style="width: 100%" class="a-card" :class="button_status.type" @click="addhwdialog = true">
+            <el-button round style="width: 100%" class="a-card" :class="button_status.type" @click="openSubmitDialog">
                 <i class="fa-solid status-icon" :class="button_status.icon" />
                 {{ button_status.text }}
             </el-button>
@@ -40,7 +40,7 @@
             :return_num="hw.return_num || 0"
             :fz="hw.fz ?? 0"
         />
-        <div v-else>
+        <div v-else class="blocked-submit-tip">
             <el-text v-if="isReturned">
                 作业已被老师打回，可修改后重新提交。
             </el-text>
@@ -53,6 +53,15 @@
             <el-text v-else-if="hw.subStatus == 2 && hw.status == 0">
                 作业已过截止时间，且当前不允许补交。
             </el-text>
+            <el-button
+                v-if="canForceOpenSubmitPanel"
+                type="danger"
+                plain
+                round
+                @click="forceOpenSubmitPanel"
+            >
+                我就是要交！
+            </el-button>
         </div>
     </el-dialog>
 
@@ -60,7 +69,7 @@
 </template>
 <script lang='ts' setup>
 import type { HomeworkItem } from '@/api';
-import { computed, ref, type PropType } from 'vue';
+import { computed, onMounted, onUnmounted, ref, type PropType } from 'vue';
 import AddHwPanel from '@/components/AddHwPanel.vue';
 import { emitter } from '@/utils';
 const props = defineProps({
@@ -71,6 +80,7 @@ const props = defineProps({
 })
 const hw = computed(() => props.activehomework)
 const addhwdialog = ref(false)
+const forceOpenSubmit = ref(false)
 const isReturned = computed(() => hw.value.returned === true || String(hw.value.return_flag ?? '') === '1' || hw.value.sub_status_text === '被打回')
 const countdownTarget = computed(() => {
     const now = Date.now();
@@ -86,7 +96,21 @@ const canOpenSubmitPanel = computed(() => {
     if (hw.value.subStatus === 2 && !isReturned.value) return false
     return true
 })
-const showaddhw = ref(canOpenSubmitPanel.value)
+const showaddhw = computed(() => canOpenSubmitPanel.value || forceOpenSubmit.value)
+const canForceOpenSubmitPanel = computed(() => {
+    if (canOpenSubmitPanel.value) return false
+    if (hw.value.status === 1 || hw.value.status === 2) return true
+    return hw.value.status === 0 && hw.value.subStatus === 2 && !isReturned.value
+})
+
+const openSubmitDialog = () => {
+    forceOpenSubmit.value = false
+    addhwdialog.value = true
+}
+
+const forceOpenSubmitPanel = () => {
+    forceOpenSubmit.value = true
+}
 const button_status = computed(() => {
     if (isReturned.value) {
         return { text: '待重交', type: 'warning', icon: 'fa-reply' }
@@ -105,9 +129,21 @@ const button_status = computed(() => {
         return { text: '已批改', type: 'success', icon: 'fa-square-check' }
     }
 })
-emitter.on('UPDATE_HOMEWORKS', () => {
+const handleUpdateHomeworks = () => {
     addhwdialog.value = false;
-    showaddhw.value = canOpenSubmitPanel.value;
+    forceOpenSubmit.value = false
+}
+
+onMounted(() => {
+    emitter.on('UPDATE_HOMEWORKS', handleUpdateHomeworks)
+})
+
+onUnmounted(() => {
+    emitter.off('UPDATE_HOMEWORKS', handleUpdateHomeworks)
+})
+
+defineExpose({
+    openSubmitDialog,
 })
 
 </script>
@@ -139,5 +175,11 @@ emitter.on('UPDATE_HOMEWORKS', () => {
 
 .status-icon {
     margin-right: 6px;
+}
+
+.blocked-submit-tip {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 </style>

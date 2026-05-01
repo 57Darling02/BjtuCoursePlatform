@@ -16,6 +16,10 @@ class EventEmitter {
         this.listeners[eventName].add(listener)
     }
 
+    off(eventName: EventName, listener: Listener) {
+        this.listeners[eventName].delete(listener)
+    }
+
     emit(eventName: EventName, ...args: unknown[]) {
         if (this.listeners[eventName]) {
             this.listeners[eventName].forEach((listener) => {
