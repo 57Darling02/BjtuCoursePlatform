@@ -61,10 +61,19 @@ const functionList = [
     },
     {
         text: '查看课程回放', type: 'info', function: (courseInfo: CourseInfo) => {
-            ElMessage.error({
-                message: "没座！",
-                duration: 500
-            })
+            const route = router.resolve({
+                name: 'course-replay',
+                query: {
+                    courseId: courseInfo.course_num,
+                    cId: courseInfo.id,
+                    xkhId: courseInfo.fz_id,
+                    xqCode: courseInfo.xq_code,
+                    teacherId: courseInfo.teacher_id,
+                    courseToPage: 10480,
+                    dataSource: 1,
+                }
+            });
+            window.open(route.href, '_blank');
         }
     },
 ]

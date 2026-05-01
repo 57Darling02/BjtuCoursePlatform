@@ -12,9 +12,11 @@ declare module 'vue' {
     Bg_Normal: typeof import('./src/components/Bg_Normal.vue')['default']
     Bg_StarrySky: typeof import('./src/components/Bg_StarrySky.vue')['default']
     Bg_StarrySkySass: typeof import('./src/components/Bg_StarrySkySass.vue')['default']
+    CourseReplaySyncPlayer: typeof import('./src/components/CourseReplaySyncPlayer.vue')['default']
     CourseScheduleItemPanel: typeof import('./src/components/CourseScheduleItemPanel.vue')['default']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElButtonGroup: typeof import('element-plus/es')['ElButtonGroup']
     ElCard: typeof import('element-plus/es')['ElCard']
     ElCol: typeof import('element-plus/es')['ElCol']
     ElCollapse: typeof import('element-plus/es')['ElCollapse']
@@ -33,10 +35,12 @@ declare module 'vue' {
     ElInput: typeof import('element-plus/es')['ElInput']
     ElMenu: typeof import('element-plus/es')['ElMenu']
     ElMenuItem: typeof import('element-plus/es')['ElMenuItem']
+    ElOption: typeof import('element-plus/es')['ElOption']
     ElRadio: typeof import('element-plus/es')['ElRadio']
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElRow: typeof import('element-plus/es')['ElRow']
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
+    ElSelect: typeof import('element-plus/es')['ElSelect']
     ElSelectV2: typeof import('element-plus/es')['ElSelectV2']
     ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
     ElSpace: typeof import('element-plus/es')['ElSpace']
@@ -58,5 +62,8 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     Submenu: typeof import('./src/components/Submenu.vue')['default']
     TheWelcome: typeof import('./src/components/TheWelcome.vue')['default']
+  }
+  export interface GlobalDirectives {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

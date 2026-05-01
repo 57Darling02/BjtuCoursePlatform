@@ -181,3 +181,50 @@ export interface CourseResourceItem {
     share_type: number
     stu_download: number
 }
+
+export interface CourseReplayScheduleItem {
+    id: string
+    uuid: string
+    teacherId: string
+    courseBetween: string
+    courseScheName: string
+    content: string
+    params: {
+        videoId: string
+        isCollect?: string
+        support?: string | number
+        commentCount?: string | number
+        isSupport?: string
+    }
+}
+
+export interface CourseReplayStreamMap {
+    haveStream: string
+    rpSize?: string
+    publicRpType?: string
+    teaStreamHlsUrl?: string
+    stuStreamHlsUrl?: string
+    vgaStreamHlsUrl?: string
+    teaCloseUpStreamHlsUrl?: string
+    stuCloseUpStreamHlsUrl?: string
+    movieStreamHlsUrl?: string
+}
+
+export interface CourseReplayDetail {
+    courseSched: {
+        id: string
+        uuid: string
+        courseBetween: string
+        classRoom: string
+        params: CourseReplayScheduleItem['params']
+    }
+    streamMap: CourseReplayStreamMap
+    pointStatus?: string
+}
+
+export interface CourseReplayKnowledgeItem {
+    id: string
+    zsd_name: string
+    sfm: string
+    zsd_wait_time: string
+}

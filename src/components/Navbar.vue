@@ -58,6 +58,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { showAboutDialog } from '@/utils/aboutDialog'
 import Submenu from './Submenu.vue'
 
 const router = useRouter()
@@ -68,9 +69,9 @@ const visible = ref(false)
 const menuItems = [
     { key: 'home', label: '作业', routeName: 'home', icon: 'fa-solid fa-house' },
     { key: 'learn', label: '课程学习', routeName: 'learn', icon: 'fa-solid fa-book-open' },
-    { key: 'ai', label: '交大AI', routeName: 'ai', icon: 'fa-solid fa-wand-magic-sparkles' },
+    { key: 'ai', label: '交大AI', icon: 'fa-solid fa-wand-magic-sparkles', action: () => userStore.go_ai() },
     { key: 'course-platform', label: '官方课程平台', icon: 'fa-solid fa-arrow-up-right-from-square', action: () => userStore.go_kcpt() },
-    { key: 'about', label: '关于', routeName: 'about', icon: 'fa-solid fa-circle-info' },
+    { key: 'about', label: '关于', icon: 'fa-solid fa-circle-info', action: () => showAboutDialog() },
     { key: 'logout', label: '重新登录', icon: 'fa-solid fa-right-from-bracket', action: () => handleLogout(), divided: true, danger: true },
 ]
 

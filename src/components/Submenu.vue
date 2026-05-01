@@ -57,6 +57,14 @@
                     </div>
                 </el-descriptions-item>
             </el-descriptions>
+            <el-button
+                class="relogin-btn"
+                type="danger"
+                plain
+                @click="handleRelogin"
+            >
+                重新登录
+            </el-button>
         </div>
     </el-card>
 </template>
@@ -98,6 +106,10 @@ const handleStatusAction = async () => {
     }
 }
 
+const handleRelogin = () => {
+    void userStore.handlelogout()
+}
+
 onMounted(() => {
     void runStatusRefresh()
 })
@@ -107,6 +119,10 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.relogin-btn {
+    width: 100%;
 }
 
 .sync-label {

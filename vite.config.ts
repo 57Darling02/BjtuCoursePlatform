@@ -19,8 +19,9 @@ const buildVeReferer = (url = '') => {
   const isCourseResource = requestUrl.pathname.endsWith('/back/coursePlatform/courseResource.shtml')
   const isFilePlayUrl = requestUrl.pathname.endsWith('/back/coursePlatform/dataSynAction.shtml')
     && requestUrl.searchParams.get('method') === 'getFilePlayUrl'
+  const isReplayApi = requestUrl.pathname.endsWith('/back/rp/common/teachCalendar.shtml')
 
-  if (isCourseResource || isFilePlayUrl) {
+  if (isCourseResource || isFilePlayUrl || isReplayApi) {
     return veRootUrl
   }
 

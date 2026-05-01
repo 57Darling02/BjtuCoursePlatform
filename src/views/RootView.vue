@@ -4,7 +4,7 @@ import type { ScrollbarInstance } from 'element-plus'
 import { throttle } from 'lodash-es'
 import Navbar from '@/components/Navbar.vue'
 import { useUserStore } from '@/stores/user'
-import router from '@/router'
+import { showAboutDialog } from '@/utils/aboutDialog'
 const version = '1.0.1'; // 版本号 大版本.小版本.修复版本/patch版本
 const userStore = useUserStore()
 const last_scrollY = ref(0)
@@ -46,7 +46,7 @@ onMounted(() => {
   scrollbarRef.value?.update()
   const current_version = localStorage.getItem('version')
   if (current_version === version) return
-  router.push({ name: 'about' })
+  void showAboutDialog(version).catch(() => undefined)
   localStorage.setItem('version', version)
   // showNotice()
 })

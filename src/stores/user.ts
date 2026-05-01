@@ -203,11 +203,28 @@ export const useUserStore = defineStore('user', () => {
             })
     }
 
-    const go_kcpt = async () => {
-        await logout();
-        setTimeout(() => {
-            window.location.href = `http://123.121.147.7:88/ve/s.shtml?username=${username.value}&loginType=2&login=main_2`;
-        }, 500);
+    const openExternal = (targetUrl: string) => {
+        window.open(targetUrl, '_blank', 'noopener,noreferrer')
+    }
+
+    const go_kcpt = () => {
+        const query = new URLSearchParams({
+            username: username.value,
+            loginType: '2',
+            login: 'main_2',
+        })
+        const targetUrl = `http://123.121.147.7:88/ve/s.shtml?${query.toString()}`
+        openExternal(targetUrl)
+    }
+
+    const go_ai = () => {
+        const studentId = String(userinfo.value?.id || username.value || '').trim()
+        const query = new URLSearchParams({
+            redirect: '/aigcUtils/index',
+            noLoginUserId: studentId,
+        })
+        const targetUrl = `http://10.126.59.109:6074/aw/#/login?${query.toString()}`
+        openExternal(targetUrl)
     }
 
     const syncVeUserInfo = async () => {
@@ -589,6 +606,7 @@ export const useUserStore = defineStore('user', () => {
         courseList,
         homeworkList,
         handlelogout,
+        go_ai,
         go_kcpt,
         handleSyncPassword,
         checkAuth_ve,

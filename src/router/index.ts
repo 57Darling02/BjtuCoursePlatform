@@ -11,11 +11,6 @@ const router = createRouter({
       redirect: { name: 'home' },
       children: [
         {
-          path: '/about',
-          name: 'about',
-          component: () => import('@/views/AboutView.vue'),
-        },
-        {
           path: '/home',
           name: 'home',
           component: () => import('@/views/HomeView.vue'),
@@ -24,11 +19,6 @@ const router = createRouter({
           path: '/learn',
           name: 'learn',
           component: () => import('@/views/LearnView.vue'),
-        },
-        {
-          path: '/ai',
-          name: 'ai',
-          component: () => import('@/views/AIView.vue'),
         },
 
       ]
@@ -46,6 +36,23 @@ const router = createRouter({
         course_num: route.query.course_num,
         fz_id: route.query.fz_id,
         xq_code: route.query.xq_code
+      })
+    },
+    {
+      path: '/course-replay',
+      name: 'course-replay',
+      component: () => import('@/views/CourseReplayPanel.vue'),
+      props: route => ({
+        courseId: route.query.courseId,
+        cId: route.query.cId,
+        xkhId: route.query.xkhId,
+        xqCode: route.query.xqCode,
+        teacherId: route.query.teacherId,
+        rpId: route.query.rpId,
+        timeTableId: route.query.timeTableId,
+        userLevel: route.query.userLevel,
+        courseToPage: route.query.courseToPage,
+        dataSource: route.query.dataSource,
       })
     },
   ],
