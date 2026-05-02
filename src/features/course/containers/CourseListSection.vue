@@ -45,25 +45,13 @@ import { useUserStore } from '@/stores/user'
 import type { CourseInfo } from '@/api';
 import PanelShell from '@/shared/ui/PanelShell.vue';
 import router from '@/router';
+import { formatMonthDayTime } from '@/utils';
 const userStore = useUserStore();
 
 const activeColumn = ref(userStore.courseList.length > 0 ? userStore.courseList[0].name : ''); // 默认展开第一门课程
 
-const formatTimestamp = (timestamp: number) => {
-    if (!timestamp) return '--/--/-- --:--'
-
-    const date = new Date(timestamp)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-
-    return `${year}/${month}/${day} ${hours}:${minutes}`
-}
-
 const courseUpdatedAtText = computed(() => {
-    return formatTimestamp(userStore.dataTimestamps.courseList || 0)
+    return formatMonthDayTime(userStore.dataTimestamps.courseList || 0)
 })
 
 const triggerManualRefresh = async () => {

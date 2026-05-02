@@ -55,7 +55,7 @@
             <el-button class="full-refresh-btn" type="primary" plain :loading="fullRefreshing"
                 :disabled="reconnecting || fullRefreshing" @click="handleFullRefresh" round>
                 <i v-if="!fullRefreshing" class="fa-solid fa-rotate" aria-hidden="true"></i>
-                全量刷新
+                重新加载全部数据
             </el-button>
             <el-button class="relogin-btn" type="danger" plain :disabled="reconnecting || fullRefreshing"
                 @click="handleRelogin" round>
@@ -67,7 +67,7 @@
 </template>
 <script lang='ts' setup>
 import { useUserStore } from '@/stores/user'
-import { beforeDeveloperModeSwitchChange, developerModeEnabled } from '@/utils';
+import { beforeDeveloperModeSwitchChange, developerModeEnabled, emitter } from '@/utils';
 import { computed, onMounted, ref } from 'vue';
 const userStore = useUserStore()
 const loading = computed(() => userStore.isLoading && !userStore.userinfo)
@@ -136,6 +136,7 @@ const handleFullRefresh = async () => {
                 resolve()
             })
         })
+        emitter.emit('REFRESH_DAY_COURSE')
     } finally {
         fullRefreshing.value = false
     }

@@ -6,6 +6,7 @@ import {
     type CourseInfo,
     type HomeworkItem,
     type LoginParams,
+    type LoginType,
     type UserInfo,
 } from '@/api';
 import { login as loginByPassword } from '@/api/auth';
@@ -83,7 +84,7 @@ export const useUserStore = defineStore('user', () => {
     const storedState = localStorage.getItem(USER_STORAGE_KEY);
     const cachedState = localStorage.getItem(CACHE_STORAGE_KEY);
     const storedAuthData = storedState
-        ? decryptData<{ isAuthenticated: boolean; username: string; vePasswordHash?: string; ve_pwd?: string; mis_psd?: string; password?: string }>(storedState)
+        ? decryptData<{ isAuthenticated: boolean; username: string; vePasswordHash?: string; ve_pwd?: string; mis_psd?: string; password?: string; loginType?: LoginType }>(storedState)
         : null;
     const cachedData = cachedState
         ? JSON.parse(cachedState)
@@ -102,6 +103,7 @@ export const useUserStore = defineStore('user', () => {
         username: storedAuthData?.username ?? '',
         vePasswordHash: storedAuthData?.vePasswordHash ?? storedAuthData?.ve_pwd ?? storedAuthData?.password ?? '',
         mis_psd: storedAuthData?.mis_psd ?? '',
+        loginType: storedAuthData?.loginType ?? '1' as LoginType,
         ...cachedData,
     };
 
@@ -109,6 +111,7 @@ export const useUserStore = defineStore('user', () => {
     const username = ref<string>(initialState.username);
     const vePasswordHash = ref<string>(initialState.vePasswordHash);
     const mis_psd = ref<string>(initialState.mis_psd);
+    const loginType = ref<LoginType>(initialState.loginType);
     const isLoading = ref(false)
     const resourceRequestCounts = ref<Record<ResourceKey, number>>({
         courseList: 0,
@@ -221,6 +224,7 @@ export const useUserStore = defineStore('user', () => {
         username.value = normalizedUsername
         vePasswordHash.value = nextVePasswordHash
         mis_psd.value = isCasLogin ? plainPassword : ''
+        loginType.value = params.loginType
         connectionStatus.value = true
         lastVeCheckResult.value = true
         lastVeCheckTime.value = Date.now()
@@ -236,6 +240,7 @@ export const useUserStore = defineStore('user', () => {
             username.value = ''
             vePasswordHash.value = ''
             mis_psd.value = ''
+            loginType.value = '1'
             activeSemester.value = null
             courseList.value = []
             homeworkList.value = []
@@ -261,7 +266,7 @@ export const useUserStore = defineStore('user', () => {
     const go_kcpt = () => {
         const query = new URLSearchParams({
             username: username.value,
-            loginType: '2',
+            loginType: loginType.value,
             login: 'main_2',
         })
         const targetUrl = `http://123.121.147.7:88/ve/s.shtml?${query.toString()}`
@@ -365,7 +370,7 @@ export const useUserStore = defineStore('user', () => {
                         username: username.value,
                         passwordHash: vePasswordHash.value,
                         passcode: '',
-                        loginType: '2',
+                        loginType: '1',
                     });
                     const connected = await checkAuth_ve({ silent: true, force: true });
                     if (connected) {
@@ -654,6 +659,7 @@ export const useUserStore = defineStore('user', () => {
                 username: username.value,
                 vePasswordHash: vePasswordHash.value,
                 mis_psd: mis_psd.value,
+                loginType: loginType.value,
             })
         );
     }
@@ -684,7 +690,7 @@ export const useUserStore = defineStore('user', () => {
     }, 1000);
 
     // 监听状态变化并持久化
-    watch([isAuthenticated, username, vePasswordHash, mis_psd], saveState);
+    watch([isAuthenticated, username, vePasswordHash, mis_psd, loginType], saveState);
     watch([userinfo, activeSemester, courseList, homeworkList, Cache], saveCache, { deep: true });
 
     return {
@@ -692,6 +698,7 @@ export const useUserStore = defineStore('user', () => {
         username,
         vePasswordHash,
         mis_psd,
+        loginType,
         isLoading,
         courseListLoading,
         homeworkListLoading,

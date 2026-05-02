@@ -46,7 +46,7 @@
                                 @keydown.enter.prevent.stop="toggleAuxStreams"
                                 @keydown.space.prevent.stop="toggleAuxStreams"
                             >
-                                {{ hideAuxStreams ? '还原' : '全屏' }}
+                                {{ hideAuxStreams ? '还原辅视图' : '隐藏辅视图' }}
                             </span>
                             <span v-if="stream.key === selectedAudioKey" class="stream-badge stream-badge-audio">
                                 音源

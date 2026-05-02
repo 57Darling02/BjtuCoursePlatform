@@ -1,10 +1,9 @@
 <template>
     <PanelShell title="今日课表">
         <template #meta>
-            <el-space v-if="hasDayCourseSnapshot" wrap :size="6">
-                <el-tag type="info" round>{{ data?.length ? `今日共${data?.length}节` : '今日无课' }}</el-tag>
-                <el-tag type="danger" round>剩余{{ remainCourse.length }}节</el-tag>
-            </el-space>
+            <el-tag v-if="hasDayCourseSnapshot" :type="todaySummaryTagType" round>
+                {{ todaySummaryText }}
+            </el-tag>
         </template>
         <template #actions>
             <el-button
@@ -26,13 +25,13 @@
     </PanelShell>
 </template>
 <script lang='ts' setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useUserStore } from '@/stores/user';
 import type { CourseScheduleItem } from '@/api';
 import CourseScheduleItemPanel from '@/features/schedule/components/CourseScheduleItemPanel.vue';
 import PanelShell from '@/shared/ui/PanelShell.vue';
 import { getDayCourse } from '@/api/api_app';
-import { el_alert } from '@/utils';
+import { emitter, formatMonthDay } from '@/utils';
 
 const userStore = useUserStore();
 
@@ -49,11 +48,7 @@ const formatDate = (date: Date) => {
 }
 
 const formatDateLabel = (date: Date) => {
-    return [
-        date.getFullYear(),
-        (date.getMonth() + 1).toString().padStart(2, '0'),
-        date.getDate().toString().padStart(2, '0')
-    ].join('/');
+    return formatMonthDay(date)
 }
 
 const parseDayCourseCacheTime = () => {
@@ -69,7 +64,7 @@ const parseDayCourseCacheTime = () => {
 
 const dayCourseUpdatedAtText = computed(() => {
     const cacheTime = parseDayCourseCacheTime()
-    return `${cacheTime ? formatDateLabel(cacheTime) : '--/--/--'}`
+    return `${cacheTime ? formatDateLabel(cacheTime) : '--/--'}`
 })
 
 const mergeCourseScheduleItems = (items: CourseScheduleItem[]) => {
@@ -93,7 +88,7 @@ const mergeCourseScheduleItems = (items: CourseScheduleItem[]) => {
     }, [])
 }
 
-const loadDayCourse = async (options: { force?: boolean; notify?: boolean } = {}) => {
+const loadDayCourse = async (options: { force?: boolean } = {}) => {
     const today = new Date()
     const cacheTime = parseDayCourseCacheTime()
     const isSameDay = cacheTime && formatDate(cacheTime) === formatDate(today)
@@ -106,14 +101,6 @@ const loadDayCourse = async (options: { force?: boolean; notify?: boolean } = {}
         userStore.Cache['DayCourse'] = JSON.stringify(freshData)
         userStore.Cache['DayCourse_time'] = JSON.stringify(today)
         data.value = freshData
-
-        if (options.notify ?? true) {
-            el_alert({
-                title: '今日课表',
-                message: `${today.toLocaleString()},今日共${freshData.length}节`,
-                type: 'success',
-            })
-        }
     }
 
     if (data.value) {
@@ -127,7 +114,17 @@ const remainCourse = computed(() => {
     ) || []
 })
 
-const refreshDayCourse = async (options: { force?: boolean; notify?: boolean } = {}) => {
+const todaySummaryText = computed(() => {
+    const total = data.value?.length ?? 0
+    return `余/共 ${remainCourse.value.length}/${total}`
+})
+
+const todaySummaryTagType = computed(() => {
+    if (!data.value?.length) return 'info'
+    return remainCourse.value.length > 0 ? 'warning' : 'success'
+})
+
+const refreshDayCourse = async (options: { force?: boolean } = {}) => {
     if (isRefreshing.value) return
     isRefreshing.value = true
 
@@ -139,11 +136,20 @@ const refreshDayCourse = async (options: { force?: boolean; notify?: boolean } =
 }
 
 const triggerManualRefresh = async () => {
-    await refreshDayCourse({ force: true, notify: true })
+    await refreshDayCourse({ force: true })
+}
+
+const handleRefreshDayCourse = () => {
+    void refreshDayCourse({ force: true })
 }
 
 onMounted(async () => {
-    await refreshDayCourse({ notify: true })
+    emitter.on('REFRESH_DAY_COURSE', handleRefreshDayCourse)
+    await refreshDayCourse()
+})
+
+onUnmounted(() => {
+    emitter.off('REFRESH_DAY_COURSE', handleRefreshDayCourse)
 })
 </script>
 <style lang="scss" scoped>

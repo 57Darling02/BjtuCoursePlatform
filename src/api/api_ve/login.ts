@@ -1,16 +1,17 @@
 import { service } from "./instance";
 import { service as appService } from "../api_app/instance";
+import type { LoginType } from "../types";
 
 //定义输入参数类型
 interface VeLoginParams {
     username: string;
     passwordHash: string;
     passcode: string;
-    loginType: "1" | "2";
+    loginType: LoginType;
 }
 
 export async function login_ve(loginparams: VeLoginParams): Promise<boolean> {
-    const { username, passwordHash, passcode } = loginparams;
+    const { username, passwordHash, passcode, loginType } = loginparams;
     try {
         await service.post(
             "/s.shtml",
@@ -22,7 +23,7 @@ export async function login_ve(loginparams: VeLoginParams): Promise<boolean> {
                 username,
                 password: passwordHash,
                 passcode,
-                loginType: "1",
+                loginType,
             }),
             {
                 headers: {

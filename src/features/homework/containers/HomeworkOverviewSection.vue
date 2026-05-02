@@ -1,14 +1,9 @@
 <template>
     <PanelShell title="作业概览">
         <template #meta>
-            <el-space v-if="userStore.homeworkList.length > 0" wrap :size="5">
-                <el-tag type="warning" v-if="countWaitMakeup(userStore.homeworkList)" round>{{
-                    countWaitMakeup(userStore.homeworkList) }}项待补交</el-tag>
-                <el-tag type="warning" round>{{ countUncompleted(userStore.homeworkList) }}项待完成</el-tag>
-                <el-tag type="danger" v-if="countExpired(userStore.homeworkList)" round>{{
-                    countExpired(userStore.homeworkList) }}项过期</el-tag>
-                <el-tag type="info" round>共{{ userStore.homeworkList.length }}项</el-tag>
-            </el-space>
+            <el-tag v-if="userStore.homeworkList.length > 0" :type="getHomeworkSummaryType(userStore.homeworkList)" round>
+                {{ formatOverviewSummary(userStore.homeworkList) }}
+            </el-tag>
         </template>
         <template #actions>
             <el-button
@@ -29,16 +24,9 @@
                     <template #title>
                         <el-space wrap>
                             <el-text>{{ group.courseName }}</el-text>
-                            <el-space :size="2">
-                                <el-tag type="warning" round v-if="countWaitMakeup(group.items)">{{
-                                    countWaitMakeup(group.items) }}项待补交</el-tag>
-                                <el-tag type="warning" round v-if="countUncompleted(group.items)">{{
-                                    countUncompleted(group.items)
-                                    }}项待完成</el-tag>
-                                <el-tag type="danger" round v-if="countExpired(group.items)">{{
-                                    countExpired(group.items) }}项过期</el-tag>
-                                <el-tag type="info" round>共{{ group.items.length }}项</el-tag>
-                            </el-space>
+                            <el-tag :type="getHomeworkSummaryType(group.items)" round>
+                                {{ formatGroupSummary(group.items) }}
+                            </el-tag>
                         </el-space>
                     </template>
                     <transition-group
@@ -82,6 +70,7 @@ import {
     countUncompleted,
     countWaitMakeup,
     emitter,
+    formatMonthDayTime,
     groupHomeworksByCourse,
 } from '@/utils';
 const userStore = useUserStore();
@@ -94,21 +83,38 @@ const HomeworkDialogVisible = ref(false);
 const groupedByCourse = computed(() => groupHomeworksByCourse(userStore.homeworkList));
 const renderedCourseIds = ref<Set<string>>(new Set())
 
-const formatTimestamp = (timestamp: number) => {
-    if (!timestamp) return '--/--/-- --:--'
+const getHomeworkSummary = (items: HomeworkItem[]) => {
+    const waitMakeup = countWaitMakeup(items)
+    const uncompleted = countUncompleted(items)
+    const expired = countExpired(items)
 
-    const date = new Date(timestamp)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return {
+        waitMakeup,
+        uncompleted,
+        expired,
+        total: items.length,
+    }
+}
 
-    return `${year}/${month}/${day} ${hours}:${minutes}`
+const formatGroupSummary = (items: HomeworkItem[]) => {
+    const summary = getHomeworkSummary(items)
+    return `需补${summary.waitMakeup}/未交${summary.uncompleted}/过期${summary.expired}`
+}
+
+const formatOverviewSummary = (items: HomeworkItem[]) => {
+    const summary = getHomeworkSummary(items)
+    return `过期${summary.expired}/总共${summary.total}`
+}
+
+const getHomeworkSummaryType = (items: HomeworkItem[]) => {
+    const summary = getHomeworkSummary(items)
+    if (summary.expired > 0) return 'danger'
+    if (summary.waitMakeup > 0 || summary.uncompleted > 0) return 'warning'
+    return 'info'
 }
 
 const homeworkUpdatedAtText = computed(() => {
-    return formatTimestamp(userStore.dataTimestamps.homeworkList || 0)
+    return formatMonthDayTime(userStore.dataTimestamps.homeworkList || 0)
 })
 
 const normalizeCourseId = (value: unknown) => {

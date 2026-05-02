@@ -1,4 +1,4 @@
-const eventNames = ['UPDATE_HOMEWORKS'] as const;
+const eventNames = ['UPDATE_HOMEWORKS', 'REFRESH_DAY_COURSE'] as const;
 type EventName = (typeof eventNames)[number];
 type Listener = (...args: unknown[]) => void;
 
