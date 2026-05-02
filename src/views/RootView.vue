@@ -23,21 +23,6 @@ const scroll = throttle(({ scrollTop }: { scrollTop: number }) => {
 
 const footer_content = ['Powered by 57Darling02 © 2025']
 
-const showNotice = () => {
-  ElMessageBox.confirm(
-    '欢迎使用课程平台青春版！',
-    '重要提示',
-    {
-      confirmButtonText: '前往备用站点',
-      // cancelButtonText: '暂不迁移',
-      type: 'warning',
-    }
-  ).then(() => {
-    // window.location.href = 'http://hw.57d02.cn:8080';
-  }).catch(() => {
-    // showNotice();
-  });
-}
 onMounted(() => {
   userStore.addTaskToQueue(async () => {
     await userStore.reconnectOnFirstEntryIfDisconnected()
@@ -63,14 +48,15 @@ onUnmounted(() => scroll.cancel())
     <div style="width: 100%; height: 100%; display: flex; justify-content: center;">
       <RouterView />
     </div>
-    <el-divider />
+    
     <el-space id="footer" wrap>
-      <el-tag effect="light" type="success" v-for="i in footer_content" round>
+      <el-divider />
+      <el-text v-for="i in footer_content">
         {{ i }}
-      </el-tag>
-      <el-tag effect="light" type="success" round>
-        本站总访问量<span id="vercount_value_site_pv">-</span>次
-      </el-tag>
+      </el-text>
+      
+      <el-text>|&nbsp;本站总访问量<span id="vercount_value_site_pv">-</span>次</el-text>
+      
     </el-space>
   </el-scrollbar>
 </template>
