@@ -180,7 +180,7 @@ const syncHomeworkOnEnter = () => {
 const triggerManualRefresh = () => {
     if (userStore.homeworkListLoading) return
     userStore.addTaskToQueue(async () => {
-        await userStore.reconnectOnFirstEntryIfDisconnected({ notifyOnFailure: true })
+        await userStore.reconnectOnFirstEntryIfDisconnected()
         await userStore.refreshHomeworks({ force: true })
     })
 }

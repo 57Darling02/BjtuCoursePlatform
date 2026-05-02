@@ -34,16 +34,14 @@ interface AuthCheckOptions {
 
 interface ReconnectOptions {
     notify?: boolean
+    notifyOnSuccess?: boolean
+    notifyOnFailure?: boolean
 }
 
 interface TemporaryAccountOptions {
     username: string
     password: string
     passwordIsHash?: boolean
-}
-
-interface InitialReconnectOptions {
-    notifyOnFailure?: boolean
 }
 
 interface RefreshOptions {
@@ -354,7 +352,9 @@ export const useUserStore = defineStore('user', () => {
         }
         ongoingReconnect = (async () => {
             await logout()
-            const notify = options.notify ?? true;
+            const notify = options.notify
+            const notifyOnSuccess = notify ?? options.notifyOnSuccess ?? true
+            const notifyOnFailure = notify ?? options.notifyOnFailure ?? true
             let success = false
             if (await checkAuth_ve({ silent: true, force: true })) {
                 if (!userinfo.value || !hasFreshData('userInfo')) {
@@ -383,7 +383,7 @@ export const useUserStore = defineStore('user', () => {
                     success = false
                 }
             }
-            if (notify) {
+            if ((success && notifyOnSuccess) || (!success && notifyOnFailure)) {
                 el_alert({
                     title: success ? '重连完成' : '重连失败',
                     message: success ? '课程平台会话已恢复并同步' : '课程平台会话恢复失败',
@@ -400,6 +400,17 @@ export const useUserStore = defineStore('user', () => {
         } finally {
             ongoingReconnect = null
         }
+    }
+
+    const reconnectWithUserFeedback = async () => {
+        el_alert({
+            title: '开始重连',
+            message: '正在尝试恢复课程平台会话',
+            type: 'info',
+            showClose: true,
+            duration: 1800,
+        })
+        return await reconnect({ notifyOnSuccess: true, notifyOnFailure: true })
     }
 
     const runWithTemporaryAccount = async <T>(
@@ -450,8 +461,7 @@ export const useUserStore = defineStore('user', () => {
         }
     }
 
-    const reconnectOnFirstEntryIfDisconnected = async (options: InitialReconnectOptions = {}) => {
-        const notifyOnFailure = options.notifyOnFailure ?? true
+    const reconnectOnFirstEntryIfDisconnected = async () => {
         if (hasTriedInitialReconnect.value) {
             return connectionStatus.value !== false
         }
@@ -461,17 +471,7 @@ export const useUserStore = defineStore('user', () => {
         const connected = await refreshConnectionStatus({ silent: true, force: true })
         if (connected) return true
 
-        const success = await reconnect({ notify: false })
-        if (!success && notifyOnFailure) {
-            el_alert({
-                title: '重连失败',
-                message: '检测到会话断开且自动重连失败，请手动重连或重新登录',
-                type: 'error',
-                showClose: true,
-                duration: 2500
-            })
-        }
-        return success
+        return await reconnectWithUserFeedback()
     }
 
     const refreshUserInfoTask = async (options: RefreshOptions = {}) => {
@@ -714,6 +714,7 @@ export const useUserStore = defineStore('user', () => {
         connectionStatus,
         checkAuth,
         reconnect,
+        reconnectWithUserFeedback,
         runWithTemporaryAccount,
         reconnectOnFirstEntryIfDisconnected,
         refreshConnectionStatus,

@@ -58,7 +58,7 @@ const triggerManualRefresh = async () => {
     if (userStore.courseListLoading) return
 
     try {
-        await userStore.reconnectOnFirstEntryIfDisconnected({ notifyOnFailure: true })
+        await userStore.reconnectOnFirstEntryIfDisconnected()
         await userStore.refreshUserInfo({ force: true, silent: true })
     } catch (error) {
         console.error('刷新课程列表失败:', error)

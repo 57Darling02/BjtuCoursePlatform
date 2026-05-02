@@ -30,13 +30,15 @@
                 <el-descriptions-item :span="2">
                     <div class="status-panel" :class="statusPanelClass">
                         <div class="status-main">
-                            <div class="status-indicator">
-                                <span class="status-dot" />
-                                <span class="status-title">{{ statusTitle }}</span>
+                            <div class="status-header">
+                                <span class="status-title">连通性</span>
+                                <el-text size="small" class="status-subtext">
+                                    <span class="status-indicator">
+                                        <span class="status-dot" />
+                                        <span class="status-label">{{ statusLabel }}</span>
+                                    </span>
+                                </el-text>
                             </div>
-                            <el-text size="small" class="status-subtext">
-                                {{ statusSubtext }}
-                            </el-text>
                         </div>
                         <el-button class="status-action" size="default" :type="statusActionType" plain
                             :loading="isCheckingStatus" :disabled="isCheckingStatus" @click="handleStatusAction">
@@ -79,13 +81,8 @@ const sessionStatus = computed<'ok' | 'bad'>(() => {
     return userStore.connectionStatus === true ? 'ok' : 'bad'
 })
 const statusPanelClass = computed(() => `is-${sessionStatus.value}`)
-const statusTitle = computed(() => {
+const statusLabel = computed(() => {
     return sessionStatus.value === 'ok' ? '会话已连接' : '会话未连接'
-})
-const statusSubtext = computed(() => {
-    return sessionStatus.value === 'ok'
-        ? '可以正常访问课程平台数据。'
-        : '会话已过期，请尝试重连。'
 })
 const statusActionType = computed(() => {
     return sessionStatus.value === 'ok' ? 'primary' : 'danger'
@@ -117,7 +114,7 @@ const handleStatusAction = async () => {
             await userStore.refreshConnectionStatus({ silent: true })
             return
         }
-        await userStore.reconnect()
+        await userStore.reconnectWithUserFeedback()
     } finally {
         reconnecting.value = false
     }
@@ -127,7 +124,7 @@ const handleFullRefresh = async () => {
     if (fullRefreshing.value || reconnecting.value) return
     fullRefreshing.value = true
     try {
-        await userStore.reconnectOnFirstEntryIfDisconnected({ notifyOnFailure: true })
+        await userStore.reconnectOnFirstEntryIfDisconnected()
         await userStore.refreshConnectionStatus({ silent: true, force: true })
         userStore.refreshUserInfo({ force: true, silent: true })
         await new Promise<void>((resolve) => {
@@ -195,9 +192,14 @@ onMounted(() => {
 
 .status-main {
     display: flex;
-    flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
+}
+
+.status-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .status-indicator {
@@ -226,8 +228,15 @@ onMounted(() => {
 }
 
 .status-subtext {
+    display: inline-flex;
+    align-items: center;
     color: #475569;
-    line-height: 1.45;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.status-label {
+    color: inherit;
 }
 
 .status-action {
