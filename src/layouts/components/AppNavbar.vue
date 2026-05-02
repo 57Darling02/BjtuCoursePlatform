@@ -50,7 +50,7 @@
         :append-to-body="true"
         :destroy-on-close="true"
     >
-        <Submenu v-if="visible" />
+        <ProfilePanel v-if="visible" />
     </el-drawer>
 </template>
 
@@ -59,7 +59,7 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { showAboutDialog } from '@/utils/aboutDialog'
-import Submenu from './Submenu.vue'
+import ProfilePanel from '@/features/profile/components/ProfilePanel.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -72,7 +72,7 @@ const menuItems = [
     { key: 'ai', label: '交大AI', icon: 'fa-solid fa-wand-magic-sparkles', action: () => userStore.go_ai() },
     { key: 'course-platform', label: '官方课程平台', icon: 'fa-solid fa-arrow-up-right-from-square', action: () => userStore.go_kcpt() },
     { key: 'about', label: '关于', icon: 'fa-solid fa-circle-info', action: () => showAboutDialog() },
-    { key: 'logout', label: '重新登录', icon: 'fa-solid fa-right-from-bracket', action: () => handleLogout(), divided: true, danger: true },
+    { key: 'logout', label: '退出登录', icon: 'fa-solid fa-right-from-bracket', action: () => handleLogout(), divided: true, danger: true },
 ]
 
 const isActiveRoute = (routeName: string) => {

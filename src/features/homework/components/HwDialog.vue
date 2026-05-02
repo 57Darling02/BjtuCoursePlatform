@@ -82,8 +82,8 @@
 import { onMounted, ref, type PropType } from 'vue'
 import { type HomeworkItem } from '@/api';
 import PublicHwPanel from './PublicHwPanel.vue';
-import Hwcontent from '@/components/Hwcontent.vue'
-import HwStucontent from '@/components/HwStucontent.vue'
+import Hwcontent from '@/features/homework/components/Hwcontent.vue'
+import HwStucontent from '@/features/homework/components/HwStucontent.vue'
 import { useUserStore } from '@/stores/user'
 
 import { deleteHomework, getHomeworkDetail_pg } from '@/api/api_ve';

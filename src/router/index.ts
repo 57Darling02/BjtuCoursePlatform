@@ -7,18 +7,18 @@ const router = createRouter({
     {
       path: '/',
       name: 'root',
-      component: () => import('@/views/RootView.vue'),
+      component: () => import('@/layouts/MainLayout.vue'),
       redirect: { name: 'home' },
       children: [
         {
           path: '/home',
           name: 'home',
-          component: () => import('@/views/HomeView.vue'),
+          component: () => import('@/pages/home/HomePage.vue'),
         },
         {
           path: '/learn',
           name: 'learn',
-          component: () => import('@/views/LearnView.vue'),
+          component: () => import('@/pages/learn/LearnPage.vue'),
         },
 
       ]
@@ -26,12 +26,12 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/LoginView.vue'),
+      component: () => import('@/pages/login/LoginPage.vue'),
     },
     {
       path: '/courseware',
       name: 'courseware',
-      component: () => import('@/views/CoursewarePanel.vue'),
+      component: () => import('@/pages/courseware/CoursewarePage.vue'),
       props: route => ({
         course_num: route.query.course_num,
         fz_id: route.query.fz_id,
@@ -41,7 +41,7 @@ const router = createRouter({
     {
       path: '/course-replay',
       name: 'course-replay',
-      component: () => import('@/views/CourseReplayPanel.vue'),
+      component: () => import('@/pages/replay/CourseReplayPage.vue'),
       props: route => ({
         courseId: route.query.courseId,
         cId: route.query.cId,

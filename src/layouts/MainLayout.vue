@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { ScrollbarInstance } from 'element-plus'
 import { throttle } from 'lodash-es'
-import Navbar from '@/components/Navbar.vue'
+import AppNavbar from '@/layouts/components/AppNavbar.vue'
 import { useUserStore } from '@/stores/user'
 import { showAboutDialog } from '@/utils/aboutDialog'
 const version = __APP_VERSION__
@@ -31,7 +31,7 @@ onMounted(() => {
   scrollbarRef.value?.update()
   const current_version = localStorage.getItem('version')
   if (current_version === version) return
-  void showAboutDialog(version).catch(() => undefined)
+  void showAboutDialog().catch(() => undefined)
   localStorage.setItem('version', version)
   // showNotice()
 })
@@ -40,7 +40,7 @@ onUnmounted(() => scroll.cancel())
 <template>
   <transition name="el-fade-in">
     <div id="header_container" v-show="show_navbar">
-      <Navbar />
+      <AppNavbar />
     </div>
   </transition>
   <el-scrollbar ref="scrollbarRef" always @scroll="scroll">

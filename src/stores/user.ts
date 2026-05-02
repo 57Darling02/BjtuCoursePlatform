@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { disableDeveloperMode, el_alert, decryptData, encryptData, md5 } from '@/utils';
 import {
     type TermInfo,
@@ -62,6 +62,8 @@ interface DataTimestamps {
     homeworkList: number
 }
 
+type ResourceKey = 'courseList' | 'homeworkList'
+
 const createDefaultDataTimestamps = (): DataTimestamps => ({
     userInfo: 0,
     status: 0,
@@ -108,6 +110,10 @@ export const useUserStore = defineStore('user', () => {
     const vePasswordHash = ref<string>(initialState.vePasswordHash);
     const mis_psd = ref<string>(initialState.mis_psd);
     const isLoading = ref(false)
+    const resourceRequestCounts = ref<Record<ResourceKey, number>>({
+        courseList: 0,
+        homeworkList: 0,
+    })
     const taskQueue = ref<Array<() => Promise<void>>>([]);
     const isProcessingQueue = ref(false);
     const connectionStatus = ref<boolean | null>(null)
@@ -134,6 +140,17 @@ export const useUserStore = defineStore('user', () => {
         dataTimestamps.value[key] = Date.now()
     }
 
+    const startResourceRequest = (key: ResourceKey) => {
+        resourceRequestCounts.value[key] += 1
+    }
+
+    const finishResourceRequest = (key: ResourceKey) => {
+        resourceRequestCounts.value[key] = Math.max(0, resourceRequestCounts.value[key] - 1)
+    }
+
+    const courseListLoading = computed(() => resourceRequestCounts.value.courseList > 0)
+    const homeworkListLoading = computed(() => resourceRequestCounts.value.homeworkList > 0)
+
     const hasFreshData = (key: keyof DataTimestamps) => {
         return Date.now() - dataTimestamps.value[key] < DATA_TTL[key]
     }
@@ -152,6 +169,19 @@ export const useUserStore = defineStore('user', () => {
             processTaskQueue();
         }
     };
+
+    const runTaskInQueue = <T>(task: () => Promise<T>) => {
+        return new Promise<T>((resolve, reject) => {
+            addTaskToQueue(async () => {
+                try {
+                    resolve(await task())
+                } catch (error) {
+                    reject(error)
+                    throw error
+                }
+            })
+        })
+    }
 
     const processTaskQueue = async () => {
         isProcessingQueue.value = true;
@@ -447,6 +477,7 @@ export const useUserStore = defineStore('user', () => {
 
         if (!needsUserInfo && !needsCourseList) return
         if (userinfo.value == null) isLoading.value = true;
+        if (needsCourseList) startResourceRequest('courseList')
         try {
             if (needsUserInfo) {
                 await syncVeUserInfo()
@@ -480,24 +511,27 @@ export const useUserStore = defineStore('user', () => {
                 });
             }
         } finally {
+            if (needsCourseList) finishResourceRequest('courseList')
             isLoading.value = false;
         }
     };
 
     const refreshUserInfo = (options: RefreshOptions = {}) => {
-        addTaskToQueue(() => refreshUserInfoTask(options));
+        return runTaskInQueue(() => refreshUserInfoTask(options));
     };
 
     const refreshHomeworks = async (options: RefreshOptions = {}) => {
         const force = options.force ?? false
         const silent = options.silent ?? true
         if (!force && hasHomeworkSnapshot() && hasFreshData('homeworkList')) return;
-        if (!await checkAuth({ silent: true })) return;
-        if (!hasCourseSnapshot()) {
-            await refreshUserInfoTask({ silent: true })
-        }
-        if (courseList.value.length === 0) return;
+        startResourceRequest('homeworkList')
         try {
+            if (!await checkAuth({ silent: true })) return;
+            if (!hasCourseSnapshot()) {
+                await refreshUserInfoTask({ silent: true })
+            }
+            if (courseList.value.length === 0) return;
+
             homeworkList.value = await getAllHomeworkItem(courseList.value.map(course => course.id));
             markDataFresh('homeworkList')
             if (!silent) {
@@ -519,6 +553,8 @@ export const useUserStore = defineStore('user', () => {
                     duration: 0
                 });
             }
+        } finally {
+            finishResourceRequest('homeworkList')
         }
     };
 
@@ -657,6 +693,8 @@ export const useUserStore = defineStore('user', () => {
         vePasswordHash,
         mis_psd,
         isLoading,
+        courseListLoading,
+        homeworkListLoading,
         userinfo,
         activeSemester: activeSemester,
         courseList,

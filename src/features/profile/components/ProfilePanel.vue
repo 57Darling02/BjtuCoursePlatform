@@ -28,12 +28,6 @@
                     </el-tag>
                 </el-descriptions-item>
                 <el-descriptions-item :span="2">
-                    <template #label>
-                        <div class="sync-label">
-                            <span>检测时间</span>
-                            <span class="sync-time">{{ statusSyncedAt }}</span>
-                        </div>
-                    </template>
                     <div class="status-panel" :class="statusPanelClass">
                         <div class="status-main">
                             <div class="status-indicator">
@@ -44,15 +38,9 @@
                                 {{ statusSubtext }}
                             </el-text>
                         </div>
-                        <el-button
-                            class="status-action"
-                            size="default"
-                            :type="statusActionType"
-                            plain
-                            :loading="isCheckingStatus"
-                            :disabled="isCheckingStatus"
-                            @click="handleStatusAction"
-                        >
+                        <el-button class="status-action" size="default" :type="statusActionType" plain
+                            :loading="isCheckingStatus" :disabled="isCheckingStatus" @click="handleStatusAction">
+                            <i v-if="!isCheckingStatus" class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                             {{ statusActionText }}
                         </el-button>
                     </div>
@@ -60,32 +48,19 @@
                 <el-descriptions-item :span="2">
                     <div class="developer-mode-row">
                         <span class="developer-mode-label">开发者模式</span>
-                        <el-switch
-                            v-model="developerModeEnabled"
-                            :before-change="beforeDeveloperModeSwitchChange"
-                        />
+                        <el-switch v-model="developerModeEnabled" :before-change="beforeDeveloperModeSwitchChange" />
                     </div>
                 </el-descriptions-item>
             </el-descriptions>
-            <el-button
-                class="full-refresh-btn"
-                type="primary"
-                plain
-                :loading="fullRefreshing"
-                :disabled="reconnecting || fullRefreshing"
-                @click="handleFullRefresh"
-            >
+            <el-button class="full-refresh-btn" type="primary" plain :loading="fullRefreshing"
+                :disabled="reconnecting || fullRefreshing" @click="handleFullRefresh" round>
                 <i v-if="!fullRefreshing" class="fa-solid fa-rotate" aria-hidden="true"></i>
                 全量刷新
             </el-button>
-            <el-button
-                class="relogin-btn"
-                type="danger"
-                plain
-                :disabled="reconnecting || fullRefreshing"
-                @click="handleRelogin"
-            >
-                重新登录
+            <el-button class="relogin-btn" type="danger" plain :disabled="reconnecting || fullRefreshing"
+                @click="handleRelogin" round>
+                <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                退出登录
             </el-button>
         </div>
     </el-card>
@@ -99,31 +74,24 @@ const loading = computed(() => userStore.isLoading && !userStore.userinfo)
 const reconnecting = ref(false)
 const fullRefreshing = ref(false)
 const avatarSrc = computed(() => userStore.Cache['avatar'] || userStore.userinfo?.avatarPath || '')
-const isCheckingStatus = computed(
-    () => reconnecting.value || fullRefreshing.value || userStore.connectionStatus === null
-)
-const sessionStatus = computed<'checking' | 'ok' | 'bad'>(() => {
-    if (isCheckingStatus.value) return 'checking'
+const isCheckingStatus = computed(() => reconnecting.value || fullRefreshing.value)
+const sessionStatus = computed<'ok' | 'bad'>(() => {
     return userStore.connectionStatus === true ? 'ok' : 'bad'
 })
 const statusPanelClass = computed(() => `is-${sessionStatus.value}`)
 const statusTitle = computed(() => {
-    if (sessionStatus.value === 'checking') return '会话检查中'
     return sessionStatus.value === 'ok' ? '会话已连接' : '会话未连接'
 })
 const statusSubtext = computed(() => {
-    if (sessionStatus.value === 'checking') return '正在检查权限与会话状态，请稍候。'
     return sessionStatus.value === 'ok'
         ? '可以正常访问课程平台数据。'
-        : '会话可能已过期，请尝试重连。'
+        : '会话已过期，请尝试重连。'
 })
 const statusActionType = computed(() => {
-    if (sessionStatus.value === 'checking') return 'info'
     return sessionStatus.value === 'ok' ? 'primary' : 'danger'
 })
 const statusActionText = computed(() => {
-    if (sessionStatus.value === 'checking') return '正在检查权限'
-    return sessionStatus.value === 'ok' ? '点击刷新状态' : '点击尝试重连'
+    return sessionStatus.value === 'ok' ? statusSyncedAt.value : '点击尝试重连'
 })
 const formatSyncTime = (timestamp: number) => {
     if (!timestamp) return '尚未同步'
@@ -203,20 +171,6 @@ onMounted(() => {
     font-size: 12px;
 }
 
-.sync-label {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    width: 100%;
-}
-
-.sync-time {
-    font-size: 12px;
-    color: #94a3b8;
-    font-weight: 400;
-}
-
 .status-panel {
     display: flex;
     flex-direction: column;
@@ -236,11 +190,6 @@ onMounted(() => {
 .status-panel.is-bad {
     border-color: #fecaca;
     background: linear-gradient(180deg, #fef2f2 0%, #fff1f2 100%);
-}
-
-.status-panel.is-checking {
-    border-color: #bfdbfe;
-    background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
 }
 
 .status-main {
@@ -269,11 +218,6 @@ onMounted(() => {
     box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.14);
 }
 
-.status-panel.is-checking .status-dot {
-    background: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
-}
-
 .status-title {
     font-size: 14px;
     font-weight: 600;
@@ -288,6 +232,11 @@ onMounted(() => {
 .status-action {
     width: 100%;
     justify-content: center;
+}
+
+.status-action .fa-rotate-right {
+    margin-right: 6px;
+    font-size: 12px;
 }
 
 .developer-mode-row {

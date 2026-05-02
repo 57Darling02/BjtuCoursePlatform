@@ -1,5 +1,5 @@
 <template>
-    <Loading v-if="listLoading && !userStore.isLoading" />
+    <AppLoading v-if="listLoading && !userStore.isLoading" />
     <div class="courseware-layout" v-else-if="hasCourseware">
         <el-menu
             ref="menuRef"
@@ -96,7 +96,7 @@
     </div>
 </template>
 <script lang='ts' setup>
-import Loading from '@/components/Loading.vue';
+import AppLoading from '@/shared/ui/AppLoading.vue';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { type CourseResourceItem } from '@/api';
 import { getCourseResourceList } from '@/api/api_ve';

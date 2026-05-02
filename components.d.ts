@@ -56,6 +56,7 @@ declare module 'vue' {
     HwDialog: typeof import('./src/components/HwDialog.vue')['default']
     HwStucontent: typeof import('./src/components/HwStucontent.vue')['default']
     Loading: typeof import('./src/components/Loading.vue')['default']
+    ModulePanelShell: typeof import('./src/components/ModulePanelShell.vue')['default']
     Navbar: typeof import('./src/components/Navbar.vue')['default']
     PdfPreview: typeof import('./src/components/PdfPreview.vue')['default']
     ProfileCard: typeof import('./src/components/ProfileCard.vue')['default']

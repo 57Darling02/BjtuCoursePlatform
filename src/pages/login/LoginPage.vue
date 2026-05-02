@@ -1,5 +1,5 @@
 <template>
-  <Loading v-if="is_loading" />
+  <AppLoading v-if="is_loading" />
   <el-form ref="loginFormRef" class="a-card" :model="loginForm" :rules="loginRules" label-width="72px"
     style="width: 80%; max-width: 420px;" label-position="right">
     <div style="display: flex; justify-content: center; width: 100%;">
@@ -53,7 +53,7 @@ import { el_alert } from '@/utils'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 import { logout } from '@/api/api_ve'
-import Loading from '@/components/Loading.vue'
+import AppLoading from '@/shared/ui/AppLoading.vue'
 const userStore = useUserStore();
 
 // 表单实例

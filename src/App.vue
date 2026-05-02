@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
-import Loading from './components/Loading.vue';
-import BgStarrySkySass from './components/Bg_StarrySkySass.vue';
+import AppLoading from '@/shared/ui/AppLoading.vue';
+import AppBackground from '@/layouts/components/AppBackground.vue';
 import { onMounted } from 'vue';
 import { useUserStore } from '@/stores/user';
 const userStore = useUserStore();
@@ -18,8 +18,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <BgStarrySkySass />
-  <Loading v-if="userStore.isLoading" />
+  <AppBackground />
+  <AppLoading v-if="userStore.isLoading" />
 
   <div id="mainview">
     <RouterView />

@@ -1,5 +1,5 @@
 <template>
-    <Loading v-if="initialLoading && !userStore.isLoading" />
+    <AppLoading v-if="initialLoading && !userStore.isLoading" />
     <div
         v-else
         class="replay-layout"
@@ -217,8 +217,8 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { getCourseReplayDetail, getCourseReplayKnowledgeList, getCourseReplayScheduleList } from '@/api/api_ve';
 import type { CourseReplayDetail, CourseReplayKnowledgeItem, CourseReplayScheduleItem } from '@/api';
-import CourseReplaySyncPlayer from '@/components/CourseReplaySyncPlayer.vue';
-import Loading from '@/components/Loading.vue';
+import CourseReplaySyncPlayer from '@/features/replay/components/CourseReplaySyncPlayer.vue';
+import AppLoading from '@/shared/ui/AppLoading.vue';
 import router from '@/router';
 import { useUserStore } from '@/stores/user';
 

@@ -70,7 +70,7 @@
 <script lang='ts' setup>
 import type { HomeworkItem } from '@/api';
 import { computed, onMounted, onUnmounted, ref, type PropType } from 'vue';
-import AddHwPanel from '@/components/AddHwPanel.vue';
+import AddHwPanel from '@/features/homework/components/AddHwPanel.vue';
 import { emitter } from '@/utils';
 const props = defineProps({
     activehomework: {

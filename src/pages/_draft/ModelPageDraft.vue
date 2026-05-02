@@ -8,7 +8,7 @@
             </div>
         </template>
         <template v-else>
-            <DayCourseModule />
+            <TodayScheduleSection />
             <div class="model-panel view-soft-surface">
                 hahaha
             </div>
@@ -18,7 +18,7 @@
 </template>
 <script lang='ts' setup>
 import { ref } from 'vue';
-import DayCourseModule from '@/module/DayCourseModule.vue'
+import TodayScheduleSection from '@/features/schedule/containers/TodayScheduleSection.vue'
 
 const isLoading = ref(false);
 
