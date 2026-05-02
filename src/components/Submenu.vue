@@ -34,25 +34,26 @@
                             <span class="sync-time">{{ statusSyncedAt }}</span>
                         </div>
                     </template>
-                    <div class="status-panel" :class="statusOk ? 'is-ok' : 'is-bad'">
+                    <div class="status-panel" :class="statusPanelClass">
                         <div class="status-main">
                             <div class="status-indicator">
                                 <span class="status-dot" />
-                                <span class="status-title">{{ statusOk ? '会话已连接' : '会话未连接' }}</span>
+                                <span class="status-title">{{ statusTitle }}</span>
                             </div>
                             <el-text size="small" class="status-subtext">
-                                {{ statusOk ? '状态正常，可继续访问课程平台数据。' : '会话可能已过期，请重连后再试。' }}
+                                {{ statusSubtext }}
                             </el-text>
                         </div>
                         <el-button
                             class="status-action"
                             size="default"
-                            :type="statusOk ? 'primary' : 'danger'"
+                            :type="statusActionType"
                             plain
-                            :loading="reconnecting"
+                            :loading="isCheckingStatus"
+                            :disabled="isCheckingStatus"
                             @click="handleStatusAction"
                         >
-                            {{ statusOk ? '点击刷新状态' : '点击尝试重连' }}
+                            {{ statusActionText }}
                         </el-button>
                     </div>
                 </el-descriptions-item>
@@ -98,7 +99,32 @@ const loading = computed(() => userStore.isLoading && !userStore.userinfo)
 const reconnecting = ref(false)
 const fullRefreshing = ref(false)
 const avatarSrc = computed(() => userStore.Cache['avatar'] || userStore.userinfo?.avatarPath || '')
-const statusOk = computed(() => userStore.connectionStatus === true)
+const isCheckingStatus = computed(
+    () => reconnecting.value || fullRefreshing.value || userStore.connectionStatus === null
+)
+const sessionStatus = computed<'checking' | 'ok' | 'bad'>(() => {
+    if (isCheckingStatus.value) return 'checking'
+    return userStore.connectionStatus === true ? 'ok' : 'bad'
+})
+const statusPanelClass = computed(() => `is-${sessionStatus.value}`)
+const statusTitle = computed(() => {
+    if (sessionStatus.value === 'checking') return '会话检查中'
+    return sessionStatus.value === 'ok' ? '会话已连接' : '会话未连接'
+})
+const statusSubtext = computed(() => {
+    if (sessionStatus.value === 'checking') return '正在检查权限与会话状态，请稍候。'
+    return sessionStatus.value === 'ok'
+        ? '可以正常访问课程平台数据。'
+        : '会话可能已过期，请尝试重连。'
+})
+const statusActionType = computed(() => {
+    if (sessionStatus.value === 'checking') return 'info'
+    return sessionStatus.value === 'ok' ? 'primary' : 'danger'
+})
+const statusActionText = computed(() => {
+    if (sessionStatus.value === 'checking') return '正在检查权限'
+    return sessionStatus.value === 'ok' ? '点击刷新状态' : '点击尝试重连'
+})
 const formatSyncTime = (timestamp: number) => {
     if (!timestamp) return '尚未同步'
     return new Date(timestamp).toLocaleString()
@@ -119,7 +145,7 @@ const handleStatusAction = async () => {
     if (reconnecting.value || fullRefreshing.value) return
     reconnecting.value = true
     try {
-        if (statusOk.value) {
+        if (userStore.connectionStatus === true) {
             await userStore.refreshConnectionStatus({ silent: true })
             return
         }
@@ -212,6 +238,11 @@ onMounted(() => {
     background: linear-gradient(180deg, #fef2f2 0%, #fff1f2 100%);
 }
 
+.status-panel.is-checking {
+    border-color: #bfdbfe;
+    background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+}
+
 .status-main {
     display: flex;
     flex-direction: column;
@@ -236,6 +267,11 @@ onMounted(() => {
 .status-panel.is-ok .status-dot {
     background: #16a34a;
     box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.14);
+}
+
+.status-panel.is-checking .status-dot {
+    background: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
 }
 
 .status-title {

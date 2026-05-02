@@ -5,7 +5,7 @@ import { throttle } from 'lodash-es'
 import Navbar from '@/components/Navbar.vue'
 import { useUserStore } from '@/stores/user'
 import { showAboutDialog } from '@/utils/aboutDialog'
-const version = '2.0.0'; // 版本号 大版本.小版本.修复版本/patch版本
+const version = __APP_VERSION__
 const userStore = useUserStore()
 const last_scrollY = ref(0)
 const scrollbarRef = ref<ScrollbarInstance>()

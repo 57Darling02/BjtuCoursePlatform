@@ -1117,6 +1117,18 @@ defineExpose({
         grid-column: 1;
     }
 
+    .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage.is-featured.featured-span-1 {
+        grid-row: 1 / span 1;
+    }
+
+    .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage.is-featured.featured-span-2 {
+        grid-row: 1 / span 2;
+    }
+
+    .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage.is-featured.featured-span-3 {
+        grid-row: 1 / span 3;
+    }
+
     .sync-player-shell.is-fullscreen .stream-stage-media {
         flex: 1;
         aspect-ratio: auto;
@@ -1222,6 +1234,18 @@ defineExpose({
 
     .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage.is-featured {
         grid-column: 1;
+    }
+
+    .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage.is-featured.featured-span-1 {
+        grid-row: 1 / span 1;
+    }
+
+    .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage.is-featured.featured-span-2 {
+        grid-row: 1 / span 2;
+    }
+
+    .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) .stream-stage.is-featured.featured-span-3 {
+        grid-row: 1 / span 3;
     }
 
     .sync-player-shell.is-fullscreen .stream-stage-media,

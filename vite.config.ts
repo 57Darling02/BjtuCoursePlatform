@@ -1,4 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
+import { readFileSync } from 'node:fs'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -10,9 +11,15 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import postcssPresetEnv from "postcss-preset-env"
 
 const veOrigin = 'http://123.121.147.7:88'
+const packageJson = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf-8')
+) as { version: string }
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+  },
   css: {
     postcss: {
       plugins: [postcssPresetEnv()]
