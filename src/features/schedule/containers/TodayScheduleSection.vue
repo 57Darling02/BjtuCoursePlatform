@@ -116,7 +116,7 @@ const remainCourse = computed(() => {
 
 const todaySummaryText = computed(() => {
     const total = data.value?.length ?? 0
-    return `余/共 ${remainCourse.value.length}/${total}`
+    return `剩${remainCourse.value.length}节/共${total}节`
 })
 
 const todaySummaryTagType = computed(() => {

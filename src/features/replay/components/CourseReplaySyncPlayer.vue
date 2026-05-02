@@ -61,7 +61,7 @@
             <div class="control-row control-row-actions">
                 <div class="control-menu">
                     <transition name="control-menu-fade">
-                        <div v-if="activeControlMenu === 'audio'" class="control-menu-panel" role="menu"
+                        <div v-if="activeControlMenu === 'audio'" class="control-menu-panel control-menu-panel--align-start" role="menu"
                             aria-label="音源选择">
                             <div class="control-menu-list">
                                 <button v-for="stream in orderedStreams" :key="stream.key" class="control-menu-option"
@@ -904,6 +904,11 @@ defineExpose({
 
 .control-menu-panel--volume {
     min-width: 164px;
+}
+
+.control-menu-panel--align-start {
+    left: 0;
+    right: auto;
 }
 
 .control-menu-list {

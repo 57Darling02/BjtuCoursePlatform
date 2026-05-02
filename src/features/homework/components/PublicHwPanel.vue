@@ -8,13 +8,6 @@
                 <el-tag type="info"><i class="fa-solid fa-ban tag-icon" />{{ hw.end_time.split(' ')[0] }}</el-tag>
                 <el-tag><i class="fa-solid fa-users tag-icon" />已完成:{{ hw.submitCount }}/{{ hw.allCount }}</el-tag>
                 <el-tag type="warning" v-if="isReturned"><i class="fa-solid fa-reply tag-icon" />被打回</el-tag>
-                <el-tag type="danger" v-if="hw.status == 0 && hw.subStatus != 2 && !isReturned">
-                    <i class="fa-solid fa-hourglass-half tag-icon" />
-                    <el-countdown
-                        :style="{ display: 'inline-block', verticalAlign: 'middle', marginLeft: '4px' }"
-                        value-style="color: #666; font-size: 14px; font-weight: 700; height:100%; display:flex "
-                        format="DD[天] HH:mm:ss"
-                        :value="countdownTarget" /></el-tag>
                 <el-tag type="success" v-if="hw.detail && hw.detail.score">
                     <i class="fa-solid fa-pen-to-square tag-icon" />分数:{{ hw.detail.score }}/{{ hw.full_score }}</el-tag>
                 <el-tag type="info" v-if="hw.detail && hw.detail.rank">
@@ -24,7 +17,15 @@
         <el-col :xs="24" :sm="8" :md="8">
             <el-button round style="width: 100%" class="a-card" :class="button_status.type" @click="openSubmitDialog">
                 <i class="fa-solid status-icon" :class="button_status.icon" />
-                {{ button_status.text }}
+                <span v-if="showCountdown" class="status-button-content">
+                    <span class="status-action">{{ countdownActionText }}</span>
+                    <el-countdown
+                        class="status-countdown"
+                        format="DD[天] HH:mm:ss"
+                        :value="countdownTarget"
+                    />
+                </span>
+                <span v-else>{{ button_status.text }}</span>
             </el-button>
         </el-col>
     </el-row>
@@ -82,6 +83,8 @@ const hw = computed(() => props.activehomework)
 const addhwdialog = ref(false)
 const forceOpenSubmit = ref(false)
 const isReturned = computed(() => hw.value.returned === true || String(hw.value.return_flag ?? '') === '1' || hw.value.sub_status_text === '被打回')
+const showCountdown = computed(() => hw.value.status === 0 && hw.value.subStatus !== 2 && !isReturned.value)
+const countdownActionText = computed(() => hw.value.subStatus === 1 ? '补交' : '提交')
 const countdownTarget = computed(() => {
     const now = Date.now();
     const endTime = new Date(hw.value.end_time).getTime();
@@ -176,6 +179,27 @@ defineExpose({
 
 .status-icon {
     margin-right: 6px;
+}
+
+.status-button-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-action {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-countdown :deep(.el-statistic__content) {
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.status-countdown :deep(.el-statistic__number) {
+    font-weight: 700;
 }
 
 .blocked-submit-tip {
