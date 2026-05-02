@@ -1,34 +1,18 @@
 <template>
-    <div
-        v-if="arrangedStreams.length"
-        ref="shellRef"
-        class="sync-player-shell"
-        :class="{ 'is-fullscreen': isFullscreen }"
-    >
-        <div
-            class="streams-board"
-            :class="{
-                'is-single': arrangedStreams.length === 1 || hideAuxStreams,
-                'is-main-only': hideAuxStreams
-            }"
-        >
-            <article
-                v-for="stream in arrangedStreams"
-                :key="stream.key"
-                class="stream-stage"
-                :class="[
-                    {
-                        'is-featured': stream.key === featuredStream?.key,
-                        'is-hidden-aux': hideAuxStreams && stream.key !== featuredStream?.key
-                    },
-                    stream.key === featuredStream?.key ? `featured-span-${featuredSpanRows}` : ''
-                ]"
-            >
-                <button
-                    class="stream-stage-media"
-                    type="button"
-                    @click="handleStreamStageClick(stream.key)"
-                >
+    <div v-if="arrangedStreams.length" ref="shellRef" class="sync-player-shell"
+        :class="{ 'is-fullscreen': isFullscreen }">
+        <div class="streams-board" :class="{
+            'is-single': arrangedStreams.length === 1 || hideAuxStreams,
+            'is-main-only': hideAuxStreams
+        }">
+            <article v-for="stream in arrangedStreams" :key="stream.key" class="stream-stage" :class="[
+                {
+                    'is-featured': stream.key === featuredStream?.key,
+                    'is-hidden-aux': hideAuxStreams && stream.key !== featuredStream?.key
+                },
+                stream.key === featuredStream?.key ? `featured-span-${featuredSpanRows}` : ''
+            ]">
+                <button class="stream-stage-media" type="button" @click="handleStreamStageClick(stream.key)">
                     <div class="stream-stage-overlay">
                         <span class="stream-stage-label">
                             {{ resolveDisplayLabel(stream) }}
@@ -37,15 +21,10 @@
                             <span v-if="stream.key === featuredStream?.key" class="stream-badge stream-badge-featured">
                                 主视图
                             </span>
-                            <span
-                                v-if="stream.key === featuredStream?.key && canToggleAuxStreams"
-                                class="stream-badge stream-badge-toggle"
-                                role="button"
-                                tabindex="0"
-                                @click.stop="toggleAuxStreams"
-                                @keydown.enter.prevent.stop="toggleAuxStreams"
-                                @keydown.space.prevent.stop="toggleAuxStreams"
-                            >
+                            <span v-if="stream.key === featuredStream?.key && canToggleAuxStreams"
+                                class="stream-badge stream-badge-toggle" role="button" tabindex="0"
+                                @click.stop="toggleAuxStreams" @keydown.enter.prevent.stop="toggleAuxStreams"
+                                @keydown.space.prevent.stop="toggleAuxStreams">
                                 {{ hideAuxStreams ? '还原辅视图' : '隐藏辅视图' }}
                             </span>
                             <span v-if="stream.key === selectedAudioKey" class="stream-badge stream-badge-audio">
@@ -53,117 +32,99 @@
                             </span>
                         </div>
                     </div>
-                    <video
-                        :ref="setVideoRef(stream.key)"
-                        class="stream-video"
-                        playsinline
-                        preload="metadata"
+                    <video :ref="setVideoRef(stream.key)" class="stream-video" playsinline preload="metadata"
                         @loadedmetadata="stream.key === controllerKey && syncControlState()"
                         @durationchange="stream.key === controllerKey && syncControlState()"
                         @timeupdate="stream.key === controllerKey && syncControlState()"
                         @play="stream.key === controllerKey && handleControllerPlay()"
                         @pause="stream.key === controllerKey && handleControllerPause()"
                         @seeking="stream.key === controllerKey && handleControllerSeeking()"
-                        @ratechange="stream.key === controllerKey && handleControllerRateChange()"
-                    />
+                        @ratechange="stream.key === controllerKey && handleControllerRateChange()" />
                 </button>
             </article>
         </div>
 
-        <el-row class="control-dock" :gutter="12">
-            <el-col class="control-col control-col-play">
-                <div class="control-cluster control-cluster-play">
-                    <button class="control-button" type="button" @click="togglePlayback">
-                        <i :class="isPaused ? 'fa-solid fa-play' : 'fa-solid fa-pause'" />
-                    </button>
-                    <div class="timeline-box">
-                        <span class="timeline-time">{{ formatTime(scrubTime) }}</span>
-                        <input
-                            :value="scrubTime"
-                            class="timeline-slider"
-                            type="range"
-                            min="0"
-                            :max="safeDuration"
-                            step="0.1"
-                            @input="handleSeekInput"
-                            @mousedown="isScrubbing = true"
-                            @touchstart="isScrubbing = true"
-                            @change="commitSeek"
-                        >
-                        <span class="timeline-time">{{ formatTime(duration) }}</span>
-                    </div>
+        <div class="control-dock">
+            <div class="control-row control-row-main">
+                <button class="control-button" type="button" @click="togglePlayback">
+                    <i :class="isPaused ? 'fa-solid fa-play' : 'fa-solid fa-pause'" />
+                </button>
+                <div class="timeline-box">
+                    <span class="timeline-time">{{ formatTime(scrubTime) }}</span>
+                    <input :value="scrubTime" class="timeline-slider" type="range" min="0" :max="safeDuration"
+                        step="0.1" @input="handleSeekInput" @mousedown="isScrubbing = true"
+                        @touchstart="isScrubbing = true" @change="commitSeek">
+                    <span class="timeline-time">{{ formatTime(duration) }}</span>
                 </div>
-            </el-col>
+            </div>
 
-            <el-col class="control-col control-col-source">
-                <div class="control-cluster control-cluster-source">
-                    <div class="control-group control-group-source">
-                        <span class="control-label">音源</span>
-                        <el-select
-                            v-model="selectedAudioKey"
-                            size="small"
-                            class="toolbar-select"
-                            :teleported="true"
-                            :append-to="selectAppendTarget"
-                            :show-arrow="false"
-                            @change="handleAudioSourceChange"
-                        >
-                            <el-option
-                                v-for="stream in orderedStreams"
-                                :key="stream.key"
-                                :label="stream.label"
-                                :value="stream.key"
-                            />
-                        </el-select>
-                    </div>
-
-                    <div class="control-group control-group-speed">
-                        <span class="control-label">倍速</span>
-                        <el-select
-                            v-model="selectedPlaybackRate"
-                            size="small"
-                            class="toolbar-select toolbar-select--compact"
-                            :teleported="true"
-                            :append-to="selectAppendTarget"
-                            :show-arrow="false"
-                            @change="handlePlaybackRateChange"
-                        >
-                            <el-option
-                                v-for="rate in playbackRateOptions"
-                                :key="rate"
-                                :label="`${rate}x`"
-                                :value="rate"
-                            />
-                        </el-select>
-                    </div>
-                </div>
-            </el-col>
-
-            <el-col class="control-col control-col-volume">
-                <div class="control-cluster control-cluster-volume">
-                    <button
-                        class="control-button control-button-fullscreen"
-                        type="button"
-                        :title="isFullscreen ? '退出全屏' : '全屏拼盘'"
-                        @click="toggleFullscreen"
-                    >
-                        <i :class="isFullscreen ? 'fa-solid fa-compress' : 'fa-solid fa-expand'" />
+            <div class="control-row control-row-actions">
+                <div class="control-menu">
+                    <transition name="control-menu-fade">
+                        <div v-if="activeControlMenu === 'audio'" class="control-menu-panel" role="menu"
+                            aria-label="音源选择">
+                            <div class="control-menu-list">
+                                <button v-for="stream in orderedStreams" :key="stream.key" class="control-menu-option"
+                                    :class="{ 'is-active': stream.key === selectedAudioKey }" type="button"
+                                    @click="handleAudioSourceChange(stream.key)">
+                                    <span>{{ resolveDisplayLabel(stream) }}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </transition>
+                    <button class="control-pill" :class="{ 'is-active': activeControlMenu === 'audio' }" type="button"
+                        title="音源选择" @click="toggleControlMenu('audio')">
+                        <i class="control-pill-icon fa-solid fa-music" />
+                        <span class="control-pill-value control-pill-value--truncate">{{ selectedAudioLabel }}</span>
                     </button>
-                    <button class="control-button control-button-volume" type="button" @click="toggleMute">
-                        <i :class="volumeIconClass" />
-                    </button>
-                    <input
-                        :value="effectiveVolume"
-                        class="volume-slider"
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.05"
-                        @input="handleVolumeInput"
-                    >
                 </div>
-            </el-col>
-        </el-row>
+
+                <div class="control-menu">
+                    <transition name="control-menu-fade">
+                        <div v-if="activeControlMenu === 'speed'" class="control-menu-panel" role="menu"
+                            aria-label="倍速选择">
+                            <div class="control-menu-list">
+                                <button v-for="rate in playbackRateOptions" :key="rate" class="control-menu-option"
+                                    :class="{ 'is-active': rate === selectedPlaybackRate }" type="button"
+                                    @click="handlePlaybackRateChange(rate)">
+                                    <span>{{ rate }}x</span>
+                                </button>
+                            </div>
+                        </div>
+                    </transition>
+                    <button class="control-pill" :class="{ 'is-active': activeControlMenu === 'speed' }" type="button"
+                        title="倍速选择" @click="toggleControlMenu('speed')">
+                        <i class="control-pill-icon fa-solid fa-gauge-high" />
+                        <span class="control-pill-value">{{ selectedPlaybackRateLabel }}</span>
+                    </button>
+                </div>
+
+
+
+                <div class="control-menu">
+                    <transition name="control-menu-fade">
+                        <div v-if="activeControlMenu === 'volume'" class="control-menu-panel control-menu-panel--volume"
+                            role="group" aria-label="音量控制">
+                            <div class="volume-popover-slider-box">
+                                
+                                <input :value="effectiveVolume" class="volume-slider volume-slider--popover"
+                                    type="range" min="0" max="1" step="0.05" @input="handleVolumeInput">
+                            </div>
+                        </div>
+                    </transition>
+                    <button class="control-pill" :class="{ 'is-active': activeControlMenu === 'volume' }" type="button"
+                        title="音量控制" @click="toggleControlMenu('volume')">
+                        <i :class="['control-pill-icon', volumeIconClass]" />
+                        <span class="control-pill-value">{{ volumeValueLabel }}</span>
+                    </button>
+                </div>
+                <button class="control-pill" type="button" :title="isFullscreen ? '退出全屏' : '全屏拼盘'"
+                    @click="toggleFullscreen">
+                    <i :class="['control-pill-icon', isFullscreen ? 'fa-solid fa-compress' : 'fa-solid fa-expand']" />
+                    <span class="control-pill-value">{{ fullscreenLabel }}</span>
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -183,6 +144,8 @@ type PlaybackSnapshot = {
     paused: boolean;
     playbackRate: number;
 };
+
+type ControlMenuKey = 'audio' | 'speed' | 'volume' | null;
 
 const props = defineProps({
     streams: {
@@ -212,7 +175,7 @@ const currentTime = ref(0);
 const scrubTime = ref(0);
 const isScrubbing = ref(false);
 const volume = ref(1);
-const isMuted = ref(false);
+const activeControlMenu = ref<ControlMenuKey>(null);
 
 const orderedStreams = computed(() => props.streams.filter(stream => !!stream.url));
 const streamSignature = computed(() =>
@@ -251,16 +214,20 @@ const featuredSpanRows = computed(() => {
 });
 
 const safeDuration = computed(() => Math.max(duration.value, 0.1));
-const effectiveVolume = computed(() => (isMuted.value ? 0 : volume.value));
+const effectiveVolume = computed(() => volume.value);
 const canToggleAuxStreams = computed(() => orderedStreams.value.length > 1);
-const selectAppendTarget = computed(() =>
-    isFullscreen.value && shellRef.value ? shellRef.value : 'body'
-);
 const volumeIconClass = computed(() => {
-    if (effectiveVolume.value <= 0) return 'fa-solid fa-volume-xmark';
-    if (effectiveVolume.value < 0.5) return 'fa-solid fa-volume-low';
+    if (volume.value <= 0) return 'fa-solid fa-volume-xmark';
+    if (volume.value < 0.5) return 'fa-solid fa-volume-low';
     return 'fa-solid fa-volume-high';
 });
+const selectedAudioLabel = computed(() => {
+    const stream = orderedStreams.value.find(item => item.key === selectedAudioKey.value);
+    return stream ? resolveDisplayLabel(stream) : '音源';
+});
+const selectedPlaybackRateLabel = computed(() => `${selectedPlaybackRate.value}x`);
+const volumeValueLabel = computed(() => `${Math.round(effectiveVolume.value * 100)}%`);
+const fullscreenLabel = computed(() => (isFullscreen.value ? '退出' : '全屏'));
 
 const supportsNativeHls = (video: HTMLVideoElement) =>
     video.canPlayType('application/vnd.apple.mpegurl') !== '';
@@ -311,7 +278,7 @@ const captureControllerState = (): PlaybackSnapshot | null => {
 
 const syncAudioTracks = () => {
     const targetKey = selectedAudioKey.value;
-    const targetVolume = effectiveVolume.value;
+    const targetVolume = volume.value;
 
     for (const stream of orderedStreams.value) {
         const video = videoElements.get(stream.key);
@@ -574,35 +541,52 @@ const handlePlaybackRateChange = async (rate: number) => {
     const controllerVideo = getControllerVideo();
     if (!controllerVideo) return;
 
+    selectedPlaybackRate.value = rate;
     controllerVideo.playbackRate = rate;
     syncControlState();
     await syncFollowers(false);
+    activeControlMenu.value = null;
 };
 
-const handleAudioSourceChange = async () => {
-    syncAudioTracks();
-    await syncFollowers(true);
+const handleAudioSourceChange = (key: string) => {
+    selectedAudioKey.value = key;
+    activeControlMenu.value = null;
 };
 
 const handleVolumeInput = (event: Event) => {
     const nextVolume = Number((event.target as HTMLInputElement).value);
     volume.value = Number.isFinite(nextVolume) ? nextVolume : 1;
-    isMuted.value = volume.value <= 0;
-    syncAudioTracks();
-};
-
-const toggleMute = () => {
-    isMuted.value = !isMuted.value;
-    syncAudioTracks();
 };
 
 const syncFullscreenState = () => {
     isFullscreen.value = !!shellRef.value && document.fullscreenElement === shellRef.value;
 };
 
+const closeControlMenu = () => {
+    activeControlMenu.value = null;
+};
+
+const toggleControlMenu = (menu: Exclude<ControlMenuKey, null>) => {
+    activeControlMenu.value = activeControlMenu.value === menu ? null : menu;
+};
+
+const handleDocumentPointerDown = (event: PointerEvent) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest('.control-menu')) return;
+    closeControlMenu();
+};
+
+const handleDocumentKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+        closeControlMenu();
+    }
+};
+
 const toggleFullscreen = async () => {
     const shell = shellRef.value;
     if (!shell || !document.fullscreenEnabled) return;
+    closeControlMenu();
 
     try {
         if (document.fullscreenElement === shell) {
@@ -694,12 +678,14 @@ watch(streamSignature, async () => {
     await refreshMediaBindings(snapshot);
 });
 
-watch([selectedAudioKey, volume, isMuted], () => {
+watch([selectedAudioKey, volume], () => {
     syncAudioTracks();
 });
 
 onMounted(async () => {
     document.addEventListener('fullscreenchange', syncFullscreenState);
+    document.addEventListener('pointerdown', handleDocumentPointerDown);
+    document.addEventListener('keydown', handleDocumentKeydown);
     syncFullscreenState();
     ensureSelectionState();
     await refreshMediaBindings();
@@ -707,6 +693,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
     document.removeEventListener('fullscreenchange', syncFullscreenState);
+    document.removeEventListener('pointerdown', handleDocumentPointerDown);
+    document.removeEventListener('keydown', handleDocumentKeydown);
     destroyAllPlayers();
 });
 
@@ -720,6 +708,7 @@ defineExpose({
 .sync-player-shell {
     width: 100%;
     height: 100%;
+    max-height: 100%;
     min-width: 0;
     min-height: 0;
     display: flex;
@@ -865,81 +854,121 @@ defineExpose({
 }
 
 .control-dock {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
     padding: 12px 14px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
     background: linear-gradient(180deg, rgba(15, 24, 40, 0.98), rgba(10, 16, 28, 0.98));
 }
 
-.control-col {
+.control-row {
     min-width: 0;
-    display: flex;
-    align-items: center;
-}
-
-.control-col-play {
-    flex: 999 1 420px;
-}
-
-.control-col-source {
-    flex: 2 1 340px;
-}
-
-.control-col-volume {
-    flex: 1 1 200px;
-}
-
-.control-cluster {
-    min-width: 0;
-    width: 100%;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.control-cluster-play {
-    justify-content: flex-start;
+.control-row-main {
+    min-width: 0;
 }
 
-.control-cluster-source {
-    justify-content: flex-start;
-    gap: 10px;
-}
-
-.control-cluster-volume {
+.control-row-actions {
     justify-content: flex-end;
+    flex-wrap: nowrap;
 }
 
-.control-group {
+.control-menu {
+    position: relative;
+}
+
+.control-menu-panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 10px);
+    z-index: 20;
+    min-width: 148px;
+    max-width: min(240px, calc(100vw - 24px));
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(16, 25, 42, 0.98), rgba(8, 13, 24, 0.98));
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(10px);
+}
+
+.control-menu-panel--volume {
+    min-width: 164px;
+}
+
+.control-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.control-menu-option {
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 8px 10px;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.06);
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.control-menu-option:hover,
+.control-menu-option.is-active {
+    border-color: rgba(93, 160, 255, 0.4);
+    background: rgba(93, 160, 255, 0.16);
+}
+
+.control-pill {
+    min-width: 0;
+    height: 34px;
+    padding: 0 10px;
     display: flex;
     align-items: center;
     gap: 8px;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+    transition: background 0.18s ease;
+}
+
+.control-pill:hover,
+.control-pill.is-active {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.control-pill-icon {
+    flex: none;
+}
+
+.control-pill-value {
     min-width: 0;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 12px;
+    line-height: 1;
     white-space: nowrap;
 }
 
-.control-group-source {
-    flex: 1 1 0;
-    min-width: 0;
+.control-pill-value--truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.control-group-speed {
-    flex: 0 1 auto;
-    min-width: 0;
-}
-
-.control-group-source .toolbar-select {
-    width: clamp(130px, 18vw, 210px);
-}
-
-.control-group-speed .toolbar-select {
-    width: clamp(78px, 8vw, 112px);
-}
-
-.control-label,
 .timeline-time {
     color: rgba(255, 255, 255, 0.74);
     font-size: 12px;
@@ -964,16 +993,6 @@ defineExpose({
     background: rgba(255, 255, 255, 0.14);
 }
 
-.control-button-volume {
-    width: 34px;
-    height: 34px;
-}
-
-.control-button-fullscreen {
-    width: 34px;
-    height: 34px;
-}
-
 .timeline-box {
     min-width: 0;
     flex: 1;
@@ -990,8 +1009,33 @@ defineExpose({
     cursor: pointer;
 }
 
-.control-cluster-volume .volume-slider {
-    min-width: 96px;
+.volume-slider--popover {
+    width: 88px;
+    min-width: 88px;
+}
+
+.volume-popover-slider-box {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.volume-popover-value {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.control-menu-fade-enter-active,
+.control-menu-fade-leave-active {
+    transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.control-menu-fade-enter-from,
+.control-menu-fade-leave-to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
 }
 
 .sync-player-shell.is-fullscreen {
@@ -1024,39 +1068,14 @@ defineExpose({
     display: flex;
 }
 
-.sync-player-shell.is-fullscreen .control-col-play {
-    flex-basis: 460px;
-}
-
-.sync-player-shell.is-fullscreen .control-col-source {
-    flex-basis: 420px;
-    min-width: 360px;
-}
-
-.sync-player-shell.is-fullscreen .control-dock {
-    display: grid;
-    grid-template-columns: minmax(420px, 1fr) minmax(360px, auto) minmax(220px, auto);
-    align-items: center;
-}
-
-.sync-player-shell.is-fullscreen .control-col {
-    width: 100%;
-}
-
-.sync-player-shell.is-fullscreen .control-col-source .control-cluster-source {
-    justify-content: flex-start;
-}
-
 @media (max-width: 1024px) {
     .sync-player-shell {
-        height: auto;
-        overflow: visible;
+        min-height: 0;
     }
 
     .streams-board {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-auto-rows: minmax(0, auto);
-        overflow: visible;
+        grid-auto-rows: minmax(0, 1fr);
     }
 
     .streams-board.is-single {
@@ -1076,35 +1095,29 @@ defineExpose({
     .stream-stage-media {
         display: block;
         width: 100%;
-        flex: none;
-        aspect-ratio: 16 / 9;
+        height: 100%;
+        flex: 1;
+        aspect-ratio: auto;
     }
 
     .streams-board {
         gap: 10px;
     }
 
-    .control-cluster-source {
-        justify-content: space-between;
+    .control-dock {
+        grid-template-columns: minmax(0, 1fr);
     }
 
-    .control-col-play,
-    .control-col-source,
-    .control-col-volume {
-        flex: 1 1 100%;
+    .control-row-actions {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        justify-content: stretch;
     }
 
-    .sync-player-shell.is-fullscreen .control-col-play {
-        flex: 999 1 460px;
-    }
-
-    .sync-player-shell.is-fullscreen .control-col-source {
-        flex: 2 1 360px;
-        min-width: 300px;
-    }
-
-    .sync-player-shell.is-fullscreen .control-col-volume {
-        flex: 1 1 220px;
+    .control-pill {
+        width: 100%;
+        justify-content: center;
+        padding-inline: 8px;
     }
 
     .sync-player-shell.is-fullscreen .streams-board:not(.is-main-only) {
@@ -1137,14 +1150,12 @@ defineExpose({
 
 @media (max-width: 768px) {
     .sync-player-shell {
-        height: auto;
         gap: 8px;
-        overflow: visible;
     }
 
     .streams-board {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-auto-rows: auto;
+        grid-auto-rows: minmax(0, 1fr);
         gap: 8px;
     }
 
@@ -1158,12 +1169,11 @@ defineExpose({
         min-height: 0;
     }
 
+    .stream-stage-media,
     .stream-stage.is-featured .stream-stage-media {
-        aspect-ratio: 16 / 9;
-    }
-
-    .streams-board .stream-stage:not(.is-featured) .stream-stage-media {
-        aspect-ratio: 16 / 9;
+        height: 100%;
+        flex: 1;
+        aspect-ratio: auto;
     }
 
     .streams-board .stream-stage:nth-child(n + 4) {
@@ -1174,35 +1184,25 @@ defineExpose({
         padding: 10px 12px;
     }
 
-    .control-cluster {
-        width: 100%;
-    }
-
-    .control-cluster-play {
+    .control-menu-panel {
+        bottom: calc(100% + 8px);
+        padding: 8px;
         gap: 8px;
     }
 
-    .control-cluster-source {
-        gap: 8px;
-        justify-content: flex-start;
+    .control-menu-panel--volume {
+        min-width: 148px;
+    }
+
+    .volume-slider--popover {
+        width: 72px;
+        min-width: 72px;
     }
 
     .timeline-box {
         display: grid;
         grid-template-columns: auto minmax(0, 1fr) auto;
         gap: 8px;
-    }
-
-    .control-group {
-        gap: 6px;
-    }
-
-    .control-group-source .toolbar-select {
-        width: 100%;
-    }
-
-    .control-group-speed .toolbar-select {
-        width: clamp(84px, 30vw, 124px);
     }
 
     .timeline-time {
@@ -1258,18 +1258,5 @@ defineExpose({
         display: flex;
     }
 
-    .sync-player-shell.is-fullscreen .control-col-play {
-        flex: 999 1 420px;
-    }
-
-    .sync-player-shell.is-fullscreen .control-col-source {
-        flex: 2 1 320px;
-        min-width: 260px;
-    }
-
-    .sync-player-shell.is-fullscreen .control-col-volume {
-        flex: 1 1 180px;
-    }
 }
-
 </style>

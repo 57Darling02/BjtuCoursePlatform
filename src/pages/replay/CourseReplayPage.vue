@@ -279,7 +279,7 @@ const detailLoading = ref(false);
 const knowledgeLoading = ref(false);
 const isNarrowLayout = ref(false);
 const schedulePanelOpen = ref(true);
-const knowledgePanelOpen = ref(true);
+const knowledgePanelOpen = ref(false);
 const scheduleDrawerVisible = ref(false);
 const knowledgeDrawerVisible = ref(false);
 const scheduleList = ref<CourseReplayScheduleItem[]>([]);
@@ -291,7 +291,7 @@ const playerRef = ref<CourseReplaySyncPlayerExpose | null>(null);
 let detailRequestId = 0;
 
 const updateLayoutMode = () => {
-    const nextIsNarrow = window.matchMedia('(max-width: 1200px)').matches;
+    const nextIsNarrow = window.matchMedia('(max-width: 1024px)').matches;
     isNarrowLayout.value = nextIsNarrow;
     if (!nextIsNarrow) {
         scheduleDrawerVisible.value = false;
@@ -495,8 +495,13 @@ onBeforeUnmount(() => {
     --cw-accent-soft: rgba(47, 127, 202, 0.09);
     --cw-border: rgba(101, 142, 197, 0.16);
     --cw-text: #2d3d50;
+    --replay-layout-min-height: 500px;
+    --replay-viewport-offset: 64px;
+    --replay-layout-max-height: calc(100vh - var(--replay-viewport-offset));
+    --replay-layout-max-height: calc(100dvh - var(--replay-viewport-offset) - env(safe-area-inset-bottom));
     width: 100%;
-    height: 100%;
+    height: max(var(--replay-layout-min-height), min(100%, var(--replay-layout-max-height)));
+    min-height: var(--replay-layout-min-height);
     box-sizing: border-box;
     display: grid;
     grid-template-areas: 'schedule main knowledge';
@@ -526,8 +531,6 @@ onBeforeUnmount(() => {
 }
 
 .replay-layout.is-narrow {
-    height: 100%;
-    min-height: 0;
     grid-template-areas: 'main';
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
@@ -713,10 +716,8 @@ onBeforeUnmount(() => {
     text-align: center;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
     .replay-layout {
-        height: auto;
-        min-height: 0;
         padding: 12px;
         gap: 12px;
         border-radius: 18px;
@@ -724,10 +725,6 @@ onBeforeUnmount(() => {
 
     .replay-main-pane {
         min-height: 0;
-        height: 100%;
-    }
-
-    .replay-layout.is-narrow {
         height: 100%;
     }
 }
@@ -777,8 +774,7 @@ onBeforeUnmount(() => {
     }
 
     .video-shell {
-        min-height: clamp(210px, 42vw, 280px);
-        overflow: hidden;
+        min-height: 0;
     }
 
     .mobile-pane-trigger {

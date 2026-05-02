@@ -42,7 +42,7 @@ $white_bg: rgba(255, 255, 255, 0.888);
   overflow: hidden;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   #mainview {
     align-items: stretch;
     overflow-x: hidden;
