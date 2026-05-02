@@ -4,13 +4,13 @@ import { service as appService } from "../api_app/instance";
 //定义输入参数类型
 interface VeLoginParams {
     username: string;
-    password: string;
+    passwordHash: string;
     passcode: string;
     loginType: "1" | "2";
 }
 
 export async function login_ve(loginparams: VeLoginParams): Promise<boolean> {
-    const { username, password, passcode } = loginparams;
+    const { username, passwordHash, passcode } = loginparams;
     try {
         await service.post(
             "/s.shtml",
@@ -20,7 +20,7 @@ export async function login_ve(loginparams: VeLoginParams): Promise<boolean> {
                 qxkt_type: "",
                 qxkt_url: "",
                 username,
-                password,
+                password: passwordHash,
                 passcode,
                 loginType: "1",
             }),

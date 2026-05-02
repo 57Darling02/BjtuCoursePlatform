@@ -5,10 +5,13 @@ import {
     type TermInfo,
     type CourseInfo,
     type HomeworkItem,
+    type LoginParams,
     type UserInfo,
 } from '@/api';
+import { login as loginByPassword } from '@/api/auth';
 
 import {
+    getVePasswordHash,
     logout,
     login_ve,
     getUserInfo as getUserInfo_ve,
@@ -35,7 +38,7 @@ interface ReconnectOptions {
 interface TemporaryAccountOptions {
     username: string
     password: string
-    passwordIsMd5?: boolean
+    passwordIsHash?: boolean
 }
 
 interface InitialReconnectOptions {
@@ -78,7 +81,7 @@ export const useUserStore = defineStore('user', () => {
     const storedState = localStorage.getItem(USER_STORAGE_KEY);
     const cachedState = localStorage.getItem(CACHE_STORAGE_KEY);
     const storedAuthData = storedState
-        ? decryptData<{ isAuthenticated: boolean; username: string; ve_pwd?: string; mis_psd?: string; password?: string }>(storedState)
+        ? decryptData<{ isAuthenticated: boolean; username: string; vePasswordHash?: string; ve_pwd?: string; mis_psd?: string; password?: string }>(storedState)
         : null;
     const cachedData = cachedState
         ? JSON.parse(cachedState)
@@ -95,14 +98,14 @@ export const useUserStore = defineStore('user', () => {
     const initialState = {
         isAuthenticated: storedAuthData?.isAuthenticated ?? false,
         username: storedAuthData?.username ?? '',
-        ve_pwd: storedAuthData?.ve_pwd ?? storedAuthData?.password ?? '',
+        vePasswordHash: storedAuthData?.vePasswordHash ?? storedAuthData?.ve_pwd ?? storedAuthData?.password ?? '',
         mis_psd: storedAuthData?.mis_psd ?? '',
         ...cachedData,
     };
 
     const isAuthenticated = ref<boolean>(initialState.isAuthenticated);
     const username = ref<string>(initialState.username);
-    const ve_pwd = ref<string>(initialState.ve_pwd);
+    const vePasswordHash = ref<string>(initialState.vePasswordHash);
     const mis_psd = ref<string>(initialState.mis_psd);
     const isLoading = ref(false)
     const taskQueue = ref<Array<() => Promise<void>>>([]);
@@ -170,18 +173,45 @@ export const useUserStore = defineStore('user', () => {
         isProcessingQueue.value = false;
     };
 
+    const login = async (params: LoginParams) => {
+        const plainPassword = params.password
+        const normalizedUsername = params.username.trim()
+        const isCasLogin = params.loginType === '2'
+
+        await loginByPassword({
+            ...params,
+            username: normalizedUsername,
+        })
+
+        const nextVePasswordHash = isCasLogin
+            ? await getVePasswordHash()
+            : md5(plainPassword)
+
+        isAuthenticated.value = true
+        username.value = normalizedUsername
+        vePasswordHash.value = nextVePasswordHash
+        mis_psd.value = isCasLogin ? plainPassword : ''
+        connectionStatus.value = true
+        lastVeCheckResult.value = true
+        lastVeCheckTime.value = Date.now()
+        markDataFresh('status')
+        hasTriedInitialReconnect.value = false
+        saveStateNow()
+    }
+
     const handlelogout = async () => {
         try {
             await logout()
             isAuthenticated.value = false
             username.value = ''
-            ve_pwd.value = ''
+            vePasswordHash.value = ''
             mis_psd.value = ''
             activeSemester.value = null
             courseList.value = []
             homeworkList.value = []
             Cache.value = {}
             connectionStatus.value = false
+            hasTriedInitialReconnect.value = false
             dataTimestamps.value = createDefaultDataTimestamps()
             saveCache.flush()
             saveState.flush()
@@ -296,14 +326,14 @@ export const useUserStore = defineStore('user', () => {
                     await syncVeUserInfo()
                 }
                 success = true
-            } else if (!username.value || !ve_pwd.value) {
+            } else if (!username.value || !vePasswordHash.value) {
                 connectionStatus.value = false
                 success = false
             } else {
                 try {
                     await login_ve({
                         username: username.value,
-                        password: ve_pwd.value,
+                        passwordHash: vePasswordHash.value,
                         passcode: '',
                         loginType: '2',
                     });
@@ -345,23 +375,23 @@ export const useUserStore = defineStore('user', () => {
             throw new Error('已有帮忙提交任务正在执行，请稍后重试')
         }
         const tempUsername = options.username.trim()
-        const tempVePassword = options.passwordIsMd5 ? options.password : md5(options.password)
-        if (!tempUsername || !tempVePassword) {
+        const tempVePasswordHash = options.passwordIsHash ? options.password : md5(options.password)
+        if (!tempUsername || !tempVePasswordHash) {
             throw new Error('临时账号或密码不能为空')
         }
         isTemporaryAccountSwitching = true
         suppressAuthPersistence = true
 
         const originalUsername = username.value
-        const originalVePassword = ve_pwd.value
+        const originalVePasswordHash = vePasswordHash.value
         const restoreOriginalAccount = async () => {
             username.value = originalUsername
-            ve_pwd.value = originalVePassword
+            vePasswordHash.value = originalVePasswordHash
             return await reconnect({ notify: false })
         }
 
         username.value = tempUsername
-        ve_pwd.value = tempVePassword
+        vePasswordHash.value = tempVePasswordHash
         const switched = await reconnect({ notify: false })
         if (!switched) {
             const restored = await restoreOriginalAccount()
@@ -586,7 +616,7 @@ export const useUserStore = defineStore('user', () => {
             encryptData({
                 isAuthenticated: isAuthenticated.value,
                 username: username.value,
-                ve_pwd: ve_pwd.value,
+                vePasswordHash: vePasswordHash.value,
                 mis_psd: mis_psd.value,
             })
         );
@@ -618,19 +648,20 @@ export const useUserStore = defineStore('user', () => {
     }, 1000);
 
     // 监听状态变化并持久化
-    watch([isAuthenticated, username, ve_pwd, mis_psd], saveState);
+    watch([isAuthenticated, username, vePasswordHash, mis_psd], saveState);
     watch([userinfo, activeSemester, courseList, homeworkList, Cache], saveCache, { deep: true });
 
     return {
         isAuthenticated,
         username,
-        ve_pwd,
+        vePasswordHash,
         mis_psd,
         isLoading,
         userinfo,
         activeSemester: activeSemester,
         courseList,
         homeworkList,
+        login,
         handlelogout,
         go_ai,
         go_kcpt,

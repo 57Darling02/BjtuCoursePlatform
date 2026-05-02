@@ -8,13 +8,14 @@ import { getCaptcha as getCaptcha_cas } from '@/api/api_cas'
 
 export const login = async (params: LoginParams) => {
     const { username, password, passcode, loginType, captcha_id, csrfmiddlewaretoken} = params;
+    const vePasswordHash = md5(password)
     switch (loginType) {
         case '1':
-            await login_ve({ username, password: md5(password), passcode, loginType })
+            await login_ve({ username, passwordHash: vePasswordHash, passcode, loginType })
             break
         case '2':
             await login_cas({ loginname: username, password: password, captcha_1: passcode, captcha_0: captcha_id, csrfmiddlewaretoken: csrfmiddlewaretoken })
-            await login_ve({ username, password: md5(password), passcode, loginType })
+            await login_ve({ username, passwordHash: vePasswordHash, passcode, loginType })
             break
         default:
             throw new Error('loginType错误')

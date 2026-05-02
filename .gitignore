@@ -31,4 +31,4 @@ coverage
 .vscode
 /rc
 # 忽略规则
-
+*:Zone.Identifier

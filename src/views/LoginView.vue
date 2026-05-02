@@ -48,12 +48,11 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
-import { login, getCaptcha, type loginParams } from '@/api'
-import { el_alert, md5 } from '@/utils'
+import { getCaptcha, type loginParams } from '@/api'
+import { el_alert } from '@/utils'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 import { logout } from '@/api/api_ve'
-import { getVePasswordHash } from '@/api/api_ve'
 import Loading from '@/components/Loading.vue'
 const userStore = useUserStore();
 
@@ -145,16 +144,7 @@ const handleLogin = async () => {
 
   is_loading.value = true
   try {
-    await login(loginForm)
-    const plainPassword = loginForm.password
-    const vePassword = loginForm.loginType === '2'
-      ? await getVePasswordHash()
-      : md5(plainPassword)
-    userStore.isAuthenticated = true
-    userStore.username = loginForm.username
-    userStore.ve_pwd = vePassword
-    userStore.mis_psd = loginForm.loginType === '2' ? plainPassword : ''
-    userStore.saveStateNow()
+    await userStore.login(loginForm)
     await router.replace({ name: 'home' })
     el_alert({
       title: '登录成功',
