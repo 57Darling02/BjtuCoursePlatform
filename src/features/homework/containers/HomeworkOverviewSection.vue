@@ -164,24 +164,24 @@ const syncHomeworkOnEnter = () => {
     const manualReload = isManualPageReload()
     const forceRefreshHomeworkList = manualReload || shouldRefreshHomeworkList()
 
-    userStore.addTaskToQueue(async () => {
-        await userStore.reconnectOnFirstEntryIfDisconnected()
-    })
-
-    if (manualReload) {
-        void userStore.refreshUserInfo({ force: true, silent: true })
-    }
-
-    userStore.addTaskToQueue(async () => {
-        await userStore.refreshHomeworks({ force: forceRefreshHomeworkList })
+    void userStore.refreshCoursePlatformData({
+        silent: true,
+        reconnectIfNeeded: true,
+        refreshUserData: manualReload,
+        forceUserData: manualReload,
+        refreshHomeworkData: true,
+        forceHomeworkData: forceRefreshHomeworkList,
     })
 }
 
 const triggerManualRefresh = () => {
     if (userStore.homeworkListLoading) return
-    userStore.addTaskToQueue(async () => {
-        await userStore.reconnectOnFirstEntryIfDisconnected()
-        await userStore.refreshHomeworks({ force: true })
+    void userStore.refreshCoursePlatformData({
+        silent: true,
+        reconnectIfNeeded: true,
+        refreshUserData: false,
+        refreshHomeworkData: true,
+        forceHomeworkData: true,
     })
 }
 
@@ -192,9 +192,13 @@ emitter.on('UPDATE_HOMEWORKS', () => {
     try {
         HomeworkDialogVisible.value = false;
         if (userStore.homeworkListLoading) return
-        userStore.addTaskToQueue(async () => {
-            await userStore.refreshHomeworks({ force: true })
-        });
+        void userStore.refreshCoursePlatformData({
+            silent: true,
+            refreshStatus: false,
+            refreshUserData: false,
+            refreshHomeworkData: true,
+            forceHomeworkData: true,
+        })
     } catch (error) {
         console.error('获取作业列表失败:', error)
     }

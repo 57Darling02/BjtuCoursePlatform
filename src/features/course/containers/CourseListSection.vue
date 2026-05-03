@@ -58,8 +58,12 @@ const triggerManualRefresh = async () => {
     if (userStore.courseListLoading) return
 
     try {
-        await userStore.reconnectOnFirstEntryIfDisconnected()
-        await userStore.refreshUserInfo({ force: true, silent: true })
+        await userStore.refreshCoursePlatformData({
+            silent: true,
+            reconnectIfNeeded: true,
+            refreshHomeworkData: false,
+            forceUserData: true,
+        })
     } catch (error) {
         console.error('刷新课程列表失败:', error)
     }
@@ -77,7 +81,10 @@ watch(() => userStore.courseList, (courseList) => {
 }, { immediate: true })
 
 onMounted(() => {
-    void userStore.refreshUserInfo({ silent: true })
+    void userStore.refreshCoursePlatformData({
+        silent: true,
+        refreshHomeworkData: false,
+    })
         .catch((error) => {
             console.error('初始化课程列表失败:', error)
         })

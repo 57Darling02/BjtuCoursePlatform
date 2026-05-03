@@ -16,7 +16,6 @@ export const showAboutDialog = () => {
             { class: 'about-dialog-content' },
             lines.map((line) => h('div', line))
         ),
-        customClass: 'about-message-box a-card',
         confirmButtonText: '知道了',
         closeOnClickModal: true,
         closeOnPressEscape: true,

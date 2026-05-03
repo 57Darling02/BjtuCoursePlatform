@@ -124,14 +124,12 @@ const handleFullRefresh = async () => {
     if (fullRefreshing.value || reconnecting.value) return
     fullRefreshing.value = true
     try {
-        await userStore.reconnectOnFirstEntryIfDisconnected()
-        await userStore.refreshConnectionStatus({ silent: true, force: true })
-        userStore.refreshUserInfo({ force: true, silent: true })
-        await new Promise<void>((resolve) => {
-            userStore.addTaskToQueue(async () => {
-                await userStore.refreshHomeworks({ force: true, silent: true })
-                resolve()
-            })
+        await userStore.refreshCoursePlatformData({
+            silent: true,
+            reconnectIfNeeded: true,
+            forceUserData: true,
+            refreshHomeworkData: true,
+            forceHomeworkData: true,
         })
         emitter.emit('REFRESH_DAY_COURSE')
     } finally {

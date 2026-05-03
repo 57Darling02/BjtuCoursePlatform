@@ -54,6 +54,16 @@ interface HomeworkDetailRefreshOptions {
     force?: boolean
 }
 
+interface CoursePlatformRefreshOptions {
+    silent?: boolean
+    reconnectIfNeeded?: boolean
+    refreshStatus?: boolean
+    refreshUserData?: boolean
+    forceUserData?: boolean
+    refreshHomeworkData?: boolean
+    forceHomeworkData?: boolean
+}
+
 interface DataTimestamps {
     userInfo: number
     status: number
@@ -594,6 +604,38 @@ export const useUserStore = defineStore('user', () => {
         return await checkAuth_ve({ ...options, force: true })
     }
 
+    const refreshCoursePlatformDataTask = async (options: CoursePlatformRefreshOptions = {}) => {
+        const silent = options.silent ?? true
+        const reconnectIfNeeded = options.reconnectIfNeeded ?? false
+        const refreshStatus = options.refreshStatus ?? true
+        const refreshUserData = options.refreshUserData ?? true
+        const forceUserData = options.forceUserData ?? false
+        const refreshHomeworkData = options.refreshHomeworkData ?? false
+        const forceHomeworkData = options.forceHomeworkData ?? false
+
+        if (reconnectIfNeeded) {
+            const connected = await reconnectOnFirstEntryIfDisconnected()
+            if (!connected) return
+        }
+
+        if (refreshStatus) {
+            const connected = await refreshConnectionStatus({ silent: true, force: true })
+            if (!connected) return
+        }
+
+        if (refreshUserData) {
+            await refreshUserInfoTask({ silent, force: forceUserData })
+        }
+
+        if (refreshHomeworkData) {
+            await refreshHomeworks({ silent, force: forceHomeworkData })
+        }
+    }
+
+    const refreshCoursePlatformData = (options: CoursePlatformRefreshOptions = {}) => {
+        return runTaskInQueue(() => refreshCoursePlatformDataTask(options))
+    }
+
     const refreshHomeworkDetail = async (
         homeworkId: number,
         options: HomeworkDetailRefreshOptions = {}
@@ -745,6 +787,7 @@ export const useUserStore = defineStore('user', () => {
         runWithTemporaryAccount,
         reconnectOnFirstEntryIfDisconnected,
         refreshConnectionStatus,
+        refreshCoursePlatformData,
         addTaskToQueue,
         refreshUserInfo,
         refreshHomeworks,

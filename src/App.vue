@@ -51,28 +51,21 @@ $white_bg: rgba(255, 255, 255, 0.888);
   }
 }
 
-%card-base {
+%card-surface {
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(164, 188, 221, 0.2);
   border-radius: 22px;
-  padding: 10px;
   transition: all 0.2s ease;
   box-shadow: 0 6px 18px rgba(49, 93, 151, 0.08);
-  margin: 10px 0;
-  position: relative;
-  z-index: 2;
   backdrop-filter: blur(4px);
 }
 
-.a-card {
-  @extend %card-base;
-
-  &:hover {
-    
-    box-shadow: 0 10px 22px rgba(49, 93, 151, 0.12);
-  }
-
-  padding: 1.25rem;
+%card-base {
+  @extend %card-surface;
+  padding: 10px;
+  margin: 10px 0;
+  position: relative;
+  z-index: 2;
 }
 
 .a-card-static {
@@ -99,17 +92,25 @@ $white_bg: rgba(255, 255, 255, 0.888);
   background: linear-gradient(180deg, rgba(252, 254, 255, 0.85), rgba(239, 248, 255, 0.78));
 }
 
-.el-message-box.about-message-box.a-card {
+.a-card {
   @extend %card-base;
-  box-sizing: border-box;
-  width: min(92vw, 420px);
-  max-width: 420px;
-  margin: 0;
+
+  &:hover {
+    
+    box-shadow: 0 10px 22px rgba(49, 93, 151, 0.12);
+  }
+
   padding: 1.25rem;
 }
 
-.el-message-box.about-message-box.a-card .el-message-box__content {
-  padding: 4px 18px 10px;
+.el-message-box.el-message-box {
+  @extend %card-surface;
+  --el-messagebox-border-radius: 22px;
+  --el-messagebox-box-shadow: 0 6px 18px rgba(49, 93, 151, 0.08);
+  border-radius: 22px;
+  box-shadow: 0 6px 18px rgba(49, 93, 151, 0.08);
+  background-color: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(164, 188, 221, 0.2);
 }
 
 .about-dialog-content {

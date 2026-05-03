@@ -38,7 +38,7 @@
         </div>
 
         <button class="nav-item nav-profile" type="button" aria-label="打开个人中心" @click="visible = true">
-            <i class="fa-solid fa-user" aria-hidden="true" />
+            <i class="fa-solid fa-sidebar fa-rotate-180" aria-hidden="true" />
             <span>个人</span>
         </button>
     </nav>

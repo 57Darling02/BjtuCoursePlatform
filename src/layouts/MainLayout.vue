@@ -24,10 +24,11 @@ const scroll = throttle(({ scrollTop }: { scrollTop: number }) => {
 const footer_content = ['Powered by 57Darling02 © 2025']
 
 onMounted(() => {
-  userStore.addTaskToQueue(async () => {
-    await userStore.reconnectOnFirstEntryIfDisconnected()
+  void userStore.refreshCoursePlatformData({
+    silent: true,
+    reconnectIfNeeded: true,
+    refreshHomeworkData: false,
   })
-  userStore.refreshUserInfo({ silent: true })
   scrollbarRef.value?.update()
   const current_version = localStorage.getItem('version')
   if (current_version === version) return
