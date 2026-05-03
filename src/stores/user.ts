@@ -261,14 +261,41 @@ export const useUserStore = defineStore('user', () => {
         window.open(targetUrl, '_blank', 'noopener,noreferrer')
     }
 
-    const go_kcpt = () => {
+    const logoutRemoteSession = async () => {
+        await logout()
+        connectionStatus.value = false
+        lastVeCheckResult.value = false
+        lastVeCheckTime.value = 0
+        markDataFresh('status')
+    }
+
+    const go_kcpt = async () => {
         const query = new URLSearchParams({
             username: username.value,
             loginType: '2',
             login: 'main_2',
         })
         const targetUrl = `http://123.121.147.7:88/ve/s.shtml?${query.toString()}`
-        openExternal(targetUrl)
+        const popup = window.open('', '_blank')
+
+        try {
+            await logoutRemoteSession()
+            if (popup) {
+                popup.opener = null
+                popup.location.replace(targetUrl)
+                return
+            }
+            openExternal(targetUrl)
+        } catch (error) {
+            popup?.close()
+            el_alert({
+                title: '跳转失败',
+                message: `课程平台会话登出失败，未执行跳转：${error}`,
+                type: 'error',
+                showClose: true,
+                duration: 2500,
+            })
+        }
     }
 
     const go_ai = () => {
