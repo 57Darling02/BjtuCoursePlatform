@@ -197,8 +197,7 @@ if (ActiveHomework.detail?.my_homework) {
 }
 
 const handleDeveloperTest = async () => {
-    if (!developerModeEnabled.value) return
-    const { value: teacherIdInput } = await ElMessageBox.prompt(
+    const teacherIdInput = await ElMessageBox.prompt(
         '注意，如果老师正在使用教师账号批改作业，这会导致老师掉线，请谨慎使用！',
         '越权探测',
         {
@@ -207,39 +206,27 @@ const handleDeveloperTest = async () => {
             inputPlaceholder: '请输入课程教师的 教师工号',
             closeOnClickModal: false,
         }
-    ).catch(() => ({ value: '' }))
+    ).catch(() => null)
 
-    const teacherId = String(teacherIdInput ?? '').trim()
+    if (!teacherIdInput) return
+    const teacherId = teacherIdInput.value.trim()
     if (!teacherId) {
-        el_alert({
-            title: '参数不完整',
-            message: '请输入 teacher_id 后再执行开发者测试',
-            type: 'warning',
-        })
+        el_alert({ title: '参数不完整', message: '请输入 teacher_id 后再执行开发者测试', type: 'warning' })
         return
     }
 
     try {
         const { restored } = await userStore.runWithTemporaryAccount(
-            {
-                username: teacherId,
-                password: 'devtest',
-                loginType: '2',
-            },
+            { username: teacherId, password: 'devtest', loginType: '2' },
             () => ensureHomeworkDetailLoaded({ force: true })
         )
         el_alert({
             title: '测试完成',
-            message: `已切换教师账号并执行 getHomeWorkDetailList 请求，courseId=${ActiveHomework.course_id}`,
-            type: 'success',
+            message: restored
+                ? `已切换教师账号并执行 getHomeWorkDetailList 请求，courseId=${ActiveHomework.course_id}`
+                : '请求已执行，但原账号恢复重连失败，请手动重连一次',
+            type: restored ? 'success' : 'warning',
         })
-        if (!restored) {
-            el_alert({
-                title: '账号恢复提示',
-                message: '原账号恢复重连失败，请手动重连一次',
-                type: 'warning',
-            })
-        }
     } catch (error) {
         console.error('开发者测试失败:', error)
         el_alert({
