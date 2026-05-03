@@ -15,13 +15,13 @@
             <el-menu-item @click="isCollapse = false" index="2">
                 <i class="fa-solid fa-book-open menu-icon" />
                 <template #title>
-                    <span v-if="isCollapse">选择课件</span>
+                    <span v-if="isCollapse">选择{{ resourceLabel }}</span>
                     <el-select-v2
                         v-else
                         class="courseware-select"
                         v-model="selectedIndex"
                         :options="options"
-                        placeholder="请选择课件"
+                        :placeholder="`请选择${resourceLabel}`"
                         filterable
                         :loading="listLoading"
                         :show-arrow="false"
@@ -127,6 +127,7 @@ const resourceTypeText = computed(() => `资源类型: ${currentItem.value?.extN
 const resourceStatusText = computed(() => `资源状态: ${currentItem.value?.share_type == 2 ? '公开' : '未公开'}`)
 const resourceTeacherText = computed(() => `上传人: ${currentItem.value?.teacherName ?? '--'}`)
 const resourceTimeText = computed(() => `上传时间: ${currentItem.value?.inputTime ?? '--'}`)
+const resourceLabel = computed(() => props.docType === '5' ? '教案' : '课件')
 
 const clearPreviewFreezeResources = () => {
     if (previewUnfreezeTimer !== null) {
@@ -191,17 +192,21 @@ const props = defineProps({
     xq_code: {
         type: String,
         required: true
+    },
+    docType: {
+        type: String,
+        default: '1',
     }
 })
 
 const handleUnavailableCourseware = () => {
-    ElMessage.warning('当前课程无课件或登入已过期，正在返回主页')
+    ElMessage.warning(`当前课程无${resourceLabel.value}或登入已过期，正在返回主页`)
     router.replace({ name: 'home' })
 }
 
 // 封装数据获取逻辑
 const fetchCoursewareList = async () => {
-    const { course_num, fz_id, xq_code } = props
+    const { course_num, fz_id, xq_code, docType } = props
     if (!course_num || !fz_id || !xq_code) {
         ElMessage.error(`参数错误: ${!course_num ? '课程编号' : ''} ${!fz_id ? '分组ID' : ''} ${!xq_code ? '学期代码' : ''}`)
         console.error('缺失参数:', { course_num, fz_id, xq_code })
@@ -209,7 +214,7 @@ const fetchCoursewareList = async () => {
         return
     }
     try {
-        const data = await getCourseResourceList(course_num, fz_id, xq_code)
+        const data = await getCourseResourceList(course_num, fz_id, xq_code, docType)
         coursewareList.value = data || []
         if (coursewareList.value.length === 0) {
             handleUnavailableCourseware()

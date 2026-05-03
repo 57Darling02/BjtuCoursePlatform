@@ -35,7 +35,8 @@ const router = createRouter({
       props: route => ({
         course_num: route.query.course_num,
         fz_id: route.query.fz_id,
-        xq_code: route.query.xq_code
+        xq_code: route.query.xq_code,
+        docType: route.query.doctpye ?? route.query.docType ?? '1',
       })
     },
     {

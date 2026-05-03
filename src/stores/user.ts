@@ -42,6 +42,7 @@ interface TemporaryAccountOptions {
     username: string
     password: string
     passwordIsHash?: boolean
+    loginType?: LoginType
 }
 
 interface RefreshOptions {
@@ -232,7 +233,7 @@ export const useUserStore = defineStore('user', () => {
         username.value = normalizedUsername
         vePasswordHash.value = nextVePasswordHash
         mis_psd.value = isCasLogin ? plainPassword : ''
-        loginType.value = params.loginType
+        loginType.value = '1' as LoginType
         connectionStatus.value = true
         lastVeCheckResult.value = true
         lastVeCheckTime.value = Date.now()
@@ -407,7 +408,7 @@ export const useUserStore = defineStore('user', () => {
                         username: username.value,
                         passwordHash: vePasswordHash.value,
                         passcode: '',
-                        loginType: '1',
+                        loginType: loginType.value,
                     });
                     const connected = await checkAuth_ve({ silent: true, force: true });
                     if (connected) {
@@ -459,37 +460,48 @@ export const useUserStore = defineStore('user', () => {
         }
         const tempUsername = options.username.trim()
         const tempVePasswordHash = options.passwordIsHash ? options.password : md5(options.password)
+        const tempLoginType = options.loginType ?? '1'
         if (!tempUsername || !tempVePasswordHash) {
             throw new Error('临时账号或密码不能为空')
         }
         isTemporaryAccountSwitching = true
         suppressAuthPersistence = true
-
         const originalUsername = username.value
         const originalVePasswordHash = vePasswordHash.value
+        const originalLoginType = loginType.value
+        let switched = false
+
         const restoreOriginalAccount = async () => {
             username.value = originalUsername
             vePasswordHash.value = originalVePasswordHash
+            loginType.value = originalLoginType
             return await reconnect({ notify: false })
         }
 
-        username.value = tempUsername
-        vePasswordHash.value = tempVePasswordHash
-        const switched = await reconnect({ notify: false })
-        if (!switched) {
-            const restored = await restoreOriginalAccount()
-            throw new Error(restored ? '临时账号重连失败' : '临时账号重连失败，且原账号恢复失败')
-        }
-
         try {
+            username.value = tempUsername
+            vePasswordHash.value = tempVePasswordHash
+
+            loginType.value = tempLoginType
+            switched = await reconnect({ notify: false })
+            if (!switched) {
+                const restored = await restoreOriginalAccount()
+                throw new Error(restored ? '临时账号重连失败' : '临时账号重连失败，且原账号恢复失败')
+            }
+
             const result = await request()
             const restored = await restoreOriginalAccount()
             return { result, restored }
         } catch (error) {
-            const restored = await restoreOriginalAccount()
-            if (!restored) {
-                console.error('临时请求失败后原账号恢复失败:', error)
+            if (switched) {
+                const restored = await restoreOriginalAccount()
+                if (!restored) {
+                    console.error('临时请求失败后原账号恢复失败:', error)
+                }
+            } else if (error instanceof Error && error.message.includes('临时账号重连失败')) {
+                throw error
             }
+            console.error('临时请求执行失败:', error)
             throw error
         } finally {
             suppressAuthPersistence = false
@@ -649,7 +661,7 @@ export const useUserStore = defineStore('user', () => {
         if (!force && homework.detail?.courseNoteList?.length) return true
 
         try {
-            const allSubmissions = (await getAllStudentSubmissions(homework.id)).sort((a, b) => {
+            const allSubmissions = (await getAllStudentSubmissions(homework.id, homework.course_id)).sort((a, b) => {
                 const scoreA = a.score as number | null
                 const scoreB = b.score as number | null
                 if (scoreA === null) return 1

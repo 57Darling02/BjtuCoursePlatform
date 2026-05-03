@@ -101,7 +101,59 @@ const functionList = [
                 query: {
                     course_num: courseInfo.course_num,
                     fz_id: courseInfo.fz_id,
-                    xq_code: courseInfo.xq_code
+                    xq_code: courseInfo.xq_code,
+                    doctpye: '1',
+                }
+            });
+            window.open(route.href, '_blank');
+        }
+    },
+    {
+        text: '查看教案',
+        icon: 'fa-solid fa-chalkboard-user',
+        type: 'info',
+        function: (courseInfo: CourseInfo) => {
+            const route = router.resolve({
+                name: 'courseware',
+                query: {
+                    course_num: courseInfo.course_num,
+                    fz_id: courseInfo.fz_id,
+                    xq_code: courseInfo.xq_code,
+                    doctpye: '5',
+                }
+            });
+            window.open(route.href, '_blank');
+        }
+    },
+    {
+        text: '查看实验资源',
+        icon: 'fa-solid fa-flask',
+        type: 'info',
+        function: (courseInfo: CourseInfo) => {
+            const route = router.resolve({
+                name: 'courseware',
+                query: {
+                    course_num: courseInfo.course_num,
+                    fz_id: courseInfo.fz_id,
+                    xq_code: courseInfo.xq_code,
+                    doctpye: '10',
+                }
+            });
+            window.open(route.href, '_blank');
+        }
+    },
+    {
+        text: '查看教辅资源',
+        icon: 'fa-solid fa-book-bookmark',
+        type: 'info',
+        function: (courseInfo: CourseInfo) => {
+            const route = router.resolve({
+                name: 'courseware',
+                query: {
+                    course_num: courseInfo.course_num,
+                    fz_id: courseInfo.fz_id,
+                    xq_code: courseInfo.xq_code,
+                    doctpye: '12',
                 }
             });
             window.open(route.href, '_blank');

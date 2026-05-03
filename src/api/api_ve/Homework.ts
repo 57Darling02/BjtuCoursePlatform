@@ -150,6 +150,7 @@ export const getAllHomeworkItem = async (cIdlist: number[]): Promise<HomeworkIte
  */
 const getStudentSubmissions = async (
     homeworkId: number,
+    courseId: number,
     page = 1,
     pageSize = 100
 ): Promise<SubmissionListResponse> => {
@@ -160,6 +161,7 @@ const getStudentSubmissions = async (
                 params: {
                     method: 'getHomeWorkDetailList',
                     id: homeworkId,
+                    courseId,
                     page,
                     pagesize: pageSize
                 }
@@ -189,14 +191,15 @@ const getStudentSubmissions = async (
  * 获取所有学生提交记录（自动分页）
  */
 export const getAllStudentSubmissions = async (
-    homeworkId: number
+    homeworkId: number,
+    courseId: number
 ): Promise<StudentSubmission[]> => {
     let currentPage = 1
     let totalPage = 1
     const allSubmissions: StudentSubmission[] = []
 
     while (currentPage <= totalPage) {
-        const response = await getStudentSubmissions(homeworkId, currentPage, 100)
+        const response = await getStudentSubmissions(homeworkId, courseId, currentPage, 100)
         if (response.STATUS === '0') {
             response.courseNoteList.forEach((item) => {
                 item.score = !isNaN(Number(item.score)) ? Number(item.score) : null

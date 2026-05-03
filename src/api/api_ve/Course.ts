@@ -91,7 +91,8 @@ export const getAllCourses = async (xqCode: string): Promise<CourseInfo[]> => {
 export const getCourseResourceList = async (
     courseId: string,
     xkhId: string,
-    xqCode: string
+    xqCode: string,
+    docType = '1'
 ): Promise<CourseResourceItem[]> => {
     try {
         const response = await service.get<VeCourseResourceListResponse>(
@@ -103,7 +104,7 @@ export const getCourseResourceList = async (
                     cId: courseId,
                     xkhId,
                     xqCode,
-                    docType: 1,
+                    docType,
                     up_id: 0,
                     searchName: ''
                 }
