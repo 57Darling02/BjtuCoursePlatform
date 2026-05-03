@@ -264,7 +264,7 @@ export const useUserStore = defineStore('user', () => {
     const go_kcpt = () => {
         const query = new URLSearchParams({
             username: username.value,
-            loginType: loginType.value,
+            loginType: '2',
             login: 'main_2',
         })
         const targetUrl = `http://123.121.147.7:88/ve/s.shtml?${query.toString()}`
