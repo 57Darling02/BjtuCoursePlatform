@@ -21,12 +21,6 @@
                             <span v-if="stream.key === featuredStream?.key" class="stream-badge stream-badge-featured">
                                 主视图
                             </span>
-                            <span v-if="stream.key === featuredStream?.key && canToggleAuxStreams"
-                                class="stream-badge stream-badge-toggle" role="button" tabindex="0"
-                                @click.stop="toggleAuxStreams" @keydown.enter.prevent.stop="toggleAuxStreams"
-                                @keydown.space.prevent.stop="toggleAuxStreams">
-                                {{ hideAuxStreams ? '还原辅视图' : '隐藏辅视图' }}
-                            </span>
                             <span v-if="stream.key === selectedAudioKey" class="stream-badge stream-badge-audio">
                                 音源
                             </span>
@@ -45,84 +39,113 @@
         </div>
 
         <div class="control-dock">
-            <div class="control-row control-row-main">
-                <button class="control-button" type="button" @click="togglePlayback">
-                    <i :class="isPaused ? 'fa-solid fa-play' : 'fa-solid fa-pause'" />
-                </button>
-                <div class="timeline-box">
-                    <span class="timeline-time">{{ formatTime(scrubTime) }}</span>
-                    <input :value="scrubTime" class="timeline-slider" type="range" min="0" :max="safeDuration"
-                        step="0.1" @input="handleSeekInput" @mousedown="isScrubbing = true"
-                        @touchstart="isScrubbing = true" @change="commitSeek">
-                    <span class="timeline-time">{{ formatTime(duration) }}</span>
-                </div>
+            <div class="control-row control-row-timeline" :style="timelineProgressStyle">
+                <input :value="scrubTime" class="timeline-slider timeline-slider--boundary" type="range" min="0"
+                    :max="safeDuration"
+                    step="0.1" @input="handleSeekInput" @mousedown="isScrubbing = true"
+                    @touchstart="isScrubbing = true" @change="commitSeek">
             </div>
 
             <div class="control-row control-row-actions">
-                <div class="control-menu">
-                    <transition name="control-menu-fade">
-                        <div v-if="activeControlMenu === 'audio'" class="control-menu-panel control-menu-panel--align-start" role="menu"
-                            aria-label="音源选择">
-                            <div class="control-menu-list">
-                                <button v-for="stream in orderedStreams" :key="stream.key" class="control-menu-option"
-                                    :class="{ 'is-active': stream.key === selectedAudioKey }" type="button"
-                                    @click="handleAudioSourceChange(stream.key)">
-                                    <span>{{ resolveDisplayLabel(stream) }}</span>
-                                </button>
-                            </div>
-                        </div>
-                    </transition>
-                    <button class="control-pill" :class="{ 'is-active': activeControlMenu === 'audio' }" type="button"
-                        title="音源选择" @click="toggleControlMenu('audio')">
-                        <i class="control-pill-icon fa-solid fa-music" />
-                        <span class="control-pill-value control-pill-value--truncate">{{ selectedAudioLabel }}</span>
+                <div class="control-row-group control-row-group-primary">
+                    <button class="control-button" type="button" @click="togglePlayback">
+                        <i :class="isPaused ? 'fa-solid fa-play' : 'fa-solid fa-pause'" />
                     </button>
+                    <span class="timeline-summary">{{ formatTime(scrubTime) }} / {{ formatTime(duration) }}</span>
+                    <div class="control-row-group control-row-group-views">
+                        <div class="control-menu">
+                            <transition name="control-menu-fade">
+                                <div v-if="activeControlMenu === 'featured'" class="control-menu-panel control-menu-panel--align-start"
+                                    role="menu" aria-label="主视图选择">
+                                    <div class="control-menu-list">
+                                        <button v-for="stream in orderedStreams" :key="stream.key" class="control-menu-option"
+                                            :class="{ 'is-active': stream.key === featuredStream?.key }" type="button"
+                                            @click="handleFeaturedStreamChange(stream.key)">
+                                            <span>{{ resolveDisplayLabel(stream) }}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </transition>
+                            <button class="control-pill control-pill--view"
+                                :class="{ 'is-active': activeControlMenu === 'featured' }" type="button"
+                                title="主视图选择" @click="toggleControlMenu('featured')">
+                                <i class="control-pill-icon fa-solid fa-display" />
+                                <span class="control-pill-value control-pill-value--truncate">{{ selectedFeaturedLabel }}</span>
+                            </button>
+                        </div>
+
+                        <button v-if="canToggleAuxStreams" class="control-pill control-pill--view"
+                            :class="{ 'is-active': hideAuxStreams }" type="button"
+                            :title="auxStreamsButtonLabel" @click="toggleAuxStreams">
+                            <i :class="['control-pill-icon', auxStreamsToggleIconClass]" />
+                            <span class="control-pill-value">{{ auxStreamsButtonLabel }}</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="control-menu">
-                    <transition name="control-menu-fade">
-                        <div v-if="activeControlMenu === 'speed'" class="control-menu-panel" role="menu"
-                            aria-label="倍速选择">
-                            <div class="control-menu-list">
-                                <button v-for="rate in playbackRateOptions" :key="rate" class="control-menu-option"
-                                    :class="{ 'is-active': rate === selectedPlaybackRate }" type="button"
-                                    @click="handlePlaybackRateChange(rate)">
-                                    <span>{{ rate }}x</span>
-                                </button>
+                <div class="control-row-group control-row-group-secondary">
+                    <div class="control-menu">
+                        <transition name="control-menu-fade">
+                            <div v-if="activeControlMenu === 'audio'" class="control-menu-panel control-menu-panel--align-start" role="menu"
+                                aria-label="音源选择">
+                                <div class="control-menu-list">
+                                    <button v-for="stream in orderedStreams" :key="stream.key" class="control-menu-option"
+                                        :class="{ 'is-active': stream.key === selectedAudioKey }" type="button"
+                                        @click="handleAudioSourceChange(stream.key)">
+                                        <span>{{ resolveDisplayLabel(stream) }}</span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    </transition>
-                    <button class="control-pill" :class="{ 'is-active': activeControlMenu === 'speed' }" type="button"
-                        title="倍速选择" @click="toggleControlMenu('speed')">
-                        <i class="control-pill-icon fa-solid fa-gauge-high" />
-                        <span class="control-pill-value">{{ selectedPlaybackRateLabel }}</span>
+                        </transition>
+                        <button class="control-pill" :class="{ 'is-active': activeControlMenu === 'audio' }" type="button"
+                            title="音源选择" @click="toggleControlMenu('audio')">
+                            <i class="control-pill-icon fa-solid fa-music" />
+                            <span class="control-pill-value control-pill-value--truncate">{{ selectedAudioLabel }}</span>
+                        </button>
+                    </div>
+
+                    <div class="control-menu">
+                        <transition name="control-menu-fade">
+                            <div v-if="activeControlMenu === 'speed'" class="control-menu-panel" role="menu"
+                                aria-label="倍速选择">
+                                <div class="control-menu-list">
+                                    <button v-for="rate in playbackRateOptions" :key="rate" class="control-menu-option"
+                                        :class="{ 'is-active': rate === selectedPlaybackRate }" type="button"
+                                        @click="handlePlaybackRateChange(rate)">
+                                        <span>{{ rate }}x</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </transition>
+                        <button class="control-pill" :class="{ 'is-active': activeControlMenu === 'speed' }" type="button"
+                            title="倍速选择" @click="toggleControlMenu('speed')">
+                            <i class="control-pill-icon fa-solid fa-gauge-high" />
+                            <span class="control-pill-value">{{ selectedPlaybackRateLabel }}</span>
+                        </button>
+                    </div>
+
+                    <div class="control-menu">
+                        <transition name="control-menu-fade">
+                            <div v-if="activeControlMenu === 'volume'" class="control-menu-panel control-menu-panel--volume"
+                                role="group" aria-label="音量控制">
+                                <div class="volume-popover-slider-box">
+                                    <input :value="effectiveVolume" class="volume-slider volume-slider--popover"
+                                        type="range" min="0" max="1" step="0.05" @input="handleVolumeInput">
+                                </div>
+                            </div>
+                        </transition>
+                        <button class="control-pill" :class="{ 'is-active': activeControlMenu === 'volume' }" type="button"
+                            title="音量控制" @click="toggleControlMenu('volume')">
+                            <i :class="['control-pill-icon', volumeIconClass]" />
+                            <span class="control-pill-value">{{ volumeValueLabel }}</span>
+                        </button>
+                    </div>
+                    <button class="control-pill" type="button" :title="isFullscreen ? '退出全屏' : '全屏拼盘'"
+                        @click="toggleFullscreen">
+                        <i :class="['control-pill-icon', isFullscreen ? 'fa-solid fa-compress' : 'fa-solid fa-expand']" />
+                        <span class="control-pill-value">{{ fullscreenLabel }}</span>
                     </button>
                 </div>
-
-
-
-                <div class="control-menu">
-                    <transition name="control-menu-fade">
-                        <div v-if="activeControlMenu === 'volume'" class="control-menu-panel control-menu-panel--volume"
-                            role="group" aria-label="音量控制">
-                            <div class="volume-popover-slider-box">
-                                
-                                <input :value="effectiveVolume" class="volume-slider volume-slider--popover"
-                                    type="range" min="0" max="1" step="0.05" @input="handleVolumeInput">
-                            </div>
-                        </div>
-                    </transition>
-                    <button class="control-pill" :class="{ 'is-active': activeControlMenu === 'volume' }" type="button"
-                        title="音量控制" @click="toggleControlMenu('volume')">
-                        <i :class="['control-pill-icon', volumeIconClass]" />
-                        <span class="control-pill-value">{{ volumeValueLabel }}</span>
-                    </button>
-                </div>
-                <button class="control-pill" type="button" :title="isFullscreen ? '退出全屏' : '全屏拼盘'"
-                    @click="toggleFullscreen">
-                    <i :class="['control-pill-icon', isFullscreen ? 'fa-solid fa-compress' : 'fa-solid fa-expand']" />
-                    <span class="control-pill-value">{{ fullscreenLabel }}</span>
-                </button>
             </div>
         </div>
     </div>
@@ -145,7 +168,7 @@ type PlaybackSnapshot = {
     playbackRate: number;
 };
 
-type ControlMenuKey = 'audio' | 'speed' | 'volume' | null;
+type ControlMenuKey = 'featured' | 'audio' | 'speed' | 'volume' | null;
 
 const props = defineProps({
     streams: {
@@ -221,9 +244,26 @@ const volumeIconClass = computed(() => {
     if (volume.value < 0.5) return 'fa-solid fa-volume-low';
     return 'fa-solid fa-volume-high';
 });
+const auxStreamsButtonLabel = computed(() => (hideAuxStreams.value ? '还原辅视图' : '隐藏辅视图'));
+const auxStreamsToggleIconClass = computed(() =>
+    hideAuxStreams.value ? 'fa-solid fa-table-cells-large' : 'fa-solid fa-table-cells'
+);
+const timelineProgressStyle = computed(() => {
+    const max = safeDuration.value;
+    const current = Math.min(Math.max(scrubTime.value, 0), max);
+    const percent = max > 0 ? (current / max) * 100 : 0;
+
+    return {
+        '--timeline-progress': `${percent}%`
+    };
+});
 const selectedAudioLabel = computed(() => {
     const stream = orderedStreams.value.find(item => item.key === selectedAudioKey.value);
     return stream ? resolveDisplayLabel(stream) : '音源';
+});
+const selectedFeaturedLabel = computed(() => {
+    const stream = orderedStreams.value.find(item => item.key === featuredStream.value?.key);
+    return stream ? resolveDisplayLabel(stream) : '主视图';
 });
 const selectedPlaybackRateLabel = computed(() => `${selectedPlaybackRate.value}x`);
 const volumeValueLabel = computed(() => `${Math.round(effectiveVolume.value * 100)}%`);
@@ -553,6 +593,11 @@ const handleAudioSourceChange = (key: string) => {
     activeControlMenu.value = null;
 };
 
+const handleFeaturedStreamChange = (key: string) => {
+    setFeaturedStream(key);
+    activeControlMenu.value = null;
+};
+
 const handleVolumeInput = (event: Event) => {
     const nextVolume = Number((event.target as HTMLInputElement).value);
     volume.value = Number.isFinite(nextVolume) ? nextVolume : 1;
@@ -725,6 +770,7 @@ defineExpose({
     grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.95fr);
     grid-auto-rows: minmax(0, 1fr);
     gap: 12px;
+    background: #000;
     overflow: hidden;
 }
 
@@ -825,17 +871,6 @@ defineExpose({
     color: #72b4ff;
 }
 
-.stream-badge-toggle {
-    border: 0;
-    cursor: pointer;
-    background: rgba(13, 23, 40, 0.78);
-    color: rgba(223, 238, 255, 0.96);
-}
-
-.stream-badge-toggle:hover {
-    background: rgba(27, 50, 85, 0.86);
-}
-
 .streams-board.is-main-only .stream-stage.is-hidden-aux {
     display: none;
 }
@@ -854,14 +889,15 @@ defineExpose({
 }
 
 .control-dock {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 16px 14px 10px;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
+    border-radius: 0 0 14px 14px;
     background: linear-gradient(180deg, rgba(15, 24, 40, 0.98), rgba(10, 16, 28, 0.98));
+    overflow: visible;
 }
 
 .control-row {
@@ -871,13 +907,79 @@ defineExpose({
     gap: 10px;
 }
 
-.control-row-main {
-    min-width: 0;
+.control-row-timeline {
+    --timeline-hit-height: 14px;
+    --timeline-track-height: 4px;
+    --timeline-thumb-size: 10px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--timeline-track-height);
+    gap: 0;
+    overflow: visible;
+}
+
+.control-row-timeline::before,
+.control-row-timeline::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    height: var(--timeline-track-height);
+    pointer-events: none;
+}
+
+.control-row-timeline::before {
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.control-row-timeline::after {
+    left: 0;
+    width: var(--timeline-progress);
+    background: #5da0ff;
 }
 
 .control-row-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.control-row-group {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.control-row-group-primary {
+    flex: 0 1 auto;
+}
+
+.control-row-group-views {
+    min-width: 0;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.control-row-group-views .control-menu,
+.control-row-group-views .control-pill {
+    min-width: 0;
+    width: 100%;
+}
+
+.control-row-group-views .control-menu > .control-pill {
+    width: 100%;
+}
+
+.control-row-group-secondary {
+    flex: 1;
     justify-content: flex-end;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
 }
 
 .control-menu {
@@ -952,13 +1054,22 @@ defineExpose({
     transition: background 0.18s ease;
 }
 
+.control-pill--view {
+    justify-content: center;
+}
+
 .control-pill:hover,
 .control-pill.is-active {
     background: rgba(255, 255, 255, 0.14);
 }
 
 .control-pill-icon {
+    width: 14px;
     flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .control-pill-value {
@@ -974,15 +1085,9 @@ defineExpose({
     text-overflow: ellipsis;
 }
 
-.timeline-time {
-    color: rgba(255, 255, 255, 0.74);
-    font-size: 12px;
-    white-space: nowrap;
-}
-
 .control-button {
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -998,20 +1103,101 @@ defineExpose({
     background: rgba(255, 255, 255, 0.14);
 }
 
-.timeline-box {
-    min-width: 0;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.timeline-summary {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
 .timeline-slider,
 .volume-slider {
     flex: 1;
     min-width: 0;
-    accent-color: #5da0ff;
     cursor: pointer;
+}
+
+.volume-slider {
+    accent-color: #5da0ff;
+}
+
+.timeline-slider {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.timeline-slider--boundary {
+    position: absolute;
+    top: calc((var(--timeline-track-height) - var(--timeline-hit-height)) / 2);
+    left: 0;
+    width: 100%;
+    height: var(--timeline-hit-height);
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.timeline-slider--boundary::-webkit-slider-runnable-track {
+    height: var(--timeline-track-height);
+    border-radius: 999px;
+    background: transparent;
+}
+
+.timeline-slider--boundary::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: var(--timeline-thumb-size);
+    height: var(--timeline-thumb-size);
+    margin-top: calc((var(--timeline-track-height) - var(--timeline-thumb-size)) / 2);
+    border: 2px solid #d6ebff;
+    border-radius: 50%;
+    background: #5da0ff;
+    box-shadow: 0 0 0 0 rgba(93, 160, 255, 0);
+    opacity: 0;
+    transform: scale(0.72);
+    transition: opacity 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.timeline-slider--boundary::-moz-range-track {
+    height: var(--timeline-track-height);
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.timeline-slider--boundary::-moz-range-progress {
+    height: var(--timeline-track-height);
+    border-radius: 999px;
+    background: #5da0ff;
+}
+
+.timeline-slider--boundary::-moz-range-thumb {
+    width: var(--timeline-thumb-size);
+    height: var(--timeline-thumb-size);
+    border: 2px solid #d6ebff;
+    border-radius: 50%;
+    background: #5da0ff;
+    box-shadow: 0 0 0 0 rgba(93, 160, 255, 0);
+    opacity: 0;
+    transform: scale(0.72);
+    transition: opacity 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.control-row-timeline:hover .timeline-slider--boundary::-webkit-slider-thumb,
+.timeline-slider--boundary:active::-webkit-slider-thumb,
+.timeline-slider--boundary:focus-visible::-webkit-slider-thumb {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 3px rgba(93, 160, 255, 0.18);
+}
+
+.control-row-timeline:hover .timeline-slider--boundary::-moz-range-thumb,
+.timeline-slider--boundary:active::-moz-range-thumb,
+.timeline-slider--boundary:focus-visible::-moz-range-thumb {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 3px rgba(93, 160, 255, 0.18);
 }
 
 .volume-slider--popover {
@@ -1109,18 +1295,16 @@ defineExpose({
         gap: 10px;
     }
 
-    .control-dock {
-        grid-template-columns: minmax(0, 1fr);
+    .control-row-group-primary,
+    .control-row-group-secondary {
+        min-width: 0;
     }
 
-    .control-row-actions {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        justify-content: stretch;
+    .control-row-group-views {
+        min-width: 0;
     }
 
     .control-pill {
-        width: 100%;
         justify-content: center;
         padding-inline: 8px;
     }
@@ -1189,6 +1373,59 @@ defineExpose({
         padding: 10px 12px;
     }
 
+    .control-row-timeline {
+        --timeline-hit-height: 12px;
+    }
+
+    .control-row-group-primary {
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .control-row-group-primary .control-button {
+        flex: none;
+    }
+
+    .control-row-group-views {
+        gap: 8px;
+    }
+
+    .control-row-group-views .control-menu,
+    .control-row-group-views .control-pill {
+        min-width: 0;
+    }
+
+    .control-row-group-views .control-pill {
+        width: 100%;
+    }
+
+    .control-row-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .control-row-group-primary,
+    .control-row-group-secondary {
+        width: 100%;
+    }
+
+    .control-row-group-secondary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        justify-content: stretch;
+    }
+
+    .control-row-group-views .control-pill-value {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .control-row-group-primary .control-pill,
+    .control-row-group-secondary .control-pill {
+        width: 100%;
+    }
+
     .control-menu-panel {
         bottom: calc(100% + 8px);
         padding: 8px;
@@ -1204,13 +1441,7 @@ defineExpose({
         min-width: 72px;
     }
 
-    .timeline-box {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto;
-        gap: 8px;
-    }
-
-    .timeline-time {
+    .timeline-summary {
         font-size: 11px;
     }
 
