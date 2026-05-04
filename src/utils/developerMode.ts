@@ -3,10 +3,10 @@ import { ref } from 'vue'
 import { md5 } from './cryption'
 import { el_alert } from './show'
 
-export const DEVELOPER_MODE_PASSPHRASE_MD5 = 'REDACTED_PASSPHRASE_MD5'
-export const USE_DEV_FIXED_HELPER_CREDENTIALS = true
-export const DEV_HELPER_USERNAME = ''
-export const DEV_HELPER_PASSWORD = ''
+export const DEVELOPER_MODE_PASSPHRASE_MD5 = import.meta.env.VITE_DEV_PASSPHRASE_MD5 || ''
+export const USE_DEV_FIXED_HELPER_CREDENTIALS = import.meta.env.VITE_DEV_HELPER_USE_FIXED === 'true'
+export const DEV_HELPER_USERNAME = import.meta.env.VITE_DEV_HELPER_USERNAME || ''
+export const DEV_HELPER_PASSWORD = import.meta.env.VITE_DEV_HELPER_PASSWORD || ''
 export const DEV_HELPER_DIALOG_MESSAGE = '越权模式：确认后将使用特权账号提交，22251285干的，因为我只把密钥给他了。'
 
 export const developerModeEnabled = ref<boolean>(false)
